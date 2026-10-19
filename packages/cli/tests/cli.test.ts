@@ -9,6 +9,6 @@ describe('runCli', () => {
     expect(logs.join('\n')).toMatch(/^\d+\.\d+\.\d+$/);
   });
   it('exits 2 for unknown command', async () => {
-    expect(await runCli(['nope'])).toBe(2);
+    expect(await runCli(['nope'], { log: () => {} })).toBe(2);
   });
 });
