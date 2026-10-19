@@ -671,7 +671,7 @@ export function parseHtml(file: string, source: string): Elem[] {
   (function walkNode(node: any) {
     if (node?.tagName) {
       const attrs: Record<string, string> = {};
-      for (const [k, v] of node.attrs ?? []) attrs[k] = v;
+      for (const a of node.attrs ?? []) attrs[a.name] = a.value;
       const text = (node.childNodes ?? [])
         .filter((c: any) => c.nodeName === '#text')
         .map((c: any) => c.value)
