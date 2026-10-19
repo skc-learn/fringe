@@ -221,6 +221,7 @@ git commit -m "feat(cli): monorepo scaffold with version command"
 **Interfaces:**
 - Produces (used by every later task — import from `../src/types.js`):
   - `type Severity = 'error' | 'review' | 'signal'`
+  - `export const SEVERITIES: readonly Severity[] = ['error', 'review', 'signal']` (the only runtime export; everything else is types)
   - `interface Loc { file: string; line: number; col: number }`
   - `interface Finding { rule: string; severity: Severity; message: string; hint: string; loc: Loc }`
   - `interface Elem { tag: string; attrs: Record<string, string>; text: string; loc: Loc }`
@@ -237,12 +238,12 @@ git commit -m "feat(cli): monorepo scaffold with version command"
 `packages/cli/tests/types.test.ts`:
 ```ts
 import { describe, it, expect } from 'vitest';
-import type { Finding, Severity } from '../src/types.js';
+import { SEVERITIES } from '../src/types.js';
+import type { Finding } from '../src/types.js';
 
 describe('types', () => {
-  it('Severity accepts the three levels', () => {
-    const s: Severity[] = ['error', 'review', 'signal'];
-    expect(s).toHaveLength(3);
+  it('exports the three severities', () => {
+    expect(SEVERITIES).toEqual(['error', 'review', 'signal']);
   });
   it('Finding shape compiles', () => {
     const f: Finding = { rule: 'FR-201', severity: 'error', message: 'm', hint: 'h', loc: { file: 'a.tsx', line: 1, col: 0 } };
