@@ -1,0 +1,115 @@
+<h2>Which dashboard layout feels right?</h2>
+<p class="subtitle">Wireframes for the Fringe local dashboard — same data in all three (verified findings, judged manifest, task history). Click one to select, then tell me in the terminal.</p>
+
+<style>
+  .wf { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 9px; color: #64748b; background: #f8fafc; border-radius: 6px; padding: 8px; height: 260px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+  .wf-bar { background: #e2e8f0; border-radius: 4px; padding: 4px 8px; display: flex; align-items: center; justify-content: space-between; font-weight: 600; color: #334155; }
+  .wf-block { background: #eef2f7; border: 1px solid #e2e8f0; border-radius: 4px; }
+  .wf-accent { background: #dbeafe; border-color: #bfdbfe; }
+  .wf-warn { background: #fef3c7; border-color: #fde68a; }
+  .wf-ok { background: #dcfce7; border-color: #bbf7d0; }
+  .wf-title { font-weight: 700; color: #334155; font-size: 8px; text-transform: uppercase; letter-spacing: 0.05em; padding: 3px 0; }
+  .wf-row { display: flex; gap: 4px; }
+  .wf-row > div { flex: 1; padding: 6px 4px; text-align: center; }
+  .wf-num { font-size: 16px; font-weight: 700; color: #1e293b; display: block; }
+  .wf-chip { display: inline-block; background: #fff; border: 1px solid #e2e8f0; border-radius: 999px; padding: 2px 6px; margin: 2px; font-size: 8px; color: #475569; }
+</style>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="wf">
+        <div class="wf-bar"><span>◆ fringe · my-app</span><span style="color:#94a3b8">fringe open</span></div>
+        <div class="wf-row">
+          <div class="wf-block wf-accent"><span class="wf-num">84</span>health</div>
+          <div class="wf-block"><span class="wf-num">3</span>errors</div>
+          <div class="wf-block"><span class="wf-num">7</span>review</div>
+          <div class="wf-block"><span class="wf-num">12</span>signals</div>
+          <div class="wf-block wf-ok"><span class="wf-num">92%</span>states ✓</div>
+        </div>
+        <div class="wf-block" style="flex:1; padding:6px;">
+          <div class="wf-title">Findings over time</div>
+          <svg viewBox="0 0 200 40" style="width:100%; height:44px;">
+            <polyline points="0,30 25,26 50,28 75,20 100,22 125,14 150,16 175,8 200,10" fill="none" stroke="#3b82f6" stroke-width="2"/>
+            <polyline points="0,36 25,34 50,35 75,30 100,31 125,26 150,27 175,22 200,23" fill="none" stroke="#f59e0b" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <div class="wf-block" style="flex:1; padding:6px;">
+          <div class="wf-title">Recent tasks</div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:3px;padding:3px 6px;margin-bottom:3px;">✓ settings page · 2 cut · 0 errors</div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:3px;padding:3px 6px;">✓ billing modal · 1 cut · 1 review</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A · Scorecard first</h3>
+      <p>Numbers hero, trend line, task table. Ponytail-board energy — instant "how healthy is my UI?" glance.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="wf">
+        <div class="wf-bar"><span>◆ fringe · my-app</span></div>
+        <div style="display:flex; gap:6px; flex:1;">
+          <div style="width:34%; display:flex; flex-direction:column; gap:4px;">
+            <div class="wf-title">Tasks</div>
+            <div class="wf-block wf-accent" style="padding:5px;">● settings page<br><span style="color:#94a3b8">today · ✓ verified</span></div>
+            <div class="wf-block" style="padding:5px;">● billing modal<br><span style="color:#94a3b8">yesterday</span></div>
+            <div class="wf-block" style="padding:5px;">● date picker<br><span style="color:#94a3b8">2 days ago</span></div>
+          </div>
+          <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+            <div class="wf-title">Task: settings page</div>
+            <div class="wf-block" style="padding:5px;">
+              <strong>✂ Flow (judged)</strong><br>cut: export tab · cut: 2-step wizard → 1
+            </div>
+            <div class="wf-block wf-ok" style="padding:5px;">
+              <strong>◎ Edges (verified)</strong><br>loading ✓ · empty ✓ · error ✓ · focus ✓ · alt ✓
+            </div>
+            <div class="wf-block wf-warn" style="padding:5px;">
+              <strong>✦ Polish (signals)</strong><br>FR-301 ×2 · FR-306 purple gradient
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B · Task story first</h3>
+      <p>Ledger timeline + per-task detail showing judged vs verified side by side. Reads like a changelog of UX decisions.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="wf">
+        <div class="wf-bar"><span>◆ fringe · board</span><span>my-app ▾ · 7d ▾</span></div>
+        <div style="display:flex; gap:6px; flex:1;">
+          <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+            <div class="wf-title">1 · Flow</div>
+            <div class="wf-block" style="padding:6px; text-align:center;"><span class="wf-num">9</span>flows cut</div>
+            <span class="wf-chip">export tab</span><span class="wf-chip">wizard→1step</span><span class="wf-chip">prefs page</span>
+            <div style="color:#94a3b8; font-size:8px; margin-top:auto;">judged · from manifests</div>
+          </div>
+          <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+            <div class="wf-title">2 · Edges</div>
+            <div class="wf-block wf-ok" style="padding:6px; text-align:center;"><span class="wf-num">92%</span>states ✓</div>
+            <span class="wf-chip">FR-208 ×3</span><span class="wf-chip">FR-202 ×1</span><span class="wf-chip">FR-205 ×1</span>
+            <div style="color:#94a3b8; font-size:8px; margin-top:auto;">verified · from fringe check</div>
+          </div>
+          <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+            <div class="wf-title">3 · Polish</div>
+            <div class="wf-block wf-warn" style="padding:6px; text-align:center;"><span class="wf-num">12</span>signals</div>
+            <span class="wf-chip">FR-301 ×5</span><span class="wf-chip">FR-304 ×2</span><span class="wf-chip">FR-306 🟣</span>
+            <div style="color:#94a3b8; font-size:8px; margin-top:auto;">verified · trend over time</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C · Ladder board</h3>
+      <p>The ladder IS the UI — three rung columns, judged/verified labeled per column. Most distinctive and on-brand.</p>
+    </div>
+  </div>
+
+</div>

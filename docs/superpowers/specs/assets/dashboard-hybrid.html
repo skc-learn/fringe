@@ -1,0 +1,101 @@
+<h2>Hybrid: Ladder board home + Task story drawer</h2>
+<p class="subtitle">C's rungs as the home screen, A's numbers as a slim strip up top, B's story as the drill-down when you click any task. Does this feel right?</p>
+
+<style>
+  .wf { font-family: ui-sans-serif, system-ui, sans-serif; font-size: 9px; color: #64748b; background: #f8fafc; border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+  .wf-bar { background: #e2e8f0; border-radius: 4px; padding: 4px 8px; display: flex; align-items: center; justify-content: space-between; font-weight: 600; color: #334155; }
+  .wf-block { background: #eef2f7; border: 1px solid #e2e8f0; border-radius: 4px; }
+  .wf-accent { background: #dbeafe; border-color: #bfdbfe; }
+  .wf-warn { background: #fef3c7; border-color: #fde68a; }
+  .wf-ok { background: #dcfce7; border-color: #bbf7d0; }
+  .wf-title { font-weight: 700; color: #334155; font-size: 8px; text-transform: uppercase; letter-spacing: 0.05em; padding: 3px 0; }
+  .wf-num { font-size: 14px; font-weight: 700; color: #1e293b; display: block; }
+  .wf-chip { display: inline-block; background: #fff; border: 1px solid #e2e8f0; border-radius: 999px; padding: 2px 6px; margin: 2px 1px; font-size: 8px; color: #475569; }
+  .wf-chip.sel { border-color: #3b82f6; color: #1d4ed8; background: #eff6ff; font-weight: 600; }
+  .wf-foot { color: #94a3b8; font-size: 7.5px; margin-top: auto; }
+  .stat { flex: 1; text-align: center; padding: 4px 2px; }
+</style>
+
+<div class="mockup">
+  <div class="mockup-header">fringe open · my-app — home (ladder board) with task story drawer open</div>
+  <div class="mockup-body">
+    <div class="wf" style="min-height: 380px;">
+
+      <div class="wf-bar"><span>◆ fringe · my-app</span><span>7d ▾ &nbsp;·&nbsp; board: 3 projects</span></div>
+
+      <!-- slim stat strip (from A) -->
+      <div style="display:flex; gap:4px;">
+        <div class="wf-block wf-accent stat"><span class="wf-num">84</span>health</div>
+        <div class="wf-block stat"><span class="wf-num">3</span>errors</div>
+        <div class="wf-block stat"><span class="wf-num">7</span>review</div>
+        <div class="wf-block stat"><span class="wf-num">12</span>signals</div>
+        <div class="wf-block wf-ok stat"><span class="wf-num">92%</span>states ✓</div>
+      </div>
+
+      <div style="display:flex; gap:8px; flex:1; min-height:0;">
+
+        <!-- ladder board (from C), narrowed because drawer is open -->
+        <div style="flex: 1.4; display:flex; flex-direction:column; gap:4px; opacity: 0.95;">
+          <div style="display:flex; gap:4px; flex:1;">
+            <div style="flex:1; display:flex; flex-direction:column; gap:3px;">
+              <div class="wf-title">1 · Flow</div>
+              <div class="wf-block" style="padding:5px; text-align:center;"><span class="wf-num">9</span>cut</div>
+              <div><span class="wf-chip sel">● settings page</span><br><span class="wf-chip">wizard→1step</span><br><span class="wf-chip">prefs page</span></div>
+              <div class="wf-foot">judged · manifests</div>
+            </div>
+            <div style="flex:1; display:flex; flex-direction:column; gap:3px;">
+              <div class="wf-title">2 · Edges</div>
+              <div class="wf-block wf-ok" style="padding:5px; text-align:center;"><span class="wf-num">92%</span>states ✓</div>
+              <div><span class="wf-chip">FR-208 ×3</span><br><span class="wf-chip">FR-202 ×1</span><br><span class="wf-chip">FR-205 ×1</span></div>
+              <div class="wf-foot">verified · fringe check</div>
+            </div>
+            <div style="flex:1; display:flex; flex-direction:column; gap:3px;">
+              <div class="wf-title">3 · Polish</div>
+              <div class="wf-block wf-warn" style="padding:5px; text-align:center;"><span class="wf-num">12</span>signals</div>
+              <div><span class="wf-chip">FR-301 ×5</span><br><span class="wf-chip">FR-304 ×2</span><br><span class="wf-chip">FR-306 🟣</span></div>
+              <div class="wf-foot">verified · trend</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- task story drawer (from B) -->
+        <div style="flex: 1; border-left: 2px dashed #cbd5e1; padding-left: 8px; display:flex; flex-direction:column; gap:4px;">
+          <div class="wf-title">✕ &nbsp; task · settings page</div>
+          <div class="wf-block" style="padding:5px;">
+            <strong>✂ Flow · judged</strong><br>
+            cut: export tab — 0 uses in analytics<br>
+            cut: 2-step wizard → single form
+          </div>
+          <div class="wf-block wf-ok" style="padding:5px;">
+            <strong>◎ Edges · verified</strong><br>
+            loading ✓ · empty ✓ · error ✓<br>
+            focus ✓ · alt ✓ · labels ✓
+          </div>
+          <div class="wf-block wf-warn" style="padding:5px;">
+            <strong>✦ Polish · signals</strong><br>
+            FR-301 hardcoded ×2<br>
+            FR-306 purple gradient 🟣
+          </div>
+          <div class="wf-foot" style="margin-top:0;">+ diff view · re-run check · export md</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 16px;">
+  <p class="label">How it flows</p>
+  <p><strong>Home</strong> = ladder board with the slim stat strip. Click any task chip (anywhere it appears — a rung column, the task list) → the <strong>story drawer</strong> slides in with that task's judged decisions and verified results, plus diff, re-run, and Markdown export. <code>fringe board</code> shows the same layout across all registered projects.</p>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="hybrid-ok" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content"><h3>This is the one</h3><p>Lock it in as the dashboard design.</p></div>
+  </div>
+  <div class="option" data-choice="hybrid-tweak" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content"><h3>Close — tweak something</h3><p>Tell me what to adjust in the terminal.</p></div>
+  </div>
+</div>
