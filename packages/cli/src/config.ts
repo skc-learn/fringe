@@ -13,14 +13,14 @@ export function loadConfig(root: string): FringeConfig {
     const raw = readFileSync(join(root, 'fringe.config.json'), 'utf8');
     const user = JSON.parse(raw) as Partial<FringeConfig>;
     const cfg: FringeConfig = {
-      ignore: Array.isArray(user.ignore) ? user.ignore : DEFAULT_CONFIG.ignore,
-      disable: Array.isArray(user.disable) ? user.disable : DEFAULT_CONFIG.disable,
+      ignore: Array.isArray(user.ignore) ? user.ignore : [...DEFAULT_CONFIG.ignore],
+      disable: Array.isArray(user.disable) ? user.disable : [...DEFAULT_CONFIG.disable],
       weights: { ...DEFAULT_CONFIG.weights, ...(user.weights ?? {}) },
     };
     validateWeights(cfg.weights);
     return cfg;
   } catch (e: unknown) {
-    if ((e as NodeJS.ErrnoException).code === 'ENOENT') return DEFAULT_CONFIG;
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') return structuredClone(DEFAULT_CONFIG);
     if (e instanceof SyntaxError) throw new Error('fringe.config.json: invalid JSON');
     throw e;
   }

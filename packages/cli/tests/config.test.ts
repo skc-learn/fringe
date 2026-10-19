@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { loadConfig } from '../src/config.js';
@@ -24,5 +24,10 @@ describe('loadConfig', () => {
     writeFileSync(join(d, 'fringe.config.json'), JSON.stringify({ weights: { error: 'x' } }));
     expect(() => loadConfig(d)).toThrow(/fringe\.config\.json/);
   });
-  it('cleanly removes tmpdir', () => { const d = dir(); rmSync(d, { recursive: true }); expect(true).toBe(true); });
+  it('returns a fresh object each call (defaults not shared)', () => {
+    const a = loadConfig(dir());
+    a.ignore.push('mutated/**');
+    const b = loadConfig(dir());
+    expect(b.ignore).not.toContain('mutated/**');
+  });
 });
