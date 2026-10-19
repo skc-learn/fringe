@@ -16,6 +16,9 @@ importers:
       parse5:
         specifier: ^7.3.0
         version: 7.3.0
+      postcss:
+        specifier: ^8.5.31
+        version: 8.5.31
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
