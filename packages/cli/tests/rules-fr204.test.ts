@@ -14,4 +14,13 @@ describe('FR-204 exact findings', () => {
     expect(out[1].message).toBe('multiple <h1> in file');
     expect(out.every((f) => f.loc.file === file)).toBe(true);
   });
+
+  it('flags skip when document starts below h1 (h2 -> h4)', () => {
+    const src = 'export default () => (<><h2>Sub</h2><h4>Deep</h4></>);';
+    const out = fr204.check(ctxOf('inline.tsx', src));
+    expect(out.length).toBe(1);
+    expect(out[0].rule).toBe('FR-204');
+    expect(out[0].severity).toBe('error');
+    expect(out[0].message).toBe('heading skips from h2 to h4');
+  });
 });
