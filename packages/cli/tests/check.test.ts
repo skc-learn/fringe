@@ -12,7 +12,7 @@ describe('runCheck', () => {
     const res = await runCheck(d, loadConfig(d));
     expect(res.files).toBe(1);
     expect(res.stack.jsx).toBe(true);
-    expect(res.counts).toEqual({ error: 0, review: 0, signal: 0 }); // no rules registered yet
+    expect(res.counts).toEqual({ error: 1, review: 0, signal: 0 }); // FR-201 flags the alt-less <img>
     expect(res.skipped).toEqual([]);
   });
   it('skips unparseable files without crashing', async () => {
