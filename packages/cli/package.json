@@ -1,0 +1,19 @@
+{
+  "name": "@fringetool/cli",
+  "version": "0.1.0",
+  "license": "MIT",
+  "type": "module",
+  "bin": { "fringe": "dist/bin.js" },
+  "engines": { "node": ">=18" },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup src/index.ts src/bin.ts --format esm --dts --outDir dist",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}
