@@ -931,7 +931,7 @@ Wire into `src/index.ts` (replace the `check` stub): parse flags `--json` from `
 `fixtures/rules/FR-201/pass.tsx`: `export default () => <img src="a.png" alt="Logo" />;`
 `fixtures/rules/FR-201/fail.tsx`: `export default () => <img src="a.png" />;`
 `fixtures/rules/FR-202/pass.tsx`: `export default () => <button onClick={save}>Save</button>;`
-`fixtures/rules/FR-202/fail.tsx`: `export default () => <button onClick={save} aria-hidden="true" />;`
+`fixtures/rules/FR-202/fail.tsx`: `export default () => <button onClick={save} />;`
 `fixtures/rules/FR-203/pass.tsx`: `export default () => (<><label htmlFor="email">Email</label><input id="email" type="text" /></>);`
 `fixtures/rules/FR-203/fail.tsx`: `export default () => <input type="text" placeholder="Email" />;`
 `fixtures/rules/FR-209/pass.tsx`: `export default () => <div aria-label="Menu" />;`
@@ -1036,7 +1036,7 @@ export const fr203: Rule = {
 `src/rules/fr209.ts`:
 ```ts
 import type { Rule } from '../types.js';
-const VALID_ARIA = new Set(['aria-label', 'aria-labelledby', 'aria-describedby', 'aria-hidden', 'aria-expanded', 'aria-controls', 'aria-current', 'aria-live', 'aria-disabled', 'aria-invalid', 'aria-required', 'aria-selected', 'aria-checked', 'aria-valuenow', 'aria-orientation', 'aria-placeholder', 'aria-roledescription', 'aria-atomic', 'aria-relevant', 'aria-dropeffect', 'aria-grabbed', 'aria-level', 'aria-multiline', 'aria-multiselectable', 'aria-readonly', 'aria-sort', 'aria-valuemax', 'aria-valuemin', 'aria-valuetext', 'aria-busy', 'aria-colcount', 'aria-rowcount', 'aria-details', 'aria-errormessage', 'aria-flowto', 'aria-owns', 'aria-posinset', 'aria-setsize', 'aria-modal', 'aria-active descendant']);
+const VALID_ARIA = new Set(['aria-label', 'aria-labelledby', 'aria-describedby', 'aria-hidden', 'aria-expanded', 'aria-controls', 'aria-current', 'aria-live', 'aria-disabled', 'aria-invalid', 'aria-required', 'aria-selected', 'aria-checked', 'aria-valuenow', 'aria-orientation', 'aria-placeholder', 'aria-roledescription', 'aria-atomic', 'aria-relevant', 'aria-dropeffect', 'aria-grabbed', 'aria-level', 'aria-multiline', 'aria-multiselectable', 'aria-readonly', 'aria-sort', 'aria-valuemax', 'aria-valuemin', 'aria-valuetext', 'aria-busy', 'aria-colcount', 'aria-rowcount', 'aria-details', 'aria-errormessage', 'aria-flowto', 'aria-owns', 'aria-posinset', 'aria-setsize', 'aria-modal', 'aria-activedescendant']);
 export const fr209: Rule = {
   id: 'FR-209', rung: 2, severity: 'error',
   check: (ctx) => ctx.elems.flatMap((e) =>
