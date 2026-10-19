@@ -23,6 +23,6 @@
     "vitest": "^2.0.0"
   },
   "dependencies": {
-    "@babel/parser": "^8.0.7"
+    "@babel/parser": "^7.29.9"
   }
 }
