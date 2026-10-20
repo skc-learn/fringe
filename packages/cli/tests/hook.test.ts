@@ -88,3 +88,15 @@ describe('runCli --hook', () => {
     expect(j.errors).toBe(0);
   });
 });
+
+import { toClaudeHook } from '../src/report/hook.js';
+describe('toClaudeHook', () => {
+  it('is silent without errors and emits Claude\'s decision/reason with relative paths on errors', () => {
+    expect(toClaudeHook(result([]), '/p')).toBe('');
+    const f = { rule: 'FR-203', severity: 'error' as const, message: 'input not associated with a label', hint: 'add aria-label', loc: { file: '/p/src/A.tsx', line: 4, col: 0 } };
+    const out = JSON.parse(toClaudeHook(result([f]), '/p'));
+    expect(out.decision).toBe('block');
+    expect(out.reason).toContain('FR-203 src/A.tsx:4');
+    expect(out.reason).not.toContain('/p/src');
+  });
+});

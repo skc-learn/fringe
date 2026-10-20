@@ -16,6 +16,7 @@ npx @fringetool/cli check
 
 ```
 fringe check [--json] [--hook] [--record] [--manifest <path>] [paths...]
+fringe check --claude-hook
 fringe check --update-baseline [path]
 fringe init [path]
 fringe open [path] [--port <n>]
@@ -162,7 +163,7 @@ with `tokens/colors.json` shaped like:
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": "fringe check --hook" }
+          { "type": "command", "command": "fringe check --claude-hook" }
         ]
       }
     ]
@@ -170,7 +171,7 @@ with `tokens/colors.json` shaped like:
 }
 ```
 
-After each file edit the hook prints one line:
+`--claude-hook` prints nothing when clean; when there are errors it prints Claude Code's own `{"decision":"block","reason":…}` (exit 0) listing up to 8 findings with relative paths, which is what actually reaches the agent. (`--hook`, below, is the CI/pre-commit contract: it exits 1 and Claude Code does **not** feed it back.) `fringe init` writes the `--claude-hook` form. For `--hook`, after each file edit the hook prints one line:
 
 ```json
 {"schema":"fringe/hook.v1","errors":1,"review":0,"signals":0,"block":true,"reason":"FR-201: <img> missing alt text (src/App.tsx:12)"}

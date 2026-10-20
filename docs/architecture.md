@@ -89,6 +89,8 @@ Conventions that matter: attribute values as written (`className` in JSX, `class
 
 Health: penalty = `(10·e + 3·r + 1·s) × 10 / max(files, 10)` (weights in config); score = `100 − penalty` up to a penalty of 75, then decays as `25·75/penalty` so big repos never pin at 0. Repos under 10 files score exactly as before. The score is **calibrated**, not arbitrary: three committed fixture apps pin the bands (clean 100/zero findings, reference 34 in 25–40, slop 82 in 75–85) — any weight or rule change that moves a band outside tolerance fails CI (`.github/workflows/ci.yml` runs `pnpm test`).
 
+**Agent-loop test (real, `claude -p` + `fringe init`).** First run: the hook fired but the agent ignored it — `fringe/hook.v1` exits 1 with non-Claude JSON, which Claude Code never feeds back. Fix: `--claude-hook` emits `{"decision":"block","reason"}` on exit 0. Second run: the agent received the block, fixed both unlabeled inputs with `aria-label`, and the project ended at 0 errors. One task, one run: evidence the loop works, not a rate.
+
 ## 6. Data contracts
 
 **`fringe/check.v1`** (`--json`): `{ schema, stack, files, skipped, findings[{rule,severity,wcag?,message,hint,loc}], counts, score }`

@@ -8,7 +8,7 @@ description: Use when writing or changing frontend code (JSX/TSX, HTML, CSS, Vue
 Ponytail trims your code. Fringe handles your edges. Work the ladder in order.
 
 1. **Flow (judged).** Before building, ask what the user can skip. Cut steps, screens or options nobody needs. Write each decision with its evidence to `.fringe/manifest.json`: `{"flows":[{"action":"cut"|"kept","what":"...","evidence":"..."}]}`. No evidence, no cut.
-2. **Edges (verified, gates).** After every edit run `fringe check --hook` from the project root. If `block` is `true`, fix the named finding and re-run. Do not finish with `block: true`.
+2. **Edges (verified, gates).** After every edit the hook runs `fringe check --claude-hook` and feeds errors back to you. Fix every listed finding. If there is no hook, run `fringe check --hook` yourself from the project root and do not finish while `block` is `true`.
 3. **Polish (verified, never gates).** Run `fringe check` once before finishing. Fix `review` items you agree with. Fix `signal` items that are cheap. Say which you left and why.
 
 When done: `fringe check --record --manifest .fringe/manifest.json`. Report the health score as measured; never estimate it yourself.

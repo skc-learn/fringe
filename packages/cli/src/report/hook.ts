@@ -1,3 +1,4 @@
+import { relative } from 'node:path';
 import type { CheckResult, Finding, Severity } from '../types.js';
 
 const RANK: Record<Severity, number> = { error: 0, review: 1, signal: 2 };
@@ -24,5 +25,17 @@ export function toHook(r: CheckResult): string {
     signals: r.counts.signal,
     block: r.counts.error > 0,
     reason,
+  });
+}
+
+/** Claude Code PostToolUse contract: `{"decision":"block","reason"}` on exit 0 is what reaches the agent (fringe/hook.v1 exit-1 JSON never does). Empty string = stay silent. */
+export function toClaudeHook(r: CheckResult, root: string): string {
+  const errs = r.findings.filter((f) => f.severity === 'error');
+  if (errs.length === 0) return '';
+  const shown = errs.slice(0, 8).map((f) => `- ${f.rule} ${relative(root, f.loc.file)}:${f.loc.line} — ${f.message} (${f.hint})`);
+  const more = errs.length > shown.length ? `\n…and ${errs.length - shown.length} more (run \`fringe check\`).` : '';
+  return JSON.stringify({
+    decision: 'block',
+    reason: `Fringe found ${errs.length} accessibility error(s). Fix them before finishing:\n${shown.join('\n')}${more}\nUse a fringe-ignore comment only for a genuine false positive, and say so.`,
   });
 }

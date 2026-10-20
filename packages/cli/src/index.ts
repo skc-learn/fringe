@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { VERSION } from './version.js';
 import { runCheck } from './check.js';
 import { toJson } from './report/json.js';
-import { toHook } from './report/hook.js';
+import { toHook, toClaudeHook } from './report/hook.js';
 import { toPretty } from './report/pretty.js';
 import { appendRecord } from './ledger.js';
 import type { LedgerRecord } from './ledger.js';
@@ -34,7 +34,7 @@ fringe init [path]                       add the Claude Code hook + skill
 fringe open [path] [--port <n>]   serve the .fringe ledger on 127.0.0.1
 fringe --version`;
 
-const KNOWN_FLAGS = new Set(['--json', '--hook', '--record', '--manifest', '--update-baseline']);
+const KNOWN_FLAGS = new Set(['--json', '--hook', '--claude-hook', '--record', '--manifest', '--update-baseline']);
 
 /** Splits check args into positional paths, warning on (and ignoring) unknown flags. */
 function parseArgs(rest: string[], warn: (s: string) => void): string[] {
@@ -69,6 +69,11 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
         return 0;
       }
       const result = await runCheck(root, cfg);
+      if (rest.includes('--claude-hook')) {
+        const out = toClaudeHook(result, root);
+        if (out) log(opts)(out);
+        return 0; // Claude reads the JSON, not the exit code; a non-zero exit would be discarded
+      }
       if (rest.includes('--hook')) log(opts)(toHook(result));
       else if (rest.includes('--json')) log(opts)(toJson(result));
       else log(opts)(toPretty(result));
@@ -98,7 +103,7 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
   if (cmd === 'init') {
     try {
       for (const line of initProject(resolve(opts.cwd ?? process.cwd(), rest[0] ?? '.'))) log(opts)(`fringe: ${line}`);
-      log(opts)('fringe: the hook runs `fringe check --hook` — install the CLI so that command resolves');
+      log(opts)('fringe: the hook runs `fringe check --claude-hook` — install the CLI so that command resolves');
       return 0;
     } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }
   }
