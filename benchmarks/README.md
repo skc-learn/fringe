@@ -7,7 +7,7 @@ Does Fringe change what an agent ships? Same Claude Code agent, same prompts, tw
 
 Six UI tasks (signup, dashboard, product grid, settings, modal, navbar), 2 runs each = 12 runs per arm. The prompts never mention accessibility: they measure what the agent does when nobody asks. After each run the published package (`npx @fringetools/cli check --json`) counts the findings in what the agent left behind. Reproduce with `node benchmarks/run.mjs [runs] [parallel]` (spends real usage). Raw rows: [results-2026-10-20.json](results-2026-10-20.json).
 
-## Result (v0.1.2, 2026-10-20)
+## Result (v0.1.2, 2026-10-20; FR-206 fix shipped in 0.1.3)
 
 | | plain | fringe |
 |---|---|---|

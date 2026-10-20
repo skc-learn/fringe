@@ -1,6 +1,6 @@
 {
   "name": "fringe",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "UX-quality layer for AI coding agents: checks accessibility and interaction edges after every edit and feeds errors back to the agent.",
   "author": { "name": "skc-learn", "url": "https://github.com/skc-learn" },
   "homepage": "https://github.com/skc-learn/fringe",
