@@ -29,6 +29,8 @@ jobs:
         working-directory: packages/cli
         run: npm publish --provenance --access public
       - name: GitHub Release
-        run: gh release create "${GITHUB_REF_NAME}" --generate-notes --title "${GITHUB_REF_NAME}"
+        # GitHub's API occasionally returns a transient 500; npm already published by now, so retry rather than fail the run.
+        run: |
+          for i in 1 2 3; do gh release create "${GITHUB_REF_NAME}" --generate-notes --title "${GITHUB_REF_NAME}" && break; sleep 15; done
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
