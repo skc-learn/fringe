@@ -1,6 +1,6 @@
 # Fringe — Test Strategy & Test-Case Catalog
 
-**Version:** 1.0 (v0.1: 36 test files, 293 tests, all green) · **Date:** 2026-10-20
+**Version:** 1.0 (v0.1: 36 test files, 295 tests, all green) · **Date:** 2026-10-20
 
 ## 1. Philosophy
 
@@ -42,7 +42,7 @@ Standard pattern for every rule row below: pass fixture → **0 findings**; fail
 | FR-203 labels | error | pass (id+htmlFor) / fail (placeholder only) | `aria-activedescendant` valid; `htmlFor="email2"` ≠ `id="email"` (boundary test); regex-metachar ids safe |
 | FR-204 headings | error | pass (h1,h2,h3) / fail (h1,h3,h1 → exactly 2) | h2→h4 first-heading latch (regression); frozen-prev cascade semantics |
 | FR-205 focus | error | pass/fail `.tsx` (outline-none ± focus-visible:) + pass/fail `.css` | file-level :focus-visible satisfaction; `outline: 0` |
-| FR-206 onClick-div | error | pass (role+tabIndex) / fail | span variant; partial escapes (role-only, tabIndex-only) |
+| FR-206 onClick-div | error | pass (role+tabIndex) / fail | span variant; partial escapes (role-only, tabIndex-only); modal backdrop exempt (first child dialog/aria-modal) but a plain or sibling-of-dialog div still flags |
 | FR-207 tabIndex | error | pass ({0}) / fail ({3}) | HTML `tabindex="2"` leg; whitespace `tabIndex={ 3 }`; multiple per line; `{-1}` never flags |
 | FR-208 states | review | pass (fetch+isLoading) / fail (fetch only) | alternate markers (isPending/isError, axios, non-React-Query fetch); at-most-one finding |
 | FR-209 aria | error | pass (aria-label) / fail (aria-labeledby typo) | aria-activedescendant passes (regression); full allowlist |

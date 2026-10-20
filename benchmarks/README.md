@@ -19,7 +19,7 @@ Six UI tasks (signup, dashboard, product grid, settings, modal, navbar), 2 runs 
 
 What the plain arm left behind: unlabeled inputs, an icon-only button, an unnamed control in a modal and a navbar. With Fringe, the same agent fixed them in-loop and never silenced a rule. Cost and turns are within noise: the hook adds about one turn on the runs that need a fix.
 
-The one error left in the fringe arm is `FR-206` on a modal backdrop `<div onClick={onClose}>` (the dialog also has a Close button). That is a common, defensible pattern, so this is probably a false positive of the rule, not an agent miss. It is on the deferral list in [docs/decisions.md](../docs/decisions.md).
+The one error left in the fringe arm is `FR-206` on a modal backdrop `<div onClick={onClose}>` (the dialog also has a Close button). That is a common, defensible pattern, so it was a false positive of the rule, not an agent miss. FR-206 now exempts a backdrop whose first child is a `role="dialog"` / `aria-modal` element (fixed after this run; with the fix that run scores 100). The numbers above are the unmodified results.
 
 ## Read this before quoting it
 

@@ -86,3 +86,15 @@ describe('FR-206/FR-207 HTML tier', () => {
     expect(out[0].message).toContain('2');
   });
 });
+
+describe('FR-206 modal backdrop exemption (found by the benchmark)', () => {
+  const modal = (outer: string) => `export default () => ${outer};`;
+  it('does not flag a backdrop whose first child is a dialog', () => {
+    expect(fr206.check(ctxOf('m.tsx', modal('<div onClick={close}><div role="dialog" aria-modal="true">x</div></div>')))).toEqual([]);
+    expect(fr206.check(ctxOf('m.tsx', modal('<div onClick={close}><div aria-modal="true">x</div></div>')))).toEqual([]);
+  });
+  it('still flags a plain clickable div, and a clickable sibling next to a dialog', () => {
+    expect(fr206.check(ctxOf('m.tsx', modal('<div onClick={go}><span>Go</span></div>'))).length).toBe(1);
+    expect(fr206.check(ctxOf('m.tsx', modal('<section><div onClick={go} /><div role="dialog">x</div></section>'))).length).toBe(1);
+  });
+});

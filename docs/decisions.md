@@ -162,6 +162,5 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | Sequential parse, no per-file timeout | measured fast; spec aspiration | revisit on perf evidence |
 | Slop-tuning pass: px-2/px-20 + flex-1 word boundaries, emoji narrowing (©®™), Tailwind v4 `bg-linear-*`, FR-304 cascade modeling, `text-[rgba()]` FR-302 leak | signals never gate; batch tuning beats dribbles | backlog plan |
 | FR-364/366 thresholds fixed (3 tiles / 5 chips) | deliberately conservative first cut | tuning pass |
-| FR-206 on modal backdrops (`<div onClick={onClose}>` with a Close button present) | seen in the benchmark; a common defensible pattern, but loosening needs a precise rule (skip overlays whose only handler closes, or `stopPropagation`-only handlers) | tuning pass |
 | Token-drift checks, `fringe shot`, `--stamp verified` | v2 scope, schema already reserved | PRD §4.5 |
 | Per-rule precision view | ledger records `byRule`/`suppressed`; needs real data | v0.2 |

@@ -25,7 +25,7 @@ Once wired, every time Claude Code edits a file Fringe checks the project and ha
 
 ## What it checks — 29 rules, three severities
 
-- **Edges (`error`, gates):** missing alt, unnamed buttons, unlabeled inputs, heading skips, removed focus rings, `onClick` on divs, positive `tabIndex`, invalid aria — every finding tagged with its **WCAG success criterion**.
+- **Edges (`error`, gates):** missing alt, unnamed buttons, unlabeled inputs, heading skips, removed focus rings, `onClick` on divs (modal backdrops exempt), positive `tabIndex`, invalid aria — every finding tagged with its **WCAG success criterion**.
 - **Judgment (`review`):** data fetching with no loading/empty/error handling; five **dark patterns** (fake countdowns, prechecked consent, confirm-shaming, forced infinite scroll, drip pricing); generic "Something went wrong" copy with no recovery action.
 - **Polish (`signal`):** hardcoded colors vs design tokens, off-scale type/spacing, WCAG contrast math, tiny hit areas, and the **slop catalog** — italic serif display headlines, eyebrow chips, card-inside-card, icon-tile stacks, thin-border-wide-shadow, status-chip soup, "01 Discover" labels, the purple AI gradient, emoji headings.
 
