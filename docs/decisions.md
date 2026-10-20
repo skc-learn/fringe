@@ -7,7 +7,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | D-01 | Product form: skill + CLI + local dashboard ("both") | 2026-10-20 | 🔒 CLI + skill shipped; full dashboard deferred (D-23) |
 | D-02 | Measurement model: CLI-verified (static analysis) + judged manifests | 2026-10-20 | 🔒 |
 | D-03 | Core discipline: three-rung ladder (Flow → Edges → Polish) | 2026-10-20 | 🔒 |
-| D-04 | Name: **Fringe**; package `@fringetool/cli`, bin `fringe` | 2026-10-20 | 🔒 |
+| D-04 | Name: **Fringe**; package `@fringetools/cli`, bin `fringe` | 2026-10-20 | 🔒 |
 | D-05 | Judged/verified labeling as the credibility moat | 2026-10-20 | 🔒 |
 | D-06 | Severity system: error/review/signal; only `error` gates | 2026-10-20 | 🔒 |
 | D-07 | Parsing tiers: AST first-class, text best-effort, honest coverage matrix | 2026-10-20 | 🔒 |
@@ -49,7 +49,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 
 ### D-04 — Name
 **Alternatives considered at naming:** Fringe / fringeux / checkfringe.
-**Decision:** **Fringe** — hair kinship with ponytail (brand adjacency), literal meaning "edge cases" ("Fringe checks your edges"). npm `fringe` was taken (checked 2026-10-20) → package `@fringetool/cli`, bin `fringe`.
+**Decision:** **Fringe** — hair kinship with ponytail (brand adjacency), literal meaning "edge cases" ("Fringe checks your edges"). npm `fringe` was taken (checked 2026-10-20) → package `@fringetools/cli`, bin `fringe`.
 **Consequence:** everything swappable pre-publish; bin name is the user-facing constant.
 
 ### D-05 — Judged/verified moat
@@ -114,7 +114,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 
 ### D-19 — Two hook outputs
 **Context:** the first real agent test showed `fringe/hook.v1` (JSON, exit 1) is ignored by Claude Code; only `{"decision":"block","reason"}` on exit 0 (or stderr on exit 2) reaches the agent.
-**Decision:** keep `--hook` unchanged as the CI/pre-commit contract; add `--claude-hook` for agents (silent when clean, up to 8 findings, relative paths, exit 0). `fringe init` writes the latter via `npx -y @fringetool/cli check --claude-hook`, so setup needs no prior install.
+**Decision:** keep `--hook` unchanged as the CI/pre-commit contract; add `--claude-hook` for agents (silent when clean, up to 8 findings, relative paths, exit 0). `fringe init` writes the latter via `npx -y @fringetools/cli check --claude-hook`, so setup needs no prior install.
 **Consequence:** a hook format is a contract with the host agent — verify it with a real session, not by reading docs.
 
 ### D-20 — Baseline mode

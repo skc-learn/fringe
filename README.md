@@ -5,8 +5,8 @@
 AI agents made UI fast — Figma's 2025 report pegs the gains at 78% efficiency but only 40% quality. Fringe closes the quality half: a static checker that measures whether agent-written frontends handle their **edges** — accessibility, interaction states, dark patterns, design-token drift, the generic "AI look" — gates the hard failures, and keeps a local ledger so the history is measurable, not vibes.
 
 ```sh
-npx @fringetool/cli init     # one command: wires the Claude Code hook + installs the skill
-npx @fringetool/cli check    # or run it by hand
+npx @fringetools/cli init     # one command: wires the Claude Code hook + installs the skill
+npx @fringetools/cli check    # or run it by hand
 ```
 
 ```
@@ -19,7 +19,7 @@ health 34/100 · 6 errors · 2 review · 0 signals
 
 Once wired, every time Claude Code edits a file Fringe checks the project and hands accessibility errors back to the agent to fix — verified with real agent runs. For CI, `fringe check` exits `1` on any error. Review-level heuristics and taste-level signals never gate; they inform.
 
-> **Until the first npm release** (package not published yet): `pnpm install && pnpm --filter @fringetool/cli build`, then run `node packages/cli/dist/bin.js <command>` instead of `npx @fringetool/cli <command>`.
+> **Until the first npm release** (package not published yet): `pnpm install && pnpm --filter @fringetools/cli build`, then run `node packages/cli/dist/bin.js <command>` instead of `npx @fringetools/cli <command>`.
 
 **Messy existing repo?** `fringe check --update-baseline` once; from then on only *new* problems gate. **False positive?** `// fringe-ignore FR-203` on the line (counted in every report).
 

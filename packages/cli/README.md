@@ -1,23 +1,23 @@
-# @fringetool/cli
+# @fringetools/cli
 
 `fringe` — a UX-quality checker for agent-written frontends. It scans JSX/TSX/HTML/CSS (and Vue/Svelte/Astro templates, text rules only) for the accessibility, state-handling, dark-pattern and "AI look" mistakes coding agents commonly make, gates the hard failures, and keeps a local history.
 
-Package `@fringetool/cli` · binary `fringe` · Node ≥ 18 · zero config by default.
+Package `@fringetools/cli` · binary `fringe` · Node ≥ 18 · zero config by default.
 
 ## Quick start
 
 In your project root:
 
 ```sh
-npx @fringetool/cli init     # wires the Claude Code hook + installs the skill (nothing to install first)
-npx @fringetool/cli check    # run it by hand
+npx @fringetools/cli init     # wires the Claude Code hook + installs the skill (nothing to install first)
+npx @fringetools/cli check    # run it by hand
 ```
 
 That is the whole setup. `init` adds a `PostToolUse` hook to `.claude/settings.json` (your existing settings are kept) and copies the skill to `.claude/skills/fringe/`. From then on, every time Claude Code edits a file, Fringe checks the project and feeds any accessibility errors back to the agent to fix.
 
-Prefer a permanent command? `npm install -D @fringetool/cli`, then `npx fringe check`. Existing messy repo? Run `npx @fringetool/cli check --update-baseline` once so only *new* problems gate (see [Baseline](#baseline)).
+Prefer a permanent command? `npm install -D @fringetools/cli`, then `npx fringe check`. Existing messy repo? Run `npx @fringetools/cli check --update-baseline` once so only *new* problems gate (see [Baseline](#baseline)).
 
-> **Until the first npm release:** build from source — `pnpm install && pnpm --filter @fringetool/cli build`, then use `node packages/cli/dist/bin.js` in place of `npx @fringetool/cli`.
+> **Until the first npm release:** build from source — `pnpm install && pnpm --filter @fringetools/cli build`, then use `node packages/cli/dist/bin.js` in place of `npx @fringetools/cli`.
 
 ## Commands
 
@@ -89,7 +89,7 @@ Also `// fringe-ignore FR-203, FR-202` and `<!-- fringe-ignore FR-203 -->`. Rule
 {
   "hooks": {
     "PostToolUse": [
-      { "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "npx -y @fringetool/cli check --claude-hook" }] }
+      { "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "npx -y @fringetools/cli check --claude-hook" }] }
     ]
   }
 }

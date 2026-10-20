@@ -7,7 +7,7 @@
 ```
 ┌─────────────┐   runs    ┌──────────────────────────────────────────┐
 │ AI agent /  │──────────▶│              fringe check                │
-│ CI / human  │           │  (packages/cli — @fringetool/cli)        │
+│ CI / human  │           │  (packages/cli — @fringetools/cli)        │
 └─────────────┘           └───────────────┬──────────────────────────┘
         ▲                                 │ reads
         │ --hook block:true               ▼

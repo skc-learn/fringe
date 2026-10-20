@@ -11,7 +11,7 @@ AI coding agents made UI fast but not good. Figma's 2025 AI report puts agent ga
 ## The product in one minute
 
 ```sh
-npx @fringetool/cli check            # scan the repo, print findings + health score
+npx @fringetools/cli check            # scan the repo, print findings + health score
 fringe check --hook                  # one-line JSON gate for CI / pre-commit
 fringe check --claude-hook           # the form Claude Code feeds back to the agent
 fringe init                          # wire the hook + install the skill
