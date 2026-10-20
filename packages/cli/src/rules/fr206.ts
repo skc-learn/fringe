@@ -8,7 +8,7 @@ export const fr206: Rule = {
       && (el.attrs.onClick ?? el.attrs.onclick) !== undefined // JSX attrs keep their case; HTML attrs are lowercase
       && el.attrs.role === undefined
       && (el.attrs.tabIndex ?? el.attrs.tabindex) === undefined)) {
-      out.push({ rule: 'FR-206', severity: 'error' as const, message: `onClick on non-interactive <${e.tag}>`, hint: `use a <button>/<a> or add role and tabIndex`, loc: e.loc });
+      out.push({ rule: 'FR-206', severity: 'error' as const, message: `onClick on non-interactive <${e.tag}>`, hint: `use a <button>/<a> or add role and tabIndex`, loc: e.loc, wcag: '2.1.1' });
     }
     return out;
   },

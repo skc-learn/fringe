@@ -8,5 +8,5 @@ export const fr203: Rule = {
         (e.attrs.id && new RegExp(`(htmlFor|for)=["'\`{]${e.attrs.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["'\`}]`).test(ctx.source));
       return !labeled;
     })
-    .map((e) => ({ rule: 'FR-203', severity: 'error' as const, message: `input not associated with a label`, hint: `add id + <label htmlFor>, or aria-label`, loc: e.loc })),
+    .map((e) => ({ rule: 'FR-203', severity: 'error' as const, message: `input not associated with a label`, hint: `add id + <label htmlFor>, or aria-label`, loc: e.loc, wcag: '3.3.2' })),
 };

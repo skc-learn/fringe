@@ -5,5 +5,5 @@ export const fr209: Rule = {
   check: (ctx) => ctx.elems.flatMap((e) =>
     Object.keys(e.attrs)
       .filter((a) => a.startsWith('aria-') && !VALID_ARIA.has(a))
-      .map((a) => ({ rule: 'FR-209', severity: 'error' as const, message: `unknown aria attribute '${a}'`, hint: `check spelling against the ARIA spec`, loc: e.loc }))),
+      .map((a) => ({ rule: 'FR-209', severity: 'error' as const, message: `unknown aria attribute '${a}'`, hint: `check spelling against the ARIA spec`, loc: e.loc, wcag: '4.1.2' }))),
 };

@@ -46,6 +46,7 @@ export const fr304: Rule = {
           message: `contrast ${colorDecl.value.trim()} on ${bgDecl.value.trim()} is ${ratio.toFixed(1)}:1 (< 4.5:1)`,
           hint: `darken the text or lighten the background to reach AA 4.5:1`,
           loc: colorDecl.loc,
+          wcag: '1.4.3',
         });
     }
     return out;

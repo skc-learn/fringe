@@ -5,5 +5,5 @@ export const fr202: Rule = {
   check: (ctx) => ctx.elems
     .filter((e) => ['button', 'a'].includes(e.tag) && e.attrs['aria-hidden'] !== 'true')
     .filter((e) => !e.text && !NAME_ATTRS.some((a) => e.attrs[a]))
-    .map((e) => ({ rule: 'FR-202', severity: 'error' as const, message: `<${e.tag}> has no accessible name`, hint: `add text content or aria-label`, loc: e.loc })),
+    .map((e) => ({ rule: 'FR-202', severity: 'error' as const, message: `<${e.tag}> has no accessible name`, hint: `add text content or aria-label`, loc: e.loc, wcag: '4.1.2' })),
 };

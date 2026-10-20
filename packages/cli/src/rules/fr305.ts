@@ -20,6 +20,7 @@ export const fr305: Rule = {
         message: `tiny hit area: text-xs interactive element without adequate padding`,
         hint: `add py-2+ padding or a larger text size (WCAG 2.5.8 target size)`,
         loc: e.loc,
+        wcag: '2.5.8',
       });
     }
     return out;

@@ -9,10 +9,10 @@ export const fr207: Rule = {
     ctx.source.split('\n').forEach((line, i) => {
       for (const m of line.matchAll(JSX_FORM)) {
         if (Number(m[1]) > 0)
-          out.push({ rule: 'FR-207', severity: 'error' as const, message: `tabIndex=${m[1]} > 0 disrupts natural tab order`, hint: `use tabIndex={0} and place in DOM order`, loc: { file: ctx.file, line: i + 1, col: m.index ?? 0 } });
+          out.push({ rule: 'FR-207', severity: 'error' as const, message: `tabIndex=${m[1]} > 0 disrupts natural tab order`, hint: `use tabIndex={0} and place in DOM order`, loc: { file: ctx.file, line: i + 1, col: m.index ?? 0 }, wcag: '2.4.3' });
       }
       for (const m of line.matchAll(HTML_FORM)) {
-        out.push({ rule: 'FR-207', severity: 'error' as const, message: `tabIndex=${m[1]} > 0 disrupts natural tab order`, hint: `use tabIndex={0} and place in DOM order`, loc: { file: ctx.file, line: i + 1, col: m.index ?? 0 } });
+        out.push({ rule: 'FR-207', severity: 'error' as const, message: `tabIndex=${m[1]} > 0 disrupts natural tab order`, hint: `use tabIndex={0} and place in DOM order`, loc: { file: ctx.file, line: i + 1, col: m.index ?? 0 }, wcag: '2.4.3' });
       }
     });
     return out;

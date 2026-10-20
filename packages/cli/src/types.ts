@@ -15,6 +15,8 @@ export interface Finding {
   message: string;
   hint: string;
   loc: Loc;
+  /** WCAG 2.1 success criterion (e.g. '1.1.1') for accessibility findings. */
+  wcag?: string;
 }
 
 export interface Elem {
