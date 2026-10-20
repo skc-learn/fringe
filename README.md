@@ -52,7 +52,7 @@ Plays well with [ponytail](https://github.com/dietrichgebert/ponytail) (run both
 
 ## Contributing
 
-TDD everywhere: every change is a failing test first. Adding a rule is a documented recipe — fixtures, `expectRule` test, pure rule file, registry, golden check — see [docs/test-strategy.md](docs/test-strategy.md). All load-bearing decisions are recorded in [docs/decisions.md](docs/decisions.md).
+TDD everywhere: every change is a failing test first. See [CONTRIBUTING.md](CONTRIBUTING.md). Adding a rule is a documented recipe — fixtures, `expectRule` test, pure rule file, registry, golden check — see [docs/test-strategy.md](docs/test-strategy.md). All load-bearing decisions are recorded in [docs/decisions.md](docs/decisions.md).
 
 ## License
 
