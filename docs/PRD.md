@@ -116,6 +116,8 @@ Requirements use stable IDs; **Status** reflects v0.1 (shipped) unless marked *p
 
 ## 7. Release plan
 
+The staged, evidence-driven version of this plan lives in [ROADMAP.md](ROADMAP.md); the table below is the original release framing.
+
 | Release | Scope | Status |
 |---|---|---|
 | **v0.1** | Checker core: 29 rules, outputs, size-aware score, calibration, ledger, hooks, token sources, WCAG tags, baseline, suppression, `init`, minimal `open`, skill (Plans 1–2 + post-dogfood work) | ✅ published to npm as `@fringetools/cli@0.1.3` |

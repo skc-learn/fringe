@@ -1,61 +1,166 @@
-# Fringe
+<h1 align="center">Fringe</h1>
 
-**A UX-quality layer for AI coding agents.** *Ponytail trims your code. Fringe handles your edges.*
+<p align="center"><strong>Your AI coding agent builds the UI. Fringe checks the edges it forgets.</strong><br>
+<em>Ponytail trims your code. Fringe handles your edges.</em></p>
 
-AI agents made UI fast, not reliably good: in our [benchmark](benchmarks/README.md) an agent asked for ordinary UI left error-level accessibility problems in 4 of 12 runs when nobody checked, and 1 of 12 with Fringe. Fringe closes the quality half: a static checker that measures whether agent-written frontends handle their **edges** — accessibility, interaction states, dark patterns, design-token drift, the generic "AI look" — gates the hard failures, and keeps a local ledger so the history is measurable, not vibes.
+<p align="center">
+  <a href="https://www.npmjs.com/package/@fringetools/cli"><img src="https://img.shields.io/npm/v/@fringetools/cli?style=flat-square&label=npm" alt="npm"></a>
+  <a href="https://github.com/skc-learn/fringe/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/skc-learn/fringe/ci.yml?style=flat-square&label=tests" alt="tests"></a>
+  <img src="https://img.shields.io/badge/license-MIT-111111?style=flat-square" alt="MIT license">
+  <img src="https://img.shields.io/badge/node-%E2%89%A518-111111?style=flat-square" alt="Node 18+">
+</p>
 
-**Claude Code plugin** (hook + skills, one step): `/plugin marketplace add skc-learn/fringe`, then `/plugin install fringe@fringe`. **Other agents / CI / manual setup:** see [INSTALL.md](INSTALL.md).
+AI agents write UI fast, and quietly skip the unglamorous parts: an `alt` on the image, a label on the input, a name on the icon button, a visible focus ring. Fringe is a **static checker that runs after every edit**, hands the problems back to the agent, and keeps the agent from finishing with broken markup. Nothing leaves your machine.
+
+**Measured:** in our [benchmark](benchmarks/README.md), an agent asked for ordinary UI left error-level accessibility problems in **4 of 12 runs** on its own, and **1 of 12 with Fringe**, at the same cost. (Small test, honest caveats inside.)
+
+---
+
+## Start in 60 seconds
+
+Pick **one**:
+
+**A. Claude Code plugin** (hook + skills in one step). Send these as two separate prompts:
+
+```
+/plugin marketplace add skc-learn/fringe
+```
+```
+/plugin install fringe@fringe
+```
+
+**B. One command in your project** (any Claude Code project, nothing to install first):
 
 ```sh
-npx @fringetools/cli init     # one command: wires the Claude Code hook + installs 5 skills (fringe, review, audit, debt, help)
-npx @fringetools/cli check    # or run it by hand
+npx @fringetools/cli init
 ```
 
+**C. Just try the checker**, no agent needed:
+
+```sh
+npx @fringetools/cli check
 ```
+
+Needs [Node.js](https://nodejs.org) 18 or newer. Using Cursor, Copilot, Windsurf, Codex, CI or pre-commit instead? See **[INSTALL.md](INSTALL.md)**.
+
+### See it work
+
+Ask your agent for any UI, for example *"add a signup form with email and password"*. Behind the scenes:
+
+```
+agent writes src/Signup.tsx
+  └─ Fringe runs automatically  →  "2 errors: inputs have no label"
+agent adds the labels
+  └─ Fringe runs again          →  clean
+```
+
+You can also run it yourself:
+
+```
+$ npx @fringetools/cli check
 fringe · stack jsx,tailwind · 3 files
-[ERROR] FR-201 /path/to/app/src/App.tsx:15 — <img> missing alt text (add alt="description" (or alt="" if decorative))
-[ERROR] FR-204 /path/to/app/src/App.tsx:17 — heading skips from h1 to h3 (don't skip heading levels for visual size)
-…
+[ERROR] FR-201 src/App.tsx:15 — <img> missing alt text (add alt="description" (or alt="" if decorative))
+[ERROR] FR-204 src/App.tsx:17 — heading skips from h1 to h3 (don't skip heading levels for visual size)
 health 34/100 · 6 errors · 2 review · 0 signals
 ```
 
-Once wired, every time Claude Code edits a file Fringe checks the project and hands accessibility errors back to the agent to fix — verified with real agent runs. For CI, `fringe check` exits `1` on any error. Review-level heuristics and taste-level signals never gate; they inform.
+Errors make the command exit `1` (so CI fails too). Everything else is advice and never blocks.
 
-**Messy existing repo?** `fringe check --update-baseline` once; from then on only *new* problems gate. **False positive?** `// fringe-ignore FR-203` on the line (counted in every report).
+---
 
-## What it checks — 29 rules, three severities
+## What you get
 
-- **Edges (`error`, gates):** missing alt, unnamed buttons, unlabeled inputs, heading skips, removed focus rings, `onClick` on divs (modal backdrops exempt), positive `tabIndex`, invalid aria — every finding tagged with its **WCAG success criterion**.
-- **Judgment (`review`):** data fetching with no loading/empty/error handling; five **dark patterns** (fake countdowns, prechecked consent, confirm-shaming, forced infinite scroll, drip pricing); generic "Something went wrong" copy with no recovery action.
-- **Polish (`signal`):** hardcoded colors vs design tokens, off-scale type/spacing, WCAG contrast math, tiny hit areas, and the **slop catalog** — italic serif display headlines, eyebrow chips, card-inside-card, icon-tile stacks, thin-border-wide-shadow, status-chip soup, "01 Discover" labels, the purple AI gradient, emoji headings.
+**Five skills** your agent can use (Claude Code: type the slash command):
 
-Full rule table, configuration (`ignore` / `disable` / `weights` / `tokenSource`), and Claude Code hook wiring: **[packages/cli/README.md](packages/cli/README.md)**.
-
-## The discipline
-
-Fringe encodes a ladder: **Flow** (cut what users don't need — agent-judged, with evidence, via manifests) → **Edges** (never skip states/a11y — CLI-verified, gated) → **Polish** (tokens, scales, no AI-look — CLI-verified signals). Every number it shows is labeled **verified** or **judged** — the agent never grades its own homework where measurement is possible. Runs can `--record` to an append-only local ledger (`.fringe/ledger.jsonl`), the substrate for the upcoming dashboard and trends.
-
-## Status (v0.1)
-
-| | |
+| Skill | Use it to |
 |---|---|
-| **Published** | `@fringetools/cli@0.1.3` on npm — `npx @fringetools/cli init`. Source: [skc-learn/fringe](https://github.com/skc-learn/fringe). |
-| **Shipped** | 29 rules, calibrated size-aware health score, pretty/JSON/CI-hook/Claude-hook outputs, `init`, baseline, inline suppression, ledger + manifests + token sources, `fringe open` ledger page, five agent skills (`/fringe-review`, `/fringe-audit`, `/fringe-debt`, `/fringe-help`), a Claude Code plugin, `AGENTS.md`, stack auto-detection. Golden snapshots + three calibration apps; CI on every push. |
-| **Verified** | Agent loop run end to end with real Claude Code sessions (three tasks): errors reach the agent and get fixed. Checker dogfooded on six real projects; false positives found there are fixed. |
-| **Next** | Per-rule precision view (data already recorded), richer dashboard (`fringe board`), skill adapters for other agent platforms. See [PRD](docs/PRD.md) §7. |
+| `fringe` | Always-on rules: cut what users don't need, fix every flagged error, never silence a rule to get green |
+| `/fringe-review` | "Review this page": ranked, plain-English findings with the fix for each |
+| `/fringe-audit` | Audit a whole repo: top problems, a fix order, and an offer to set a baseline |
+| `/fringe-debt` | List everything silenced or deferred (suppressions and baseline) |
+| `/fringe-help` | Quick reference |
 
-## Documentation
+> Installed as a plugin, the names are namespaced: `/fringe:fringe-review`. The review and audit skills run the checker, so Claude Code asks you to approve that command once.
 
-**Using it:** [Install for your agent](INSTALL.md) · [`AGENTS.md` for any agent](AGENTS.md) · [CLI reference — every command, flag, rule and config key](packages/cli/README.md) · [the agent skill](packages/cli/skill/SKILL.md)
+**29 rules in three tiers**, each with a fix hint and (for accessibility) its WCAG criterion:
 
-**Understanding it:** [Product](docs/product.md) · [PRD](docs/PRD.md) · [Architecture](docs/architecture.md) · [Decision matrix](docs/decisions.md) · [Test strategy](docs/test-strategy.md) · [Docs index](docs/README.md)
+| Tier | Gates? | Examples |
+|---|---|---|
+| **Edges** (`error`) | **Yes** | missing `alt`, unnamed buttons, unlabeled inputs, skipped headings, removed focus rings, `onClick` on a `<div>`, invalid `aria-*` |
+| **Judgment** (`review`) | No | data fetching with no loading/error state, dark patterns (fake countdowns, pre-checked consent, confirm-shaming, infinite scroll, drip pricing), "Something went wrong" with no next step |
+| **Polish** (`signal`) | No | hardcoded colors vs your design tokens, off-scale spacing/type, low contrast, tiny tap targets, the "AI look" (purple gradient, italic serif hero, card-in-card, emoji headings) |
 
-Plays well with [ponytail](https://github.com/dietrichgebert/ponytail) (run both: Ponytail promises never to cut accessibility, Fringe is the check that verifies it), [Impeccable](https://impeccable.style/), [Design with Intent](https://designwithintent.ai) — positioning in [docs/product.md](docs/product.md).
+Full rule table: **[CLI reference](packages/cli/README.md#rules)**.
+
+---
+
+## Everyday recipes
+
+| I want to… | Do this |
+|---|---|
+| Check my project | `npx @fringetools/cli check` (takes a folder, default `.`) |
+| Use it on a repo that already has problems | `npx @fringetools/cli check --update-baseline`, commit `fringe.baseline.json`. Now only **new** problems gate |
+| Silence a real false positive | Put `// fringe-ignore FR-203` on the line or the line above (JSX: `{/* fringe-ignore FR-203 */}`, HTML: `<!-- … -->`). It is always counted in the report |
+| Turn a rule off everywhere | `fringe.config.json`: `{ "disable": ["FR-214"] }` |
+| Fail CI on accessibility errors | Run `npx -y @fringetools/cli check` in your pipeline: exit code `1` on errors |
+| Get machine-readable output | `--json` (full report) or `--hook` (one-line CI gate) |
+| Keep a history of runs | `--record` appends to `.fringe/ledger.jsonl`; `npx @fringetools/cli open` shows it at `http://127.0.0.1:4173` |
+
+Every command, flag, exit code and config key: **[CLI reference](packages/cli/README.md)**.
+
+---
+
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| `npx: command not found` | Install Node.js 18+ from nodejs.org |
+| Agent never gets Fringe's feedback | The hook only fires when the agent edits or writes a file. Restart Claude Code after installing; check `.claude/settings.json` has the `fringe check --claude-hook` entry (re-run `npx @fringetools/cli init` if not) |
+| `/fringe-review` asks for permission | Expected: it runs the checker. Approve once, or allow `Bash(npx:*)` |
+| "No findings" but I see problems | Fringe is static. It can't judge real colors on images, runtime focus order, or whether your copy is good |
+| Hundreds of findings on an old repo | Use the baseline (see above); fix at your own pace |
+| A rule is wrong for my case | `fringe-ignore` it on that line, and please [report the false positive](https://github.com/skc-learn/fringe/issues/new?template=false-positive.md) |
+| `exit 2` / "internal error" | The message names the cause: bad `fringe.config.json`, corrupt `fringe.baseline.json`, or an invalid `.claude/settings.json` |
+| It checked a folder I don't want | Add globs to `ignore` in `fringe.config.json`, e.g. `"examples/**"` (use the `dir/**` form) |
+| Remove it | Plugin: `/plugin uninstall fringe`. Init: delete the Fringe entry in `.claude/settings.json` and the `.claude/skills/fringe*` folders |
+
+**Privacy:** Fringe reads your source files locally and makes no network calls and sends no telemetry. The only download is `npx` fetching the package itself. Its run history stays in your repo (`.fringe/`).
+
+---
+
+## How it thinks
+
+Fringe encodes a three-step ladder for agents: **Flow** (cut what users don't need, with evidence) → **Edges** (never skip accessibility and states, checked and gated) → **Polish** (tokens, scales, no "AI look", advice only). Every number it shows is labelled **verified** (the checker measured it) or **judged** (the agent decided it). The agent never grades its own work where a measurement exists.
+
+Works alongside [Ponytail](https://github.com/dietrichgebert/ponytail): Ponytail keeps the code small and promises never to cut accessibility; Fringe is the check that verifies the promise. Also complementary to [Impeccable](https://impeccable.style/) and [Design with Intent](https://designwithintent.ai) (positioning in [docs/product.md](docs/product.md)).
+
+---
+
+## Roadmap
+
+Where Fringe is going, in plain terms (the full plan, with the reasons and the evidence that moves each item, is in **[docs/ROADMAP.md](docs/ROADMAP.md)**):
+
+| When | Theme | What you'll get |
+|---|---|---|
+| **Now** (v0.1.x) | **Easy to try and trust** | Real-world false-positive fixes, issue templates, a larger public benchmark |
+| **Next** (v0.2) | **Understand every finding** | `fringe explain FR-203` (why it matters + a fix example), check a single file, see which rules are noisy in your repo |
+| **Then** (v0.3) | **Works wherever you work** | A GitHub Action with PR annotations, SARIF for GitHub code scanning, pre-commit config, rules files for Cursor/Copilot/Windsurf |
+| **Later** (v0.4) | **See the trend** | A proper dashboard: health over time, per-project board, handoff report |
+| **v1.0** | **Beyond static** | Design-token drift, real-browser checks (screenshots, rendered contrast), stable output schemas |
+
+Want something sooner? [Open an issue](https://github.com/skc-learn/fringe/issues): what real use asks for decides the order.
+
+---
+
+## Docs
+
+**Use it:** [INSTALL.md](INSTALL.md) · [CLI reference](packages/cli/README.md) · [AGENTS.md](AGENTS.md) (rules file for any agent) · [Skills](packages/cli/skill/)
+**Understand it:** [Product](docs/product.md) · [PRD](docs/PRD.md) · [Architecture](docs/architecture.md) · [Decisions](docs/decisions.md) · [Test strategy](docs/test-strategy.md) · [Benchmark](benchmarks/README.md) · [Docs index](docs/README.md)
 
 ## Contributing
 
-TDD everywhere: every change is a failing test first. See [CONTRIBUTING.md](CONTRIBUTING.md). Adding a rule is a documented recipe — fixtures, `expectRule` test, pure rule file, registry, golden check — see [docs/test-strategy.md](docs/test-strategy.md). All load-bearing decisions are recorded in [docs/decisions.md](docs/decisions.md).
+Bug reports, false positives and rule ideas are all welcome as [issues](https://github.com/skc-learn/fringe/issues). Code changes: every change starts as a failing test; adding a rule is a documented recipe. Start at **[CONTRIBUTING.md](CONTRIBUTING.md)**.
 
 ## License
 
-[MIT](LICENSE). Dark-pattern taxonomy adapted (with attribution) from Design with Intent's CC0 library.
+[MIT](LICENSE). The dark-pattern taxonomy is adapted, with attribution, from Design with Intent's CC0 library.
