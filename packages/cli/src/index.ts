@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { VERSION } from './version.js';
 import { runCheck } from './check.js';
 import { toJson } from './report/json.js';
+import { toHook } from './report/hook.js';
 import { appendRecord } from './ledger.js';
 import type { LedgerRecord } from './ledger.js';
 
@@ -27,7 +28,8 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
   if (cmd === 'check') {
     const root = opts.cwd ?? process.cwd();
     const result = await runCheck(root);
-    if (rest.includes('--json')) log(opts)(toJson(result));
+    if (rest.includes('--hook')) log(opts)(toHook(result));
+    else if (rest.includes('--json')) log(opts)(toJson(result));
     else {
       log(opts)(`fringe: score ${result.score}/100 — ${result.counts.error} errors, ${result.counts.review} review, ${result.counts.signal} signal (${result.files} files)`);
       for (const f of result.findings)
