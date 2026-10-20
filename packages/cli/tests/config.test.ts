@@ -30,4 +30,24 @@ describe('loadConfig', () => {
     const b = loadConfig(dir());
     expect(b.ignore).not.toContain('mutated/**');
   });
+  it('parses a valid tokenSource through', () => {
+    const d = dir();
+    writeFileSync(join(d, 'fringe.config.json'), JSON.stringify({ tokenSource: { kind: 'css-vars' } }));
+    expect(loadConfig(d).tokenSource).toEqual({ kind: 'css-vars' });
+  });
+  it('rejects unknown tokenSource kind, mentioning fringe.config.json', () => {
+    const d = dir();
+    writeFileSync(join(d, 'fringe.config.json'), JSON.stringify({ tokenSource: { kind: 'nope' } }));
+    expect(() => loadConfig(d)).toThrow(/fringe\.config\.json/);
+  });
+  it('requires a path for design-tokens-json', () => {
+    const d = dir();
+    writeFileSync(join(d, 'fringe.config.json'), JSON.stringify({ tokenSource: { kind: 'design-tokens-json' } }));
+    expect(() => loadConfig(d)).toThrow(/fringe\.config\.json/);
+  });
+  it('accepts design-tokens-json with a path', () => {
+    const d = dir();
+    writeFileSync(join(d, 'fringe.config.json'), JSON.stringify({ tokenSource: { kind: 'design-tokens-json', path: 'tokens.json' } }));
+    expect(loadConfig(d).tokenSource).toEqual({ kind: 'design-tokens-json', path: 'tokens.json' });
+  });
 });

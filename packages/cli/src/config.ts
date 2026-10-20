@@ -8,6 +8,8 @@ export const DEFAULT_CONFIG: FringeConfig = {
   weights: { error: 10, review: 3, signal: 1 },
 };
 
+const TOKEN_SOURCE_KINDS = ['css-vars', 'theme-factory', 'design-tokens-json'] as const;
+
 export function loadConfig(root: string): FringeConfig {
   try {
     const raw = readFileSync(join(root, 'fringe.config.json'), 'utf8');
@@ -18,12 +20,26 @@ export function loadConfig(root: string): FringeConfig {
       weights: { ...DEFAULT_CONFIG.weights, ...(user.weights ?? {}) },
     };
     validateWeights(cfg.weights);
+    if (user.tokenSource !== undefined) {
+      cfg.tokenSource = validateTokenSource(user.tokenSource);
+    }
     return cfg;
   } catch (e: unknown) {
     if ((e as NodeJS.ErrnoException).code === 'ENOENT') return structuredClone(DEFAULT_CONFIG);
     if (e instanceof SyntaxError) throw new Error('fringe.config.json: invalid JSON');
     throw e;
   }
+}
+
+function validateTokenSource(ts: NonNullable<FringeConfig['tokenSource']>): NonNullable<FringeConfig['tokenSource']> {
+  let problem: string | null = null;
+  if (!ts || typeof ts !== 'object' || !TOKEN_SOURCE_KINDS.includes(ts.kind as (typeof TOKEN_SOURCE_KINDS)[number])) {
+    problem = `tokenSource.kind must be one of: ${TOKEN_SOURCE_KINDS.join(', ')}`;
+  } else if (ts.kind === 'design-tokens-json' && (typeof ts.path !== 'string' || ts.path.trim() === '')) {
+    problem = 'tokenSource.path is required when kind is design-tokens-json';
+  }
+  if (problem) throw new Error('fringe.config.json: ' + problem);
+  return ts;
 }
 
 function validateWeights(weights: FringeConfig['weights']): void {

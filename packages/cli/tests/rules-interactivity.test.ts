@@ -6,7 +6,7 @@ import { ALL_RULES } from '../src/rules/registry.js';
 import { parseHtml } from '../src/parse/html.js';
 
 function htmlCtx(file: string, source: string) {
-  return { file, source, elems: parseHtml(file, source), css: [] as [] };
+  return { file, source, elems: parseHtml(file, source), css: [] as [], tokenColors: [] };
 }
 
 expectRule(fr206, 'FR-206');

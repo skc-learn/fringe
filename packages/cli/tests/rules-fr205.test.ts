@@ -10,7 +10,7 @@ import { ALL_RULES } from '../src/rules/registry.js';
 expectRule(fr205, 'FR-205');
 
 function cssCtxOf(file: string, source: string): RuleContext {
-  return { file, source, elems: [], css: parseCss(file, source) };
+  return { file, source, elems: [], css: parseCss(file, source), tokenColors: [] };
 }
 
 function cssFixture(kind: 'pass' | 'fail'): { file: string; source: string } {

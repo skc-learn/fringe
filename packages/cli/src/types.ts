@@ -40,6 +40,8 @@ export interface RuleContext {
   source: string;
   elems: Elem[];
   css: CssDecl[];
+  /** Token color values (hex/rgb()/hsl() strings as written); empty when no token source. */
+  tokenColors: string[];
 }
 
 export interface Rule {
@@ -49,10 +51,19 @@ export interface Rule {
   check(ctx: RuleContext): Finding[];
 }
 
+export type TokenSourceKind = 'css-vars' | 'theme-factory' | 'design-tokens-json';
+
+export interface TokenSource {
+  kind: TokenSourceKind;
+  /** Required for design-tokens-json: path (relative to project root) of the JSON file. */
+  path?: string;
+}
+
 export interface FringeConfig {
   ignore: string[];
   disable: string[];
   weights: { error: number; review: number; signal: number };
+  tokenSource?: TokenSource;
 }
 
 export interface Counts {

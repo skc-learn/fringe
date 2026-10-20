@@ -8,8 +8,8 @@ import type { Rule, RuleContext } from '../src/types.js';
 export const FIXTURES = fileURLToPath(new URL('../../../fixtures', import.meta.url));
 
 export function ctxOf(file: string, source: string): RuleContext {
-  try { return { file, source, elems: parseJsx(file, source), css: [] }; }
-  catch { return { file, source, elems: [], css: [] }; }
+  try { return { file, source, elems: parseJsx(file, source), css: [], tokenColors: [] }; }
+  catch { return { file, source, elems: [], css: [], tokenColors: [] }; }
 }
 
 export function fixture(id: string, kind: 'pass' | 'fail'): { file: string; source: string } {
