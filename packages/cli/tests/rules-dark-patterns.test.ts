@@ -101,7 +101,9 @@ describe('dark-pattern registration', () => {
     for (const id of ['FR-210', 'FR-211', 'FR-212', 'FR-213', 'FR-214']) {
       expect(ids).toContain(id);
     }
-    const tail = ids.slice(-5);
-    expect(tail).toEqual(['FR-210', 'FR-211', 'FR-212', 'FR-213', 'FR-214']);
+    // relative order, not registry position — rung 3 rules are appended after these
+    const rel = ['FR-210', 'FR-211', 'FR-212', 'FR-213', 'FR-214'].map((id) => ids.indexOf(id));
+    expect(rel.every((i) => i >= 0)).toBe(true);
+    expect([...rel].sort((a, b) => a - b)).toEqual(rel);
   });
 });
