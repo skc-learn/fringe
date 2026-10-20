@@ -19,8 +19,6 @@ health 34/100 · 6 errors · 2 review · 0 signals
 
 Once wired, every time Claude Code edits a file Fringe checks the project and hands accessibility errors back to the agent to fix — verified with real agent runs. For CI, `fringe check` exits `1` on any error. Review-level heuristics and taste-level signals never gate; they inform.
 
-> **Until the first npm release** (package not published yet): `pnpm install && pnpm --filter @fringetools/cli build`, then run `node packages/cli/dist/bin.js <command>` instead of `npx @fringetools/cli <command>`.
-
 **Messy existing repo?** `fringe check --update-baseline` once; from then on only *new* problems gate. **False positive?** `// fringe-ignore FR-203` on the line (counted in every report).
 
 ## What it checks — 29 rules, three severities
@@ -39,9 +37,10 @@ Fringe encodes a ladder: **Flow** (cut what users don't need — agent-judged, w
 
 | | |
 |---|---|
+| **Published** | `@fringetools/cli@0.1.0` on npm — `npx @fringetools/cli init`. Source: [skc-learn/fringe](https://github.com/skc-learn/fringe). |
 | **Shipped** | 29 rules, calibrated size-aware health score, pretty/JSON/CI-hook/Claude-hook outputs, `init`, baseline, inline suppression, ledger + manifests + token sources, `fringe open` ledger page, the agent skill, stack auto-detection. Golden snapshots + three calibration apps; CI on every push. |
 | **Verified** | Agent loop run end to end with real Claude Code sessions (three tasks): errors reach the agent and get fixed. Checker dogfooded on six real projects; false positives found there are fixed. |
-| **Next** | Per-rule precision view (data already recorded), richer dashboard (`fringe board`), skill adapters for other agent platforms, npm publish. See [PRD](docs/PRD.md) §7. |
+| **Next** | Per-rule precision view (data already recorded), richer dashboard (`fringe board`), skill adapters for other agent platforms. See [PRD](docs/PRD.md) §7. |
 
 ## Documentation
 

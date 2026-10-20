@@ -17,8 +17,6 @@ That is the whole setup. `init` adds a `PostToolUse` hook to `.claude/settings.j
 
 Prefer a permanent command? `npm install -D @fringetools/cli`, then `npx fringe check`. Existing messy repo? Run `npx @fringetools/cli check --update-baseline` once so only *new* problems gate (see [Baseline](#baseline)).
 
-> **Until the first npm release:** build from source — `pnpm install && pnpm --filter @fringetools/cli build`, then use `node packages/cli/dist/bin.js` in place of `npx @fringetools/cli`.
-
 ## Commands
 
 | Command | What it does |

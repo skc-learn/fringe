@@ -7,7 +7,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | D-01 | Product form: skill + CLI + local dashboard ("both") | 2026-10-20 | 🔒 CLI + skill shipped; full dashboard deferred (D-23) |
 | D-02 | Measurement model: CLI-verified (static analysis) + judged manifests | 2026-10-20 | 🔒 |
 | D-03 | Core discipline: three-rung ladder (Flow → Edges → Polish) | 2026-10-20 | 🔒 |
-| D-04 | Name: **Fringe**; package `@fringetools/cli`, bin `fringe` | 2026-10-20 | 🔒 |
+| D-04 | Name: **Fringe**; package `@fringetools/cli` (org `fringetools`; `fringetool` was never created), bin `fringe` | 2026-10-20 | 🔒 |
 | D-05 | Judged/verified labeling as the credibility moat | 2026-10-20 | 🔒 |
 | D-06 | Severity system: error/review/signal; only `error` gates | 2026-10-20 | 🔒 |
 | D-07 | Parsing tiers: AST first-class, text best-effort, honest coverage matrix | 2026-10-20 | 🔒 |
@@ -146,5 +146,4 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | Slop-tuning pass: px-2/px-20 + flex-1 word boundaries, emoji narrowing (©®™), Tailwind v4 `bg-linear-*`, FR-304 cascade modeling, `text-[rgba()]` FR-302 leak | signals never gate; batch tuning beats dribbles | backlog plan |
 | FR-364/366 thresholds fixed (3 tiles / 5 chips) | deliberately conservative first cut | tuning pass |
 | Token-drift checks, `fringe shot`, `--stamp verified` | v2 scope, schema already reserved | PRD §4.5 |
-| npm publish | package ready; blocked on account 2FA | owner action |
 | Per-rule precision view | ledger records `byRule`/`suppressed`; needs real data | v0.2 |

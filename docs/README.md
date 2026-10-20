@@ -25,7 +25,7 @@
 
 ## Roadmap
 
-- **Now:** npm publish (needs account 2FA).
+- **Shipped:** v0.1 on npm (`@fringetools/cli`).
 - **Next:** per-rule precision view from the ledger; full dashboard (`fringe board`; layout approved, see mockups).
 - **Only if wanted:** adapters for other agent platforms, slash commands, README site.
 - **v2** — token drift, `fringe shot`, `--stamp verified`, tier-2 depth.
