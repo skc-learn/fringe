@@ -26,6 +26,12 @@
 | [superpowers/plans/2026-10-20-fringe-1-cli-core.md](superpowers/plans/2026-10-20-fringe-1-cli-core.md) | Plan 1 — CLI core (21 tasks, executed & merged) |
 | [superpowers/plans/2026-10-20-fringe-2-rung3-slop.md](superpowers/plans/2026-10-20-fringe-2-rung3-slop.md) | Plan 2 — rung 3 + slop catalog (14 tasks, executed & merged) |
 
+## Research
+
+| Document | Role |
+|---|---|
+| [research/ponytail-reverse-engineering.md](research/ponytail-reverse-engineering.md) | Mechanism-level dissection of ponytail v5.3.2 (prompt, delivery hooks, band/board, benchmark, hardening) — informs Plans 3–4 and the Bangs sibling |
+
 ## Roadmap
 
 Full plan: [ROADMAP.md](ROADMAP.md).
