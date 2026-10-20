@@ -14,6 +14,10 @@ function seed() {
   writeFileSync(join(d, 'node_modules', 'x', 'y.tsx'), '');
   mkdirSync(join(d, 'gen'));
   writeFileSync(join(d, 'gen', 'b.tsx'), '');
+  for (const dir of ['build', 'out', 'coverage']) {
+    mkdirSync(join(d, dir));
+    writeFileSync(join(d, dir, `${dir}.tsx`), '');
+  }
   return d;
 }
 
@@ -21,6 +25,12 @@ describe('walk', () => {
   it('finds files, skips node_modules', () => {
     const files = walk(seed(), DEFAULT_CONFIG).map((f) => f.split('/').pop()!).sort();
     expect(files).toEqual(['App.tsx', 'a.css', 'b.tsx']);
+  });
+  it('skips build/, out/, and coverage/ by default', () => {
+    const files = walk(seed(), DEFAULT_CONFIG);
+    expect(files.some((f) => f.includes('/build/'))).toBe(false);
+    expect(files.some((f) => f.includes('/out/'))).toBe(false);
+    expect(files.some((f) => f.includes('/coverage/'))).toBe(false);
   });
   it('honors ignore globs', () => {
     const d = seed();

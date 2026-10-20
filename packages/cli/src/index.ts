@@ -45,28 +45,34 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
   const [cmd, ...rest] = argv;
   if (cmd === '--version' || cmd === '-v') { log(opts)(VERSION); return 0; }
   if (cmd === 'check') {
-    const paths = parseArgs(rest, err(opts));
-    const cwd = opts.cwd ?? process.cwd();
-    // First path is the check root (config + scan); extra paths accepted so agent-invoked runs never crash.
-    const root = paths.length > 0 ? resolve(cwd, paths[0]) : cwd;
-    const result = await runCheck(root);
-    if (rest.includes('--hook')) log(opts)(toHook(result));
-    else if (rest.includes('--json')) log(opts)(toJson(result));
-    else log(opts)(toPretty(result));
-    if (rest.includes('--record')) {
-      const rec: LedgerRecord = {
-        id: randomUUID(),
-        ts: new Date().toISOString(),
-        stack: result.stack,
-        files: result.files,
-        counts: result.counts,
-        score: result.score,
-      };
-      const mIdx = rest.indexOf('--manifest');
-      if (mIdx !== -1 && rest[mIdx + 1] !== undefined) rec.manifest = readManifest(rest[mIdx + 1], err(opts));
-      appendRecord(root, rec);
+    try {
+      const paths = parseArgs(rest, err(opts));
+      const cwd = opts.cwd ?? process.cwd();
+      // First path is the check root (config + scan); extra paths accepted so agent-invoked runs never crash.
+      const root = paths.length > 0 ? resolve(cwd, paths[0]) : cwd;
+      const result = await runCheck(root);
+      if (rest.includes('--hook')) log(opts)(toHook(result));
+      else if (rest.includes('--json')) log(opts)(toJson(result));
+      else log(opts)(toPretty(result));
+      if (rest.includes('--record')) {
+        const rec: LedgerRecord = {
+          id: randomUUID(),
+          ts: new Date().toISOString(),
+          stack: result.stack,
+          files: result.files,
+          counts: result.counts,
+          score: result.score,
+        };
+        const mIdx = rest.indexOf('--manifest');
+        if (mIdx !== -1 && rest[mIdx + 1] !== undefined) rec.manifest = readManifest(rest[mIdx + 1], err(opts));
+        appendRecord(root, rec);
+      }
+      return result.counts.error > 0 ? 1 : 0;
+    } catch (e) {
+      // Internal failure (unreadable root, bad config, unexpected rule crash): report and exit 2.
+      err(opts)(`fringe: internal error: ${(e as Error).message}\n`);
+      return 2;
     }
-    return result.counts.error > 0 ? 1 : 0;
   }
   log(opts)(`fringe: unknown command '${cmd ?? ''}' — try 'fringe check --help'`);
   return 2;

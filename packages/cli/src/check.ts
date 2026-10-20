@@ -1,5 +1,4 @@
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import type { CheckResult, Counts, FringeConfig, RuleContext } from './types.js';
 import { loadConfig } from './config.js';
 import { detectStack } from './detect.js';

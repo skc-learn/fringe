@@ -2,12 +2,15 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { StackInfo } from './types.js';
 
+/** Directory names never descended into during stack marker detection. */
+const SKIP_DIRS = new Set(['node_modules', 'dist', 'build', 'out', 'coverage']);
+
 function findFile(dir: string, match: (name: string) => boolean, depth: number): boolean {
   if (depth > 6) return false;
   let entries;
   try { entries = readdirSync(dir, { withFileTypes: true }); } catch { return false; }
   for (const e of entries) {
-    if (e.name.startsWith('.') || e.name === 'node_modules') continue;
+    if (e.name.startsWith('.') || SKIP_DIRS.has(e.name)) continue;
     if (e.isDirectory()) { if (findFile(join(dir, e.name), match, depth + 1)) return true; }
     else if (match(e.name)) return true;
   }

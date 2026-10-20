@@ -8,11 +8,13 @@ function attrValue(v: any): string {
   return '';
 }
 
+/** Collects literal text from an element's children, recursing into nested JSXElements. */
 function collectText(node: any): string {
   let t = '';
   for (const c of node.children ?? []) {
     if (c.type === 'JSXText') t += c.value;
     else if (c.type === 'JSXExpressionContainer' && c.expression?.type === 'StringLiteral') t += c.expression.value;
+    else if (c.type === 'JSXElement') t += collectText(c);
   }
   return t.trim();
 }

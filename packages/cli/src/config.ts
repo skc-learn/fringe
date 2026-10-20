@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import type { FringeConfig } from './types.js';
 
 export const DEFAULT_CONFIG: FringeConfig = {
-  ignore: ['node_modules/**', 'dist/**', '.fringe/**', '*.min.*'],
+  ignore: ['node_modules/**', 'dist/**', 'build/**', 'out/**', 'coverage/**', '.fringe/**', '*.min.*'],
   disable: [],
   weights: { error: 10, review: 3, signal: 1 },
 };

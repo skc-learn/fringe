@@ -19,7 +19,7 @@ fringe check [--json] [--hook] [--record] [--manifest <path>] [paths...]
 fringe --version
 ```
 
-- `[paths...]` — files/dirs to check. Defaults to `.` (current directory). The **first path** is the root used for config loading (`fringe.config.json`) and the scan; extra paths are accepted and ignored beyond that, so an agent-invoked run never crashes on argument shape.
+- `[paths...]` — the directory to check. Defaults to `.` (current directory). The **first path** is the root used for config loading (`fringe.config.json`) and the scan; extra paths are accepted and ignored beyond that, so an agent-invoked run never crashes on argument shape. **v0.1 supports directory roots only** — a path must be a directory, not a single file.
 - `--json` — full machine-readable report, schema `fringe/check.v1` (stack, files, findings with `rule`/`severity`/`loc`/`message`/`hint`, counts, health score).
 - `--hook` — one-line JSON, schema `fringe/hook.v1` (`errors`, `review`, `signals`, `block`, `reason`). For pre-commit/CI gates and Claude Code hooks. Takes precedence over `--json` when both are given.
 - `--record` — append one JSONL record to `<root>/.fringe/ledger.jsonl` (id, ts, stack, files, counts, score). The ledger is the task-by-task history; it is gitignoreable.
@@ -29,7 +29,7 @@ fringe --version
 Default (human) output is the pretty formatter:
 
 ```
-fringe · stack react,tailwind · 3 files
+fringe · stack jsx,tailwind · 3 files
 [ERROR] FR-201 src/App.tsx:12 — <img> missing alt text (add alt="description" (or alt="" if decorative))
 health 70/100 · 3 errors · 0 review · 0 signals
 ```
@@ -40,7 +40,9 @@ health 70/100 · 3 errors · 0 review · 0 signals
 |---|---|
 | `0` | Clean (no `error` findings) |
 | `1` | One or more `error`-severity findings |
-| `2` | CLI misuse (unknown command) |
+| `2` | Internal failure — the run itself broke (unreadable root, invalid config, unexpected error); one-line message on stderr |
+
+An unknown command also exits `2` with a usage hint.
 
 `review` and `signal` findings never change the exit code — they need human judgment, not a gate.
 
@@ -73,7 +75,7 @@ Optional, at the check root. Everything defaults sensibly; all keys are optional
 
 ```json
 {
-  "ignore": ["node_modules/**", "dist/**", ".fringe/**", "*.min.*", "examples/**"],
+  "ignore": ["node_modules/**", "dist/**", "build/**", "out/**", "coverage/**", ".fringe/**", "*.min.*", "examples/**"],
   "disable": ["FR-214"],
   "weights": { "error": 10, "review": 3, "signal": 1 }
 }

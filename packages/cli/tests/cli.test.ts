@@ -2,6 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { runCli } from '../src/index.js';
 
 const FAILING_HTML = '<html><body><img src="hero.png"></body></html>';
@@ -81,5 +82,25 @@ describe('runCli', () => {
     expect(code).toBe(0);
     expect(errs.join('')).toContain('warning');
     expect(errs.join('')).toContain('--wat');
+  });
+
+  it('check on a nonexistent root exits 2 with a one-line internal-error message on stderr', async () => {
+    const missing = join(tmpdir(), 'fringe-nonexistent-' + randomUUID());
+    const logs: string[] = [];
+    const errs: string[] = [];
+    const code = await runCli(['check', missing], { log: (s) => logs.push(s), err: (s) => errs.push(s) });
+    expect(code).toBe(2);
+    expect(logs).toEqual([]); // no report is printed when the run itself failed
+    const lines = errs.join('').split('\n').filter((l) => l.trim() !== '');
+    expect(lines.length).toBe(1);
+    expect(lines[0]).toMatch(/internal error/i);
+    expect(lines[0]).toContain(missing);
+  });
+  it('check with an unreadable config exits 2 instead of crashing the CLI', async () => {
+    const dir = makeDir({ 'fringe.config.json': '{not json' });
+    const errs: string[] = [];
+    const code = await runCli(['check', dir], { log: () => {}, err: (s) => errs.push(s) });
+    expect(code).toBe(2);
+    expect(errs.join('')).toMatch(/internal error.*fringe\.config\.json/s);
   });
 });

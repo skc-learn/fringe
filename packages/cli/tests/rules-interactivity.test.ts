@@ -3,6 +3,11 @@ import { expectRule, ctxOf } from './helpers.js';
 import { fr206 } from '../src/rules/fr206.js';
 import { fr207 } from '../src/rules/fr207.js';
 import { ALL_RULES } from '../src/rules/registry.js';
+import { parseHtml } from '../src/parse/html.js';
+
+function htmlCtx(file: string, source: string) {
+  return { file, source, elems: parseHtml(file, source), css: [] as [] };
+}
 
 expectRule(fr206, 'FR-206');
 expectRule(fr207, 'FR-207');
@@ -53,5 +58,31 @@ describe('FR-206/FR-207 registration', () => {
   it('are registered in ALL_RULES', () => {
     expect(ALL_RULES.some((r) => r.id === 'FR-206')).toBe(true);
     expect(ALL_RULES.some((r) => r.id === 'FR-207')).toBe(true);
+  });
+});
+
+describe('FR-206/FR-207 HTML tier', () => {
+  it('FR-206 flags <div onclick="go()">Menu</div> in an .html file', () => {
+    const out = fr206.check(htmlCtx('menu.html', '<html><body><div onclick="go()">Menu</div></body></html>'));
+    expect(out.length).toBe(1);
+    expect(out[0].rule).toBe('FR-206');
+    expect(out[0].loc.file).toBe('menu.html');
+  });
+  it('FR-206 does not flag an html div that carries role or tabindex', () => {
+    expect(fr206.check(htmlCtx('ok.html', '<html><body><div onclick="go()" role="button" tabindex="0">Menu</div></body></html>'))).toEqual([]);
+  });
+  it('FR-207 flags tabindex="2" in an .html file', () => {
+    const out = fr207.check(htmlCtx('promo.html', '<html><body><div tabindex="2">Featured</div></body></html>'));
+    expect(out.length).toBe(1);
+    expect(out[0].rule).toBe('FR-207');
+    expect(out[0].message).toContain('2');
+  });
+  it('FR-207 leaves tabindex="0" in html alone', () => {
+    expect(fr207.check(htmlCtx('ok.html', '<html><body><div tabindex="0">x</div></body></html>'))).toEqual([]);
+  });
+  it('FR-207 JSX form tolerates inner whitespace: tabIndex={ 2 }', () => {
+    const out = fr207.check(ctxOf('a.tsx', 'export default () => <div tabIndex={  2  } />;'));
+    expect(out.length).toBe(1);
+    expect(out[0].message).toContain('2');
   });
 });
