@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { FIXTURES, ctxOf } from './helpers.js';
+import { FIXTURES, ctxOf, expectRule } from './helpers.js';
 import { parseCss } from '../src/parse/css.js';
 import type { Rule, RuleContext } from '../src/types.js';
 import { fr304 } from '../src/rules/fr304.js';
 import { fr301 } from '../src/rules/fr301.js';
+import { fr302 } from '../src/rules/fr302.js';
+import { fr303 } from '../src/rules/fr303.js';
 import { ALL_RULES } from '../src/rules/registry.js';
 
 function cssCtxOf(file: string, source: string): RuleContext {
@@ -183,5 +185,85 @@ describe('FR-301 token adoption', () => {
 describe('FR-301 registration', () => {
   it('is registered in ALL_RULES at rung 3', () => {
     expect(ALL_RULES.some((r) => r.id === 'FR-301' && r.rung === 3)).toBe(true);
+  });
+});
+
+expectRule(fr302, 'FR-302');
+
+describe('FR-302 off-scale font size', () => {
+  it('flags the fail fixture naming the matched utility at signal severity', () => {
+    const { file, source } = fixtureOf('FR-302', 'fail');
+    const out = fr302.check(ctxOf(file, source));
+    expect(fr302.severity).toBe('signal');
+    expect(out.length).toBe(1);
+    expect(out[0].rule).toBe('FR-302');
+    expect(out[0].severity).toBe('signal');
+    expect(out[0].message).toBe('font size off the type scale: text-[17px]');
+    expect(out[0].hint).toBe('use the type scale (text-xs..text-6xl) or extend the theme');
+    expect(out[0].loc.file).toBe(file);
+    expect(out[0].loc.line).toBe(1);
+  });
+
+  it('passes on type-scale sizes', () => {
+    const src = 'export default () => <p className="text-xs sm:text-lg xl:text-2xl">Hi</p>;';
+    expect(fr302.check(ctxOf('a.tsx', src))).toEqual([]);
+  });
+
+  it('emits one finding per arbitrary size on the element', () => {
+    const src = 'export default () => <p className="text-[17px] md:text-[1.5rem]">Hi</p>;';
+    const out = fr302.check(ctxOf('a.tsx', src));
+    expect(out.length).toBe(2);
+    expect(out[0].message).toBe('font size off the type scale: text-[17px]');
+    expect(out[1].message).toBe('font size off the type scale: text-[1.5rem]');
+  });
+
+  it('honors plain class attributes too', () => {
+    const out = fr302.check(ctxOf('a.tsx', 'export default () => <p class="text-[17px]">Hi</p>;'));
+    expect(out.length).toBe(1);
+    expect(out[0].message).toBe('font size off the type scale: text-[17px]');
+  });
+});
+
+expectRule(fr303, 'FR-303');
+
+describe('FR-303 off-scale spacing/dimensions', () => {
+  it('flags each matched utility on the fail fixture at signal severity', () => {
+    const { file, source } = fixtureOf('FR-303', 'fail');
+    const out = fr303.check(ctxOf(file, source));
+    expect(fr303.severity).toBe('signal');
+    expect(out.length).toBe(2);
+    expect(out.every((f) => f.rule === 'FR-303' && f.severity === 'signal')).toBe(true);
+    expect(out[0].message).toBe('spacing/dimension off the scale: p-[13px]');
+    expect(out[1].message).toBe('spacing/dimension off the scale: gap-[9px]');
+    expect(out[0].hint).toBe('use spacing scale utilities (1 unit = 0.25rem) or extend the theme');
+    expect(out[0].loc.file).toBe(file);
+    expect(out[0].loc.line).toBe(1);
+  });
+
+  it('passes on scale utilities', () => {
+    const src = 'export default () => <div className="p-4 px-2 pt-1 mt-8 mx-auto gap-2 w-full h-screen">x</div>;';
+    expect(fr303.check(ctxOf('a.tsx', src))).toEqual([]);
+  });
+
+  it('reports the longest utility name, not a prefix (px-[5px] stays px-[5px])', () => {
+    const src = 'export default () => <div className="px-[5px] mt-[3px] w-[111px] h-[42px]">x</div>;';
+    const out = fr303.check(ctxOf('a.tsx', src));
+    expect(out.map((f) => f.message)).toEqual([
+      'spacing/dimension off the scale: px-[5px]',
+      'spacing/dimension off the scale: mt-[3px]',
+      'spacing/dimension off the scale: w-[111px]',
+      'spacing/dimension off the scale: h-[42px]',
+    ]);
+  });
+
+  it('leaves arbitrary font sizes to FR-302', () => {
+    expect(fr303.check(ctxOf('a.tsx', 'export default () => <p className="text-[17px]">Hi</p>;'))).toEqual([]);
+  });
+});
+
+describe('FR-302/303 registration', () => {
+  it('registers both rules in ALL_RULES at rung 3', () => {
+    expect(ALL_RULES.some((r) => r.id === 'FR-302' && r.rung === 3)).toBe(true);
+    expect(ALL_RULES.some((r) => r.id === 'FR-303' && r.rung === 3)).toBe(true);
   });
 });
