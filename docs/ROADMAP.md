@@ -10,7 +10,7 @@ How Fringe grows from "a checker one person trusts" to "a tool a stranger instal
 4. **Small surface.** New rules, flags and skills must earn their place with a failing test and a real case (the benchmark and the dogfooding each found a false positive; that is the bar).
 5. **Honest claims.** Every number in the README has a method behind it, with its limits stated.
 
-## Where we are (v0.2.0)
+## Where we are (v0.2.1)
 
 Shipped in 0.2: `fringe plan` (priority order, clusters, shared components first), `fringe explain` and fix recipes (also inside the agent hook), single-file `check`, `critical` paths, nested build output ignored by default. Shipped before: 29 rules, size-aware health score, baseline, inline suppression, `init`, Claude Code plugin, five skills, `AGENTS.md`, minimal ledger page, automated releases, a 24-run benchmark. Known gaps: no regression receipts in the hook yet; no per-rule feedback loop; only Claude Code gets the live hook; the benchmark is small.
 
@@ -96,7 +96,7 @@ Shipped in 0.2: `fringe plan` (priority order, clusters, shared components first
 - **Intensity levels** (lite/full/ultra): baseline + severity tiers cover it.
 - **A hosted service or accounts**: breaks local-first. A hosted view, if ever, is opt-in and separate.
 - **Auto-fixing code**: the agent fixes with context; a blind codemod would hide the real fix. Revisit only for mechanical rules with zero judgment.
-- **Chasing a rule count**: 29 precise rules beat 200 noisy ones.
+- **Chasing a rule count**: 36 precise rules beat 200 noisy ones.
 
 ## How to influence it
 

@@ -13,6 +13,7 @@ import { startBoard } from './board.js';
 import { writeBaseline } from './baseline.js';
 import { initProject } from './init.js';
 import { renderExplain } from './guidance.js';
+import { renderPatterns } from './patterns.js';
 import { toPlanJson, toPlanMarkdown } from './report/plan.js';
 
 export interface CliOpts { log?: (s: string) => void; cwd?: string; err?: (s: string) => void }
@@ -54,6 +55,7 @@ const HELP = `fringe check [--json] [--hook] [--record] [--manifest <path>] [pat
 fringe check --claude-hook [path]       for Claude Code hooks (feeds errors back to the agent)
 fringe check --update-baseline [path]   accept today's findings; only new ones gate
 fringe plan [dir|file] [--json] [--limit n]   ordered fix batches with recipes
+fringe explain pattern [form]           best-practice checklist for a component type
 fringe explain [FR-203]                 why a rule matters and how to fix it well
 fringe init [path]                       add the Claude Code hook + skill
 fringe open [path] [--port <n>]   serve the .fringe ledger on 127.0.0.1
@@ -136,6 +138,12 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
       log(opts)(rest.includes('--json') ? toPlanJson(result, limit) : toPlanMarkdown(result, paths[0] ?? '.', limit));
       return 0;
     } catch (e) { err(opts)(`fringe: internal error: ${(e as Error).message}\n`); return 2; }
+  }
+  if (cmd === 'explain' && rest[0] === 'pattern') {
+    const out = renderPatterns(rest[1]);
+    if (out === undefined) { err(opts)(`fringe: unknown pattern '${rest[1]}' — run 'fringe explain pattern' to list them\n`); return 2; }
+    log(opts)(out);
+    return 0;
   }
   if (cmd === 'explain') {
     const out = renderExplain(rest[0]);

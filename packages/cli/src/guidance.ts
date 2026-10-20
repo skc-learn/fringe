@@ -102,6 +102,46 @@ export const GUIDANCE: Record<string, Guidance> = {
     recipe: 'Say what failed in plain words and give a next step: retry, a link, or a way to contact support.',
     fixability: 'judgment',
   },
+  'FR-216': {
+    why: 'The wrong input type gives the wrong keyboard on phones and skips built-in validation; no autocomplete blocks password managers and autofill.',
+    recipe: 'Use type="email" / "tel" / "password", and set autoComplete (email, tel, current-password, new-password, name).',
+    avoid: 'type="text" for everything.',
+    example: { before: '<input type="text" name="email" />', after: '<input type="email" name="email" autoComplete="email" />' },
+    fixability: 'mechanical',
+  },
+  'FR-217': {
+    why: 'Screen reader users browse a list of links out of context, so "click here" says nothing; href="#" links go nowhere.',
+    recipe: 'Name the destination or action in the link text. Use a <button> for an action, a real URL for navigation.',
+    avoid: '"click here", "read more", or href="#" with an onClick.',
+    example: { before: '<a href="#" onClick={save}>Save</a>', after: '<button type="button" onClick={save}>Save</button>' },
+    fixability: 'mechanical',
+  },
+  'FR-218': {
+    why: 'A missing lang makes screen readers use the wrong voice; a missing title leaves the tab and the page unnamed; a viewport that blocks zoom shuts out low-vision users.',
+    recipe: 'Set <html lang="en"> (the real language), add a unique <title>, and remove user-scalable=no / maximum-scale=1 from the viewport meta.',
+    avoid: 'Blocking zoom to "fix" a layout problem.',
+    fixability: 'mechanical',
+  },
+  'FR-219': {
+    why: 'Motion can trigger nausea or distraction for some users, and they can ask their system to reduce it.',
+    recipe: 'Wrap the animation in @media (prefers-reduced-motion: no-preference), or disable it under (prefers-reduced-motion: reduce).',
+    fixability: 'mechanical',
+  },
+  'FR-220': {
+    why: 'Sound that starts on its own startles users and talks over a screen reader; browsers block it anyway.',
+    recipe: 'Start muted and show controls, or play only after a user action.',
+    fixability: 'mechanical',
+  },
+  'FR-221': {
+    why: 'A hover-only reaction cannot be reached with a keyboard or a touchscreen.',
+    recipe: 'Do the same on focus (onFocus/onBlur) and on tap/click, and make the element focusable.',
+    fixability: 'mechanical',
+  },
+  'FR-222': {
+    why: 'Lorem ipsum and TODO text that ships makes the product look unfinished.',
+    recipe: 'Replace it with real copy before release.',
+    fixability: 'judgment',
+  },
   'FR-301': {
     why: 'Hardcoded colors drift from the design system and make theming painful.',
     recipe: 'Use the project tokens (CSS variables or palette utilities) instead of literal hex values.',

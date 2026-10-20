@@ -42,7 +42,7 @@ Requirements use stable IDs; **Status** reflects v0.1 (shipped) unless marked *p
 | F-02 | Stack auto-detection from package.json + file markers (React/Preact/Solid, Vue, Svelte, Tailwind, HTML); reported in output and ledger | ✅ |
 | F-03 | File discovery: extensions `.jsx .tsx .js .ts .html .css .scss .vue .svelte .astro`; always skips node_modules, dot-dirs; config `ignore` globs (`dir/**` form) | ✅ |
 | F-04 | Parsing tiers: JSX/TSX via @babel/parser AST (first-class), HTML via parse5 (first-class), CSS/SCSS via PostCSS (first-class); other template files get text-level rules only; unparseable files are skipped and reported, never crash | ✅ |
-| F-05 | 29 rules with stable IDs and three severities (`error` 8 / `review` 7 / `signal` 14) — full table in the [package README](../packages/cli/README.md#rules) | ✅ |
+| F-05 | 36 rules with stable IDs and three severities (`error` 8 / `review` 13 / `signal` 15) — full table in the [package README](../packages/cli/README.md#rules) | ✅ |
 | F-06 | Dark-pattern rules FR-210–214 adapted (attributed) from Design with Intent's CC0 taxonomy | ✅ |
 | F-07 | WCAG success-criterion tags on a11y findings (10 rules tagged) | ✅ |
 | F-08 | Health score: penalty `(10e+3r+1s) × 10/max(files,10)`; score `100 − penalty` to 75, then smooth decay (never pins at 0); weights configurable | ✅ |
@@ -60,6 +60,8 @@ Requirements use stable IDs; **Status** reflects v0.1 (shipped) unless marked *p
 | F-20 | `fringe check <file>`: single-file judgement with project root found by climbing to package.json | ✅ |
 | F-21 | Config `critical: [globs]` raises priority for key paths | ✅ |
 | F-22 | Hook message carries each shown rule's fix recipe | ✅ |
+| F-24 | UX best-practice rules FR-216..222 (forms, links, page basics, reduced motion, autoplay, hover-only, filler text), all `review`/`signal`, validated on six real projects before shipping | ✅ |
+| F-25 | `fringe explain pattern <form\|modal\|navigation\|data-view>`: build-time checklists, each item verified (rule ids) or judged | ✅ |
 | F-23 | Regression receipts in the hook (what the last edit introduced) | 🔜 v0.2.x |
 
 ### 4.2 Outputs
@@ -127,7 +129,7 @@ The staged, evidence-driven version of this plan lives in [ROADMAP.md](ROADMAP.m
 
 | Release | Scope | Status |
 |---|---|---|
-| **v0.1** | Checker core: 29 rules, outputs, size-aware score, calibration, ledger, hooks, token sources, WCAG tags, baseline, suppression, `init`, minimal `open`, skill (Plans 1–2 + post-dogfood work) | ✅ published to npm as `@fringetools/cli@0.2.0` |
+| **v0.1** | Checker core: 29 rules (36 by 0.2), outputs, size-aware score, calibration, ledger, hooks, token sources, WCAG tags, baseline, suppression, `init`, minimal `open`, skill (Plans 1–2 + post-dogfood work) | ✅ published to npm as `@fringetools/cli@0.2.1` |
 | **v0.2** | ✅ `plan`, `explain`, recipes, priority/clusters, single-file check. Still planned: per-rule precision view from the ledger; full dashboard (`fringe board`, stat strip + ladder board + story drawer, handoff export) (Plan 3) | planned |
 | **v0.3** | Adapters for other agent platforms, slash commands, README site (Plan 4) — only if real use shows demand | planned |
 | **v0.4+** | Slop-tuning pass, Vue/Svelte tier-2 depth | backlog |
@@ -140,5 +142,5 @@ The staged, evidence-driven version of this plan lives in [ROADMAP.md](ROADMAP.m
 | False positives erode trust | Severity system (only high-confidence AST checks are `error`); fixture+golden regression nets; calibration bands |
 | Overlap confusion with Impeccable | Explicit positioning + complementary framing; Fringe's moat is measured history and edge completeness |
 | Agent-ecosystem churn (hook formats, skill formats) | Stable `fringe/hook.v1` + `fringe/check.v1` contracts; adapters generated from one source (Plan 4) |
-| 29-rule maintenance burden | Rules are pure functions over a narrow IR; per-rule fixtures; adding-a-rule recipe documented in [test-strategy.md](test-strategy.md) |
+| 36-rule maintenance burden | Rules are pure functions over a narrow IR; per-rule fixtures; adding-a-rule recipe documented in [test-strategy.md](test-strategy.md) |
 | Memory profile on huge monorepos | Accepted, documented deviation (see [architecture.md](architecture.md) §9) with a tracked restructure plan |

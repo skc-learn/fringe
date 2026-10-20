@@ -18,7 +18,7 @@ fringe init                          # wire the hook + install the skill
 fringe check --record --manifest .fringe/manifest.json   # append to the task ledger
 ```
 
-Fringe statically analyzes JSX/TSX (real AST), HTML, and CSS with **29 rules** across three severities:
+Fringe statically analyzes JSX/TSX (real AST), HTML, and CSS with **36 rules** across three severities:
 
 - **`error`** (8 rules) — high-confidence structural violations: missing alt, unnamed buttons, unlabeled inputs, heading skips, removed focus rings, `onClick` on divs, positive tabIndex, invalid aria. These gate: exit code 1, hook `block: true`.
 - **`review`** (7 rules) — heuristics needing human judgment: missing loading/empty/error handling, the five dark patterns (fake countdowns, prechecked consent, confirm-shaming, forced infinite scroll, drip pricing), generic error copy with no recovery action.
@@ -61,7 +61,7 @@ Fringe is complementary, not competitive, with the taste-and-strategy layers:
 
 ## Status
 
-- **Shipped (v0.1):** full checker — 29 rules, stack auto-detection, pretty/JSON/CI-hook/Claude-hook outputs, size-aware health score, baseline mode, inline suppression, `fringe init`, ledger with manifest merge and token-source recording, minimal `fringe open`, WCAG criterion tags, the agent skill, golden snapshots and score calibration, CI. Agent loop verified with real Claude Code runs; checker dogfooded on six real projects.
+- **Shipped (v0.1):** full checker — 36 rules, stack auto-detection, pretty/JSON/CI-hook/Claude-hook outputs, size-aware health score, baseline mode, inline suppression, `fringe init`, ledger with manifest merge and token-source recording, minimal `fringe open`, WCAG criterion tags, the agent skill, golden snapshots and score calibration, CI. Agent loop verified with real Claude Code runs; checker dogfooded on six real projects.
 - **Next:** per-rule precision view; the full dashboard (`fringe board`: stat strip, ladder board, task story drawer); adapters for other agent platforms, only if wanted.
 - **Later (v2):** token-drift checks against the design source, `fringe shot` visual verification, `--stamp verified` manifest stamping, Vue/Svelte tier-2 depth.
 

@@ -14,3 +14,21 @@ describe('guidance table', () => {
     }
   });
 });
+
+import { PATTERNS, patternRuleIds, knownRule } from '../src/patterns.js';
+import { runCli } from '../src/index.js';
+describe('patterns', () => {
+  it('only name rules that exist, and mix verified with judged items', () => {
+    for (const id of patternRuleIds()) expect(knownRule(id), id).toBe(true);
+    for (const p of Object.values(PATTERNS)) expect(p.items.some((i) => !i.rules), p.title).toBe(true);
+  });
+  it('explain pattern prints a checklist, lists patterns, rejects unknown names', async () => {
+    const out: string[] = [];
+    expect(await runCli(['explain', 'pattern', 'form'], { log: (s) => out.push(s) })).toBe(0);
+    expect(out.join('\n')).toMatch(/\[verified: FR-203\][\s\S]*\[judged\]/);
+    const list: string[] = [];
+    await runCli(['explain', 'pattern'], { log: (s) => list.push(s) });
+    expect(list.join('\n')).toContain('modal');
+    expect(await runCli(['explain', 'pattern', 'nope'], { log: () => {}, err: () => {} })).toBe(2);
+  });
+});

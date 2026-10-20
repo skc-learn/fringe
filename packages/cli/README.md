@@ -23,7 +23,8 @@ Prefer a permanent command? `npm install -D @fringetools/cli`, then `npx fringe 
 |---|---|
 | `fringe check [dir\|file]` | Scan a directory (default `.`) or judge one file (the project root is found by climbing to the nearest `package.json`). Prints findings and the health score. Exit `1` on any `error`. |
 | `fringe plan [dir\|file] [--json] [--limit n]` | **Fix order for a repo with many findings**: P0 (errors in shared components or critical paths) → P1 (other errors, mechanical first) → P2 review → P3 polish, each cluster with its fix recipe. Never gates (exit 0). `--json` = `fringe/plan.v1`. |
-| `fringe explain [FR-203]` | Why a rule matters, the preferred fix and the tempting fix to avoid. No id lists all 29 rules. |
+| `fringe explain [FR-203]` | Why a rule matters, the preferred fix and the tempting fix to avoid. No id lists all 36 rules. |
+| `fringe explain pattern [form]` | Build-time best-practice checklist for a component type (`form`, `modal`, `navigation`, `data-view`); each item is marked *verified* (a rule checks it) or *judged*. |
 | `fringe check --json` | Full report as JSON, schema `fringe/check.v1` (stack, files, findings, counts, score). |
 | `fringe check --claude-hook` | **For Claude Code hooks.** Silent when clean; on errors prints `{"decision":"block","reason":…}` (exit 0) so the agent sees and fixes them. |
 | `fringe check --hook` | One-line `fringe/hook.v1` JSON for CI / pre-commit. Exits `1` on errors. Claude Code does **not** feed this back — use `--claude-hook` for agents. Wins over `--json`. |
@@ -157,6 +158,12 @@ Severity `error` fails the run; `review` and `signal` are heuristics that need a
 | FR-213 | review | | dark pattern — infinite scroll without opt-out |
 | FR-214 | review | | dark pattern — bait-and-switch ("free", then a price) pricing |
 | FR-215 | review | | generic error copy ("something went wrong") with no recovery action — no retry, link, or contact |
+| FR-216 | review | | form basics — email/phone field with the wrong `type`, password field with no `autocomplete` |
+| FR-217 | review | | link text that says nothing out of context ("click here"), `href="#"` / `javascript:` links |
+| FR-218 | review | 3.1.1 · 2.4.2 · 1.4.4 | full HTML documents: no `lang`, no `<title>`, viewport that blocks pinch-zoom (fragments are skipped) |
+| FR-219 | review | | `@keyframes` animation in a stylesheet with no `prefers-reduced-motion` handling (judged per file) |
+| FR-220 | review | 1.4.2 | `<video>`/`<audio>` that autoplays with sound |
+| FR-221 | review | 1.4.13 | element that reacts to hover only (no focus, click or touch handler) |
 
 The dark-pattern taxonomy (FR-210–214) is adapted, with attribution, from [Design with Intent](https://designwithintent.ai)'s CC0 anti-pattern library.
 
@@ -180,6 +187,7 @@ The dark-pattern taxonomy (FR-210–214) is adapted, with attribution, from [Des
 | FR-367 | signal | | numbered section labels — "01 Discover" style kickers |
 | FR-368 | signal | | the purple AI gradient — violet/indigo Tailwind gradient or its CSS hex equivalent |
 | FR-369 | signal | | emoji in headings |
+| FR-222 | signal | | lorem ipsum / TODO / `[insert …]` text left in the UI |
 
 **FR-304 scope in v1:** contrast is checked only on CSS pairs — a `color` declaration and a `background-color` (or pure-color `background`) in the *same* CSS rule block. Tailwind utility classes in markup are not pair-checked, and translucent colors (alpha < 1) are skipped because contrast over an unknown backdrop is unknowable.
 

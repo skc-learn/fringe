@@ -28,6 +28,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | D-22 | Size-aware health score with soft decay | 2026-10-20 | 🔒 |
 | D-23 | Dashboard scope cut: minimal `fringe open` now, full dashboard later | 2026-10-20 | 🔒 / deferred |
 | D-24 | Flow evidence check; review/audit skills instead of levels | 2026-10-20 | 🔒 |
+| D-28 | UX best-practice rules (FR-216..222) start at review/signal and are validated on real repos first | 2026-10-21 | 🔒 |
 | D-27 | Priority is tier-first and published; guidance lives apart from rules | 2026-10-21 | 🔒 |
 | D-26 | Automated publishing via tag + npm trusted publishing | 2026-10-20 | 🔒 |
 | D-25 | Align with Ponytail's distribution: plugin, AGENTS.md, INSTALL.md, debt/help skills | 2026-10-20 | 🔒 |
@@ -159,6 +160,11 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 **Alternatives:** weighting by an opaque score (unexplainable); component-level root cause via a real import graph (deferred, base-name matching is a documented shortcut); auto-fixing (still out of scope, D-24 era decision).
 **Audience:** triage of existing repos first, agent mid-task second (receipts, v0.2.x).
 **Consequence:** measured in the messy-repo benchmark (2 runs/arm): plans and recipes did **not** change fix quality (all arms chose aria-label under a "keep the design" prompt) and the Fringe arms cost ~70-75% more than plain for one fewer remaining error. So `plan`/`explain` are justified as tools for humans triaging repos and for explaining findings, not as proven agent boosters. See [benchmarks/README.md](../benchmarks/README.md).
+
+### D-28 — UX best-practice rules and component playbooks
+**Context:** the benchmarks showed agents already handle the basic accessibility errors; the remaining value is in broader UX practice that source can show (forms, links, page basics, motion, media, hover-only UI) and in telling the agent the practice *before* it builds.
+**Decision:** seven rules FR-216..222, all `review` (FR-222 `signal`): never `error` until real use shows precision. Before shipping, each was run on six real projects; that run exposed one false positive (a search box whose placeholder mentions "phone" read as a phone field), fixed with a regression test. FR-218 only judges full HTML documents (parse5 invents `<html>` for fragments, which would flag every template). FR-219 is judged per file because a global stylesheet elsewhere may already honour reduced motion. `fringe explain pattern <form|modal|navigation|data-view>` gives build-time checklists whose items name the rules that verify them or are marked *judged*; a test requires every named rule to exist.
+**Consequence:** 36 rules (error 8 / review 13 / signal 15). Honest limit: these checks overlap with Lighthouse and jsx-a11y; Fringe's addition is the agent loop, priority order and recipes, not the checks themselves.
 
 ---
 

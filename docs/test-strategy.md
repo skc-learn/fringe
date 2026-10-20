@@ -1,6 +1,6 @@
 # Fringe — Test Strategy & Test-Case Catalog
 
-**Version:** 1.0 (v0.1: 39 test files, 309 tests, all green) · **Date:** 2026-10-20
+**Version:** 1.0 (v0.1: 40 test files, 328 tests, all green) · **Date:** 2026-10-20
 
 ## 1. Philosophy
 
@@ -52,6 +52,13 @@ Standard pattern for every rule row below: pass fixture → **0 findings**; fail
 | FR-213 infinite scroll | review | pass (Load more) / fail (auto-load marker) | opt-out suppression |
 | FR-214 drip pricing | review | pass ($9/mo) / fail ("Free! then $29") | — |
 | FR-215 error copy | review | pass (specific copy + Try again) / fail ("Something went wrong") | marker gate; all recovery escape words |
+| FR-216 form basics | review | pass/fail `.tsx` | phone typed as text; checkbox and dynamic `type` ignored; **search box mentioning phone is not a phone field** (found on real code) |
+| FR-217 links | review | pass/fail `.tsx` | vague text with aria-label passes |
+| FR-218 page basics | review | inline HTML tests | missing lang/title/zoom-blocking viewport; complete document and HTML fragments silent; JSX root layout checked |
+| FR-219 reduced motion | review | inline CSS tests | keyframes without/with `prefers-reduced-motion`; plain transitions ignored |
+| FR-220 autoplay | review | pass/fail `.tsx` | — |
+| FR-221 hover-only | review | pass/fail `.tsx` | — |
+| FR-222 filler text | signal | pass/fail `.tsx` | TODO in a placeholder flags; code comments do not |
 | FR-301 tokens | signal | pass (palette classes) / fail (4× hex utilities) | exactly-3 boundary; `--color-*` **definitions not counted** (regression); var(--) counting |
 | FR-302 type scale | signal | pass (text-base) / fail (text-[17px]) | `text-[#hex]`/`text-[color:var()]` excluded (regression); responsive variants |
 | FR-303 spacing | signal | pass (p-4) / fail (p-[13px] gap-[9px] → 2 findings) | longest-alternation matching; w-full/h-screen negatives |

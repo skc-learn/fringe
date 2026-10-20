@@ -9,6 +9,7 @@ Command: use `fringe` if it is on the PATH, otherwise `npx -y @fringetools/cli` 
 
 Ponytail trims your code. Fringe handles your edges. Work the ladder in order.
 
+0. **Building a form, modal, navigation or data view?** Run `fringe explain pattern <form|modal|navigation|data-view>` first: a short best-practice checklist, each item marked verified (Fringe checks it) or judged (you decide and say why).
 1. **Flow (judged).** Before building, ask what the user can skip. Cut steps, screens or options nobody needs. Write each decision with its evidence to `.fringe/manifest.json`: `{"flows":[{"action":"cut"|"kept","what":"...","evidence":"..."}]}`. No evidence, no cut.
 2. **Edges (verified, gates).** After every edit the hook runs `fringe check --claude-hook` and feeds errors back to you. Fix every listed finding. If there is no hook, run `fringe check --hook` yourself from the project root and do not finish while `block` is `true`.
    On a repo with many existing findings, run `fringe plan` and work it batch by batch (shared components first, since one fix clears many uses), re-running `fringe check` after each batch. `fringe explain <rule>` gives the recipe and what to avoid.

@@ -38,7 +38,8 @@ One package does everything today: `packages/cli`. The dashboard (Plan 3) and sk
 | `src/parse/css.ts` | PostCSS → `CssDecl[]` (nearest-ancestor selector; at-rules inherit) | `parseCss(file, source)` |
 | `src/color.ts` | Pure WCAG math: `parseColor` (hex/rgb()/rgba()/hsl()/hsla(); null when unparseable), `relativeLuminance`, `contrastRatio` | — |
 | `src/tokens.ts` | Gather project token colors per `tokenSource` kind (custom-property values / W3C `$value` walk) | `gatherTokenColors(root, cfg, cssSources)` |
-| `src/rules/*` | 29 pure rules (one file per rule) + `registry.ts` (`ALL_RULES`, `activeRules(cfg)` with disable filter) | `Rule` objects |
+| `src/patterns.ts` | Component checklists for `fringe explain pattern`; items name the rules that verify them | `PATTERNS`, `renderPatterns` |
+| `src/rules/*` | 36 pure rules (one file per rule) + `registry.ts` (`ALL_RULES`, `activeRules(cfg)` with disable filter) | `Rule` objects |
 | `src/check.ts` | Orchestration: detect → walk → parse+rule per file (two-phase: CSS sources collected for token gathering) → `CheckResult` | `runCheck(root, cfg)` |
 | `src/score.ts` | `max(0, 100 − weighted findings)` | `score(counts, weights)` |
 | `src/baseline.ts` | `fringe.baseline.json` read/write; multiset match on rule+file+message | `writeBaseline`, `applyBaseline` |
@@ -79,7 +80,7 @@ runCheck(root)
 
 ## 4. Intermediate representation
 
-Rules are pure functions over a deliberately narrow IR — this is what keeps 29 rules independently testable and the maintenance burden flat:
+Rules are pure functions over a deliberately narrow IR — this is what keeps 36 rules independently testable and the maintenance burden flat:
 
 ```ts
 Elem     { tag, attrs: Record<string,string>, text, loc, parentTag?, parentClass? }
@@ -96,8 +97,8 @@ Conventions that matter: attribute values as written (`className` in JSX, `class
 | Severity | Count | Gates (exit code / hook block)? | Examples |
 |---|---|---|---|
 | `error` | 8 | **Yes** | FR-201 alt, FR-205 focus, FR-206 onClick-div |
-| `review` | 7 | No | FR-208 states heuristic, FR-210…215 |
-| `signal` | 14 | No | FR-301 tokens, FR-361…369 slop |
+| `review` | 13 | No | FR-208 states heuristic, FR-210…215 |
+| `signal` | 15 | No | FR-301 tokens, FR-361…369 slop |
 
 Health: penalty = `(10·e + 3·r + 1·s) × 10 / max(files, 10)` (weights in config); score = `100 − penalty` up to a penalty of 75, then decays as `25·75/penalty` so big repos never pin at 0. Repos under 10 files score exactly as before. The score is **calibrated**, not arbitrary: three committed fixture apps pin the bands (clean 100/zero findings, reference 34 in 25–40, slop 82 in 75–85) — any weight or rule change that moves a band outside tolerance fails CI (`.github/workflows/ci.yml` runs `pnpm test`).
 

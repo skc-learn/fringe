@@ -11,7 +11,7 @@ const mk = (files: Record<string, string>) => {
   return d;
 };
 const run = async (args: string[]) => { const out: string[] = []; const err: string[] = []; const code = await runCli(args, { log: (s) => out.push(s), err: (s) => err.push(s) }); return { code, out: out.join('\n'), err: err.join('') }; };
-const IMG = '<html><body><img src="a.png"></body></html>';
+const IMG = '<html lang="en"><head><title>t</title></head><body><img src="a.png"></body></html>';
 
 describe('baseline', () => {
   afterEach(() => { while (dirs.length) rmSync(dirs.pop()!, { recursive: true, force: true }); });

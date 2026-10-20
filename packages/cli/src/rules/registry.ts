@@ -14,6 +14,13 @@ import { fr212 } from './fr212.js';
 import { fr213 } from './fr213.js';
 import { fr214 } from './fr214.js';
 import { fr215 } from './fr215.js';
+import { fr216 } from './fr216.js';
+import { fr217 } from './fr217.js';
+import { fr218 } from './fr218.js';
+import { fr219 } from './fr219.js';
+import { fr220 } from './fr220.js';
+import { fr221 } from './fr221.js';
+import { fr222 } from './fr222.js';
 import { fr301 } from './fr301.js';
 import { fr302 } from './fr302.js';
 import { fr303 } from './fr303.js';
@@ -31,7 +38,7 @@ import { fr369 } from './fr369.js';
 
 export const ALL_RULES: Rule[] = [];
 
-ALL_RULES.push(fr201, fr202, fr203, fr204, fr205, fr206, fr207, fr208, fr209, fr210, fr211, fr212, fr213, fr214, fr215, fr301, fr302, fr303, fr304, fr305, fr361, fr362, fr363, fr364, fr366, fr365, fr367, fr368, fr369);
+ALL_RULES.push(fr201, fr202, fr203, fr204, fr205, fr206, fr207, fr208, fr209, fr210, fr211, fr212, fr213, fr214, fr215, fr216, fr217, fr218, fr219, fr220, fr221, fr222, fr301, fr302, fr303, fr304, fr305, fr361, fr362, fr363, fr364, fr366, fr365, fr367, fr368, fr369);
 
 export function activeRules(cfg: FringeConfig): Rule[] {
   return ALL_RULES.filter((r) => !cfg.disable.includes(r.id));

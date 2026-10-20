@@ -82,13 +82,13 @@ Errors make the command exit `1` (so CI fails too). Everything else is advice an
 
 > Installed as a plugin, the names are namespaced: `/fringe:fringe-review`. The review and audit skills run the checker, so Claude Code asks you to approve that command once.
 
-**29 rules in three tiers**, each with a fix hint and (for accessibility) its WCAG criterion:
+**36 rules in three tiers**, each with a fix hint and (for accessibility) its WCAG criterion:
 
 | Tier | Gates? | Examples |
 |---|---|---|
 | **Edges** (`error`) | **Yes** | missing `alt`, unnamed buttons, unlabeled inputs, skipped headings, removed focus rings, `onClick` on a `<div>`, invalid `aria-*` |
-| **Judgment** (`review`) | No | data fetching with no loading/error state, dark patterns (fake countdowns, pre-checked consent, confirm-shaming, infinite scroll, drip pricing), "Something went wrong" with no next step |
-| **Polish** (`signal`) | No | hardcoded colors vs your design tokens, off-scale spacing/type, low contrast, tiny tap targets, the "AI look" (purple gradient, italic serif hero, card-in-card, emoji headings) |
+| **Judgment** (`review`) | No | data fetching with no loading/error state, dark patterns (fake countdowns, pre-checked consent, confirm-shaming, infinite scroll, drip pricing), "Something went wrong" with no next step, form basics (wrong input type, no autocomplete), "click here" and `href="#"` links, missing page `lang`/`title` or a viewport that blocks zoom, animation with no reduced-motion handling, autoplaying sound, hover-only interactions |
+| **Polish** (`signal`) | No | lorem ipsum / TODO text left in the UI, hardcoded colors vs your design tokens, off-scale spacing/type, low contrast, tiny tap targets, the "AI look" (purple gradient, italic serif hero, card-in-card, emoji headings) |
 
 Full rule table: **[CLI reference](packages/cli/README.md#rules)**.
 

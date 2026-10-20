@@ -4,8 +4,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { runCli } from '../src/index.js';
+import { ALL_RULES } from '../src/rules/registry.js';
 
-const FAILING_HTML = '<html><body><img src="hero.png"></body></html>';
+const FAILING_HTML = '<html lang="en"><head><title>t</title></head><body><img src="hero.png"></body></html>';
 
 const dirs: string[] = [];
 /** Temp dir with the given relative-path -> content files. */
@@ -113,7 +114,7 @@ describe('explain and single-file check', () => {
     expect(out.join('\n')).toMatch(/Why:[\s\S]*Fix:[\s\S]*Avoid:/);
     const all: string[] = [];
     await runCli(['explain'], { log: (s) => all.push(s) });
-    expect(all.join('\n').split('\n').length).toBe(29);
+    expect(all.join('\n').split('\n').length).toBe(ALL_RULES.length);
     expect(await runCli(['explain', 'FR-999'], { log: () => {}, err: () => {} })).toBe(2);
   });
   it('checks one file but still finds the project root', async () => {
