@@ -28,6 +28,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | D-22 | Size-aware health score with soft decay | 2026-10-20 | 🔒 |
 | D-23 | Dashboard scope cut: minimal `fringe open` now, full dashboard later | 2026-10-20 | 🔒 / deferred |
 | D-24 | Flow evidence check; review/audit skills instead of levels | 2026-10-20 | 🔒 |
+| D-26 | Automated publishing via tag + npm trusted publishing | 2026-10-20 | 🔒 |
 | D-25 | Align with Ponytail's distribution: plugin, AGENTS.md, INSTALL.md, debt/help skills | 2026-10-20 | 🔒 |
 
 ---
@@ -146,6 +147,10 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 **Adopted:** Claude Code plugin + marketplace (one-step install, skills namespaced `/fringe:…`); root `AGENTS.md`; `INSTALL.md`; `fringe-debt` (our debt = suppressions + baseline) and `fringe-help`; skills in one folder-per-skill source shared by plugin, npm package and `init`.
 **Deliberately not adopted:** intensity levels (baseline + severity tiers cover it, D-24); `-gain` (it reports benchmark savings, and Fringe has no benchmark to cite — a ledger trend view is the honest analogue, already on the roadmap); a status band; ~20 per-agent adapter files (AGENTS.md covers them until demand shows otherwise).
 **Open gap:** Ponytail backs its claims with a published benchmark (39 tasks, 5 runs each). Fringe has three real-agent trials and a six-repo dogfood; a small published benchmark is the credibility step still missing.
+
+### D-26 — Automated publishing
+**Decision:** a `v*` tag triggers `.github/workflows/publish.yml`: tag-vs-version check, tests, `npm publish --provenance` via npm trusted publishing (GitHub OIDC), then a GitHub Release with generated notes. **Alternatives:** an `NPM_TOKEN` secret (a long-lived credential; npm is restricting bypass-2FA tokens); manual publish (needs a human authenticator code every release — what we had).
+**Consequence:** no secret to leak or expire; releases are reproducible and carry provenance. Requires the one-time Trusted Publisher setting on npmjs.com.
 
 ---
 
