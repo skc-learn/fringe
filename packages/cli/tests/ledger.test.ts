@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mkdtempSync, writeFileSync, mkdirSync, appendFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, mkdirSync, appendFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { appendRecord, readLedger } from '../src/ledger.js';
@@ -56,6 +56,19 @@ describe('runCli --record', () => {
     await runCli(['check', '--record', '--manifest', m], { cwd: d, log: () => {} });
     const { records } = readLedger(d);
     expect(records[0].manifest?.flows).toEqual([{ action: 'cut', what: 'hero carousel', evidence: 'FR-203 findings 2,5' }]);
+  });
+  it('records tokenSource kind when fringe.config.json declares one', async () => {
+    const d = mkdtempSync(join(tmpdir(), 'fringe-rec-'));
+    writeFileSync(join(d, 'fringe.config.json'), JSON.stringify({ tokenSource: { kind: 'css-vars' } }));
+    await runCli(['check', '--record'], { cwd: d, log: () => {} });
+    const { records } = readLedger(d);
+    expect(records[0].tokenSource).toBe('css-vars');
+  });
+  it('omits tokenSource entirely when no config declares one', async () => {
+    const d = mkdtempSync(join(tmpdir(), 'fringe-rec-'));
+    await runCli(['check', '--record'], { cwd: d, log: () => {} });
+    const raw = readFileSync(join(d, '.fringe', 'ledger.jsonl'), 'utf8');
+    expect(raw).not.toContain('tokenSource');
   });
   it('warns to stderr and continues when manifest is missing', async () => {
     const d = mkdtempSync(join(tmpdir(), 'fringe-rec-'));

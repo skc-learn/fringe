@@ -11,6 +11,13 @@ import { score } from './score.js';
 import { gatherTokenColors } from './tokens.js';
 
 export async function runCheck(root: string, cfg: FringeConfig = loadConfig(root)): Promise<CheckResult> {
+  // Two-phase by design: walk+parse everything first, then run rules over the contexts.
+  // ACCEPTED DEVIATION (memory profile): every RuleContext — including its full source
+  // string — is retained until the run completes, because the token gather needs all CSS
+  // sources before any rule runs. On very large roots this holds the whole corpus in
+  // memory. The tracked follow-up is a restructure to a pre-pass CSS read (one walk for
+  // CSS/tokens, then a streaming per-file rule pass) so contexts can be dropped as they
+  // are checked. Behavior is unchanged by this note.
   const stack = detectStack(root);
   const files = walk(root, cfg);
   const rules = activeRules(cfg);

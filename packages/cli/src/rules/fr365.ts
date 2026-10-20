@@ -1,7 +1,9 @@
 import type { Rule } from '../types.js';
 
-/** Thin border utility as its own token — border or border-<width digit>. */
-const THIN_BORDER = /(?:^|\s)border(?:-\d)?\b/;
+/** Thin border utility as its own token — border or border-<1-9>. border-0 removes the
+ *  border entirely, so it is excluded. The (?!-0\b) guard is required: \b alone still
+ *  matches between "border" and "-0", which would let the bare-border path re-admit it. */
+const THIN_BORDER = /(?:^|\s)border(?!-0\b)(?:-[1-9])?\b/;
 
 /** Wide shadow utilities. */
 const WIDE_SHADOW = /\bshadow-(?:xl|2xl)\b/;

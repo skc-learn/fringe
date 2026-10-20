@@ -48,7 +48,7 @@ An unknown command also exits `2` with a usage hint.
 
 ## Rules
 
-Severity `error` fails the run; `review` and `signal` are heuristics that need a human look (they never change the exit code). The **WCAG** column cites the 2.1 criterion a finding is tagged with, when one applies.
+Severity `error` fails the run; `review` and `signal` are heuristics that need a human look (they never change the exit code). The **WCAG** column cites the WCAG success criterion a finding is tagged with, when one applies.
 
 ### Rung 2 — structural (a11y, interaction, dark patterns)
 
@@ -74,7 +74,7 @@ The dark-pattern taxonomy (FR-210–214) is adapted, with attribution, from [Des
 
 ### Rung 3 — token adoption & slop signals
 
-`signal` findings feed the health score but never gate. FR-301 counts, FR-364/366, and FR-368's CSS leg are file-level; the rest are per element/utility.
+`signal` findings feed the health score but never gate. FR-301 counts and FR-364/366 are file-level; FR-368's CSS leg is per-declaration; the rest are per element/utility.
 
 | Rule | Severity | WCAG | Flags |
 |---|---|---|---|

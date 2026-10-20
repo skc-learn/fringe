@@ -79,7 +79,11 @@ describe('FR-365 thin border with wide shadow', () => {
   it('accepts border-2/border-4 weights and shadow-xl', () => {
     expect(fr365.check(ctxOf('a.tsx', 'export default () => <div className="border-2 shadow-2xl">x</div>;')).length).toBe(1);
     expect(fr365.check(ctxOf('a.tsx', 'export default () => <div className="border-4 shadow-xl">x</div>;')).length).toBe(1);
-    expect(fr365.check(ctxOf('a.tsx', 'export default () => <div className="shadow-xl border-0">x</div>;')).length).toBe(1);
+  });
+
+  it('does not flag border-0 — it removes the border rather than thinning it', () => {
+    expect(fr365.check(ctxOf('a.tsx', 'export default () => <div className="border-0 shadow-xl">x</div>;'))).toEqual([]);
+    expect(fr365.check(ctxOf('a.tsx', 'export default () => <div className="shadow-2xl border-0">x</div>;'))).toEqual([]);
   });
 
   it('requires the border utility as its own token and a wide shadow', () => {

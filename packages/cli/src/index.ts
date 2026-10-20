@@ -8,6 +8,7 @@ import { toHook } from './report/hook.js';
 import { toPretty } from './report/pretty.js';
 import { appendRecord } from './ledger.js';
 import type { LedgerRecord } from './ledger.js';
+import { loadConfig } from './config.js';
 
 export interface CliOpts { log?: (s: string) => void; cwd?: string; err?: (s: string) => void }
 const log = (o: CliOpts) => o.log ?? ((s: string) => console.log(s));
@@ -50,7 +51,9 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
       const cwd = opts.cwd ?? process.cwd();
       // First path is the check root (config + scan); extra paths accepted so agent-invoked runs never crash.
       const root = paths.length > 0 ? resolve(cwd, paths[0]) : cwd;
-      const result = await runCheck(root);
+      // Loaded once here and passed through, so the --record path can cite the same config.
+      const cfg = loadConfig(root);
+      const result = await runCheck(root, cfg);
       if (rest.includes('--hook')) log(opts)(toHook(result));
       else if (rest.includes('--json')) log(opts)(toJson(result));
       else log(opts)(toPretty(result));
@@ -62,6 +65,7 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
           files: result.files,
           counts: result.counts,
           score: result.score,
+          tokenSource: cfg.tokenSource?.kind,
         };
         const mIdx = rest.indexOf('--manifest');
         if (mIdx !== -1 && rest[mIdx + 1] !== undefined) rec.manifest = readManifest(rest[mIdx + 1], err(opts));

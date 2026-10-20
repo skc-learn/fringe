@@ -1,7 +1,8 @@
 import type { Rule } from '../types.js';
 
-/** Tailwind arbitrary font-size utilities, e.g. text-[17px] — sizes off the type scale. */
-const ARBITRARY_SIZE = /\btext-\[[^\]]+\]/g;
+/** Tailwind arbitrary font-size utilities, e.g. text-[17px] — sizes off the type scale.
+ *  Arbitrary text COLORS (text-[#333333], text-[color:var(--x)]) are excluded: not font sizes. */
+const ARBITRARY_SIZE = /\btext-\[(?!#|color:)[^\]]+\]/g;
 
 /** FR-302 off-scale font sizes — one signal per arbitrary text size on an element. */
 export const fr302: Rule = {

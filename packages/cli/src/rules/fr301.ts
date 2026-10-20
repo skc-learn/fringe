@@ -7,7 +7,8 @@ const ARBITRARY_TW = /\b(?:bg|text|border|from|to|via|ring|fill|stroke)-\[#[0-9a
 /** Tailwind palette utilities, e.g. bg-slate-900 — the sanctioned color scale. */
 const PALETTE_TW = /\b(?:bg|text|border|from|to|via|ring|fill|stroke)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}\b/g;
 
-/** CSS properties that set a color; values must still parse as a pure color. */
+/** CSS properties that set a color; values must still parse as a pure color.
+ *  Custom properties (--color-*, etc.) are token DEFINITIONS, not hardcoded uses — excluded. */
 const COLOR_PROP = /color|^background$|border/;
 
 const count = (source: string, re: RegExp): number => (source.match(re) ?? []).length;
@@ -21,7 +22,7 @@ export const fr301: Rule = {
   check: (ctx) => {
     const hardcoded =
       count(ctx.source, ARBITRARY_TW) +
-      ctx.css.filter((d) => COLOR_PROP.test(d.prop) && parseColor(d.value) !== null).length;
+      ctx.css.filter((d) => !d.prop.startsWith('--') && COLOR_PROP.test(d.prop) && parseColor(d.value) !== null).length;
     const tokenUses =
       count(ctx.source, /var\(--/g) +
       count(ctx.source, PALETTE_TW);

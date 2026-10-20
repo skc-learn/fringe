@@ -171,6 +171,30 @@ describe('FR-301 token adoption', () => {
     expect(fr301.check(ctx)).toEqual([]);
   });
 
+  it('does not count custom-property definitions as hardcoded colors', () => {
+    const src = 'export default () => <div className="bg-[#111111] text-[#222222] border-[#333333] ring-[#444444]">x</div>;';
+    const css = parseCss('tokens.css', ':root { --color-primary: #0b5fff }');
+    const ctx = { ...ctxWithTokens('a.tsx', src, []), css };
+    const out = fr301.check(ctx);
+    expect(out.length).toBe(1);
+    expect(out[0].message).toBe('4 hardcoded colors vs 0 token uses in this file');
+  });
+
+  it('keeps a css-vars token sheet clean — --color-* defs are tokens, not hardcoded colors', () => {
+    const css = parseCss('tokens.css', [
+      ':root {',
+      '  --color-primary: #0b5fff;',
+      '  --color-ink: #111827;',
+      '  --color-muted: #6b7280;',
+      '  --color-line: #e5e7eb;',
+      '  --color-accent: #22c55e;',
+      '}',
+    ].join('\n'));
+    const source = '.a { color: var(--color-ink) } .b { border-color: var(--color-line) } .c { color: var(--color-muted) } .d { background: var(--color-primary) }';
+    const ctx: RuleContext = { file: 'tokens.css', source, elems: [], css, tokenColors: [] };
+    expect(fr301.check(ctx)).toEqual([]);
+  });
+
   it('counts var(--) occurrences as token uses', () => {
     const src = 'export default () => <div className="bg-[#111111] text-[#222222] border-[#333333] ring-[#444444]" style={{ color: "var(--fg)", background: "var(--bg)", borderColor: "var(--bd)", outlineColor: "var(--ol)" }}>x</div>;';
     expect(fr301.check(ctxWithTokens('a.tsx', src, ['#111111']))).toEqual([]);
@@ -222,6 +246,12 @@ describe('FR-302 off-scale font size', () => {
     const out = fr302.check(ctxOf('a.tsx', 'export default () => <p class="text-[17px]">Hi</p>;'));
     expect(out.length).toBe(1);
     expect(out[0].message).toBe('font size off the type scale: text-[17px]');
+  });
+
+  it('does not flag arbitrary text COLOR utilities — they are not font sizes', () => {
+    expect(fr302.check(ctxOf('a.tsx', 'export default () => <p className="text-[#333333]">Hi</p>;'))).toEqual([]);
+    expect(fr302.check(ctxOf('a.tsx', 'export default () => <p className="text-[color:var(--brand)]">Hi</p>;'))).toEqual([]);
+    expect(fr302.check(ctxOf('a.tsx', 'export default () => <p className="text-[17px]">Hi</p>;')).length).toBe(1);
   });
 });
 
