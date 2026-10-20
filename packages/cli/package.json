@@ -37,5 +37,8 @@
     "ux",
     "ai-agents",
     "claude-code"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }
