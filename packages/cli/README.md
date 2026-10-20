@@ -48,26 +48,52 @@ An unknown command also exits `2` with a usage hint.
 
 ## Rules
 
-Rung-2 (structural) checks. Severity `error` fails the run; `review` is a heuristic that needs a human look.
+Severity `error` fails the run; `review` and `signal` are heuristics that need a human look (they never change the exit code). The **WCAG** column cites the 2.1 criterion a finding is tagged with, when one applies.
 
-| Rule | Severity | Flags |
-|---|---|---|
-| FR-201 | error | `<img>` missing `alt` |
-| FR-202 | error | button/link without an accessible name |
-| FR-203 | error | form input without associated label |
-| FR-204 | error | heading level skips, multiple `<h1>` |
-| FR-205 | error | `outline: none` with no `:focus-visible` alternative |
-| FR-206 | error | `onClick` on a non-interactive element |
-| FR-207 | error | `tabIndex` > 0 |
-| FR-208 | review | states coverage heuristic — data-fetch present (fetch/useQuery/useSWR) but no loading/empty/error branch |
-| FR-209 | error | invalid/misspelled `aria-*` attributes |
-| FR-210 | review | dark pattern — fake countdown timer / manufactured urgency |
-| FR-211 | review | dark pattern — pre-checked consent checkbox |
-| FR-212 | review | dark pattern — confirm-shaming copy |
-| FR-213 | review | dark pattern — infinite scroll without opt-out |
-| FR-214 | review | dark pattern — bait-and-switch ("free", then a price) pricing |
+### Rung 2 — structural (a11y, interaction, dark patterns)
+
+| Rule | Severity | WCAG | Flags |
+|---|---|---|---|
+| FR-201 | error | 1.1.1 | `<img>` missing `alt` |
+| FR-202 | error | 4.1.2 | button/link without an accessible name |
+| FR-203 | error | 3.3.2 | form input without associated label |
+| FR-204 | error | 1.3.1 | heading level skips, multiple `<h1>` |
+| FR-205 | error | 2.4.7 | `outline: none` with no `:focus-visible` alternative |
+| FR-206 | error | 2.1.1 | `onClick` on a non-interactive element |
+| FR-207 | error | 2.4.3 | `tabIndex` > 0 |
+| FR-208 | review | | states coverage heuristic — data-fetch present (fetch/useQuery/useSWR) but no loading/empty/error branch |
+| FR-209 | error | 4.1.2 | invalid/misspelled `aria-*` attributes |
+| FR-210 | review | | dark pattern — fake countdown timer / manufactured urgency |
+| FR-211 | review | | dark pattern — pre-checked consent checkbox |
+| FR-212 | review | | dark pattern — confirm-shaming copy |
+| FR-213 | review | | dark pattern — infinite scroll without opt-out |
+| FR-214 | review | | dark pattern — bait-and-switch ("free", then a price) pricing |
+| FR-215 | review | | generic error copy ("something went wrong") with no recovery action — no retry, link, or contact |
 
 The dark-pattern taxonomy (FR-210–214) is adapted, with attribution, from [Design with Intent](https://designwithintent.ai)'s CC0 anti-pattern library.
+
+### Rung 3 — token adoption & slop signals
+
+`signal` findings feed the health score but never gate. FR-301 counts, FR-364/366, and FR-368's CSS leg are file-level; the rest are per element/utility.
+
+| Rule | Severity | WCAG | Flags |
+|---|---|---|---|
+| FR-301 | signal | | token adoption — file is dominated by hardcoded colors (Tailwind `bg-[#hex]` / CSS color declarations) over token uses (`var(--*)`, palette utilities) |
+| FR-302 | signal | | off-scale font sizes — arbitrary `text-[17px]` utilities instead of the type scale |
+| FR-303 | signal | | off-scale spacing/dimensions — arbitrary `p-[13px]` / `w-[111px]` style utilities |
+| FR-304 | signal | 1.4.3 | contrast — CSS `color` on `background-color` pairs below AA 4.5:1 |
+| FR-305 | signal | 2.5.8 | tiny hit area — `text-xs` button/link without `py-2`+ padding |
+| FR-361 | signal | | italic serif display type — the AI-tell headline |
+| FR-362 | signal | | hero eyebrow chip — uppercase, wide-tracked pill above a heading |
+| FR-363 | signal | | card inside a card — nested rounded/shadowed boxes |
+| FR-364 | signal | | icon-tile stack — three or more empty flex tiles in a file |
+| FR-365 | signal | | thin border with wide shadow — elevation not matched to weight |
+| FR-366 | signal | | status-chip soup — five or more labeled pills in a file |
+| FR-367 | signal | | numbered section labels — "01 Discover" style kickers |
+| FR-368 | signal | | the purple AI gradient — violet/indigo Tailwind gradient or its CSS hex equivalent |
+| FR-369 | signal | | emoji in headings |
+
+**FR-304 scope in v1:** contrast is checked only on CSS pairs — a `color` declaration and a `background-color` (or pure-color `background`) in the *same* CSS rule block. Tailwind utility classes in markup are not pair-checked, and translucent colors (alpha < 1) are skipped because contrast over an unknown backdrop is unknowable.
 
 ## Configuration — `fringe.config.json`
 
@@ -84,6 +110,38 @@ Optional, at the check root. Everything defaults sensibly; all keys are optional
 - `ignore` — glob list matched against paths relative to the root. **Use the `dir/**` form to skip a directory** — a bare-dir glob like `"dist"` matches only the directory entry itself and does **not** prune the files inside it. (`node_modules` and dot-directories are always skipped.)
 - `disable` — rule IDs to turn off.
 - `weights` — per-finding penalties subtracted from the 100-point health score (floor 0).
+- `tokenSource` — where your design-token colors live (see below). Optional; when unset, FR-301 hints simply report `0 colors found`.
+
+### Token sources
+
+`tokenSource` tells `fringe` where to read your palette so token-adoption findings (FR-301) can point at it. Three kinds are supported:
+
+| `kind` | Reads | Best for |
+|---|---|---|
+| `css-vars` | every `--*` custom-property declaration in your scanned CSS/SCSS whose value parses as a color | hand-rolled CSS variable sheets |
+| `theme-factory` | same `--*` collection as `css-vars`, kept as a distinct kind for framework theme sheets that compile to custom properties (e.g. Tailwind v4 `@theme { --color-*: ... }`) | framework theme files |
+| `design-tokens-json` | a recursive walk of a JSON token file collecting `$value` strings that parse as colors | W3C design-tokens-format files |
+
+Example — pointing at a tokens file:
+
+```json
+{
+  "tokenSource": { "kind": "design-tokens-json", "path": "tokens/colors.json" }
+}
+```
+
+with `tokens/colors.json` shaped like:
+
+```json
+{
+  "color": {
+    "bg": { "primary": { "$value": "#ffffff" } },
+    "text": { "primary": { "$value": "#0f172a" } }
+  }
+}
+```
+
+`path` is resolved relative to the check root (absolute paths work too). Gathered colors are deduped and reported in FR-301 hints (`tokenSource: 2 colors found`); an unreadable or malformed token file is not a crash — it just yields no tokens. `css-vars` and `theme-factory` need no `path`; they read the same CSS files the scan already covers.
 
 ## Wiring as a Claude Code hook
 
