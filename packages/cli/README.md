@@ -119,6 +119,8 @@ After each edit the hook runs; with errors it returns, for example:
 {"decision":"block","reason":"Fringe found 2 accessibility error(s). Fix them before finishing:\n- FR-203 src/Signup.tsx:9 — input not associated with a label (add id + <label htmlFor>, or aria-label)\n…"}
 ```
 
+The hook also keeps `.fringe/last.json` (the previous run's errors) and tells the agent what its **last edit broke**: "Your last edit introduced 1 new error(s) and fixed 2; 3 failing in total", with the new ones listed first and marked `NEW`. If that file is missing or unreadable it simply skips the comparison. It still blocks on every remaining error; on a legacy repo use the baseline so old debt is not nagged about.
+
 This was verified end to end with real agent runs: the agent receives the findings and fixes them (see [docs/architecture.md](../../docs/architecture.md)). Why `--claude-hook` and not `--hook`: Claude Code only passes a hook's output to the agent as `decision`/`reason` JSON on exit 0 (or stderr on exit 2); the CI contract `--hook` exits 1 and is ignored.
 
 **Skills** — `fringe init` installs five into `.claude/skills/` (sources in [skill/](skill/), one folder each); the Claude Code plugin ships the same folders, namespaced `/fringe:…`: `fringe` (below), `fringe-review` ("review this page": ranked, plain-English findings with fixes), `fringe-audit` (whole-repo plan: top rules and files, a fix order, offers `--update-baseline`), `fringe-debt` (lists `fringe-ignore` suppressions and the baseline) and `fringe-help` (quick reference). Invoke as `/fringe-review` etc. Reviews run `fringe check`, so Claude Code will ask you to approve that command once (or allow `Bash(fringe:*)` / `Bash(npx:*)`).

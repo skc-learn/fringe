@@ -11,6 +11,7 @@ import type { LedgerRecord } from './ledger.js';
 import { loadConfig } from './config.js';
 import { startBoard } from './board.js';
 import { writeBaseline } from './baseline.js';
+import { receipts } from './receipts.js';
 import { initProject } from './init.js';
 import { renderExplain } from './guidance.js';
 import { renderPatterns } from './patterns.js';
@@ -97,7 +98,7 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
       }
       const result = await runCheck(root, cfg, true, only);
       if (rest.includes('--claude-hook')) {
-        const out = toClaudeHook(result, root);
+        const out = toClaudeHook(result, root, receipts(root, result.findings));
         if (out) log(opts)(out);
         return 0; // Claude reads the JSON, not the exit code; a non-zero exit would be discarded
       }

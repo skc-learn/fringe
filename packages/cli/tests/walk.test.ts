@@ -39,10 +39,7 @@ describe('walk', () => {
   });
 });
 
-import { DEFAULT_CONFIG } from '../src/config.js';
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { rmSync } from 'node:fs';
 describe('default ignores', () => {
   it('skip nested build output (frontend/dist) as well as root dist', () => {
     const d = mkdtempSync(join(tmpdir(), 'fringe-walk-'));

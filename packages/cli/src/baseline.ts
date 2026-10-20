@@ -4,7 +4,7 @@ import type { Finding } from './types.js';
 
 const path = (root: string) => join(root, 'fringe.baseline.json');
 // Line numbers are left out of the key so edits above a known finding don't resurrect it.
-const keyOf = (root: string, f: Finding) => `${f.rule}|${relative(root, f.loc.file)}|${f.message}`;
+export const keyOf = (root: string, f: Finding) => `${f.rule}|${relative(root, f.loc.file)}|${f.message}`;
 
 export function writeBaseline(root: string, findings: Finding[]): void {
   writeFileSync(path(root), JSON.stringify(findings.map((f) => keyOf(root, f)).sort(), null, 2) + '\n');

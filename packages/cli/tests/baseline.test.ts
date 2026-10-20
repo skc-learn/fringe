@@ -85,3 +85,28 @@ describe('manifest evidence', () => {
     for (const n of ['fringe', 'fringe-review', 'fringe-audit', 'fringe-debt', 'fringe-help']) expect(existsSync(join(d, '.claude/skills', n, 'SKILL.md'))).toBe(true);
   });
 });
+
+describe('regression receipts in the Claude hook', () => {
+  afterEach(() => { while (dirs.length) rmSync(dirs.pop()!, { recursive: true, force: true }); });
+  const reason = async (d: string) => { const r = await run(['check', d, '--claude-hook']); return r.out ? (JSON.parse(r.out).reason as string) : ''; };
+  const bad = (n: string) => `<html lang="en"><head><title>t</title></head><body><img src="${n}.png"></body></html>`;
+  it('says what the last edit broke and fixed, stays silent when clean, and survives corrupt state', async () => {
+    const d = mk({ 'a.html': bad('a') });
+    const first = await reason(d);
+    expect(first).toContain('1 accessibility error');
+    expect(first).not.toContain('introduced');                 // nothing to compare with on the first run
+    writeFileSync(join(d, 'b.html'), bad('b'));                // the agent's edit breaks another file
+    const second = await reason(d);
+    expect(second).toMatch(/introduced 1 new error/);
+    expect(second).toMatch(/NEW FR-201 b\.html/);
+    expect(second.indexOf('NEW FR-201 b.html')).toBeLessThan(second.indexOf('- FR-201 a.html')); // new one listed first
+    writeFileSync(join(d, 'b.html'), '<html lang="en"><head><title>t</title></head><body><img src="b.png" alt=""></body></html>');
+    const third = await reason(d);
+    expect(third).toMatch(/introduced 0 new error\(s\) and fixed 1/);
+    writeFileSync(join(d, 'a.html'), '<html lang="en"><head><title>t</title></head><body><img src="a.png" alt="A"></body></html>');
+    expect(await reason(d)).toBe('');                          // all clean: silent
+    writeFileSync(join(d, '.fringe', 'last.json'), '{garbage');
+    writeFileSync(join(d, 'a.html'), bad('a'));
+    expect(await reason(d)).toContain('1 accessibility error'); // corrupt state: no comparison, no crash
+  });
+});

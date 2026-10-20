@@ -10,9 +10,9 @@ How Fringe grows from "a checker one person trusts" to "a tool a stranger instal
 4. **Small surface.** New rules, flags and skills must earn their place with a failing test and a real case (the benchmark and the dogfooding each found a false positive; that is the bar).
 5. **Honest claims.** Every number in the README has a method behind it, with its limits stated.
 
-## Where we are (v0.2.1)
+## Where we are (v0.2.2)
 
-Shipped in 0.2: `fringe plan` (priority order, clusters, shared components first), `fringe explain` and fix recipes (also inside the agent hook), single-file `check`, `critical` paths, nested build output ignored by default. Shipped before: 29 rules, size-aware health score, baseline, inline suppression, `init`, Claude Code plugin, five skills, `AGENTS.md`, minimal ledger page, automated releases, a 24-run benchmark. Known gaps: no regression receipts in the hook yet; no per-rule feedback loop; only Claude Code gets the live hook; the benchmark is small.
+Shipped in 0.2: `fringe plan` (priority order, clusters, shared components first), `fringe explain` and fix recipes (also inside the agent hook), single-file `check`, `critical` paths, nested build output ignored by default. Shipped before: 29 rules, size-aware health score, baseline, inline suppression, `init`, Claude Code plugin, five skills, `AGENTS.md`, minimal ledger page, automated releases, a 24-run benchmark. Known gaps: no per-rule feedback loop; only Claude Code gets the live hook; the benchmark is small.
 
 ## Stage 1: Easy to try, easy to trust (v0.1.x, now)
 
@@ -48,7 +48,7 @@ Shipped in 0.2: `fringe plan` (priority order, clusters, shared components first
 
 | Item | Why |
 |---|---|
-| Regression receipts in the hook ("your last edit introduced 1 new error") | Separates what the agent just did from pre-existing debt; state in `.fringe/last.json` |
+| ✅ Regression receipts in the hook ("your last edit introduced 1 new error") | Done in 0.2.2: separates what the agent just did from what was already failing; state in `.fringe/last.json`. Still blocks on all remaining errors (baseline handles legacy debt) |
 | ✅ Messy-repo benchmark (100+ findings) with and without `plan` + recipes | Done 2026-10-21: no fix-quality gain and ~70% more cost than a plain agent; claims limited accordingly. Repeat with a prompt that does not say "keep the design" and with more runs |
 | FR-216 advisory: input labelled only by `aria-label` | Only if the benchmark shows agents keep choosing the weaker pattern |
 
