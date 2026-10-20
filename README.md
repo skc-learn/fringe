@@ -37,7 +37,7 @@ Fringe encodes a ladder: **Flow** (cut what users don't need — agent-judged, w
 
 | | |
 |---|---|
-| **Published** | `@fringetools/cli@0.1.0` on npm — `npx @fringetools/cli init`. Source: [skc-learn/fringe](https://github.com/skc-learn/fringe). |
+| **Published** | `@fringetools/cli@0.1.1` on npm — `npx @fringetools/cli init`. Source: [skc-learn/fringe](https://github.com/skc-learn/fringe). |
 | **Shipped** | 29 rules, calibrated size-aware health score, pretty/JSON/CI-hook/Claude-hook outputs, `init`, baseline, inline suppression, ledger + manifests + token sources, `fringe open` ledger page, three agent skills (`/fringe-review`, `/fringe-audit`), stack auto-detection. Golden snapshots + three calibration apps; CI on every push. |
 | **Verified** | Agent loop run end to end with real Claude Code sessions (three tasks): errors reach the agent and get fixed. Checker dogfooded on six real projects; false positives found there are fixed. |
 | **Next** | Per-rule precision view (data already recorded), richer dashboard (`fringe board`), skill adapters for other agent platforms. See [PRD](docs/PRD.md) §7. |
