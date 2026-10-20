@@ -158,7 +158,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 **Decision:** `priority = tier (error 1000 / review 400 / signal 100) + WCAG level + critical path + blast radius`, adders summing under the tier gap so severity is never inverted (tested). Findings cluster by rule+file; a file imported by ≥ 3 others is a *shared component* and ranks into P0 of `fringe plan`. Guidance (why / recipe / avoid / example) sits in `src/guidance.ts`, not in the 29 rule files, so rules stay pure (D-09); a drift test requires an entry per rule. All new JSON fields are additive to `fringe/check.v1`; `fringe plan` has its own `fringe/plan.v1`.
 **Alternatives:** weighting by an opaque score (unexplainable); component-level root cause via a real import graph (deferred, base-name matching is a documented shortcut); auto-fixing (still out of scope, D-24 era decision).
 **Audience:** triage of existing repos first, agent mid-task second (receipts, v0.2.x).
-**Consequence:** the claim that plans and recipes help agents is *not yet measured*; the messy-repo benchmark is the gate before the README says so.
+**Consequence:** measured in the messy-repo benchmark (2 runs/arm): plans and recipes did **not** change fix quality (all arms chose aria-label under a "keep the design" prompt) and the Fringe arms cost ~70-75% more than plain for one fewer remaining error. So `plan`/`explain` are justified as tools for humans triaging repos and for explaining findings, not as proven agent boosters. See [benchmarks/README.md](../benchmarks/README.md).
 
 ---
 

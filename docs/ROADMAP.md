@@ -49,7 +49,7 @@ Shipped in 0.2: `fringe plan` (priority order, clusters, shared components first
 | Item | Why |
 |---|---|
 | Regression receipts in the hook ("your last edit introduced 1 new error") | Separates what the agent just did from pre-existing debt; state in `.fringe/last.json` |
-| Messy-repo benchmark (100+ findings) with and without `plan` + recipes | The gate for claiming plan helps; measures time-to-clean and fix quality (visible label vs aria-label) |
+| ✅ Messy-repo benchmark (100+ findings) with and without `plan` + recipes | Done 2026-10-21: no fix-quality gain and ~70% more cost than a plain agent; claims limited accordingly. Repeat with a prompt that does not say "keep the design" and with more runs |
 | FR-216 advisory: input labelled only by `aria-label` | Only if the benchmark shows agents keep choosing the weaker pattern |
 
 ## Stage 3: Works wherever you work (v0.3)
