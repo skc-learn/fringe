@@ -40,5 +40,14 @@
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/skc-learn/fringe.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/skc-learn/fringe#readme",
+  "bugs": {
+    "url": "https://github.com/skc-learn/fringe/issues"
   }
 }
