@@ -15,7 +15,7 @@ export interface LedgerRecord {
   suppressed?: number;
   tokenSource?: 'css-vars' | 'theme-factory' | 'design-tokens-json';
   shots?: string[];
-  manifest?: { flows: Array<{ action: 'cut' | 'kept'; what: string; evidence: string }> };
+  manifest?: { flows: Array<{ action: 'cut' | 'kept'; what: string; evidence: string; unsupported?: boolean }> };
 }
 
 export function ledgerPath(root: string): string {

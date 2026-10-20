@@ -4,7 +4,9 @@ import { fileURLToPath } from 'node:url';
 
 // npx runs a locally installed copy if there is one and downloads otherwise, so init needs no prior install.
 const HOOK = 'npx -y @fringetools/cli check --claude-hook';
-const SKILL = fileURLToPath(new URL('../skill/SKILL.md', import.meta.url));
+// Skill name -> shipped source file (packages/cli/skill/).
+const SKILLS: Record<string, string> = { fringe: 'SKILL.md', 'fringe-review': 'review.md', 'fringe-audit': 'audit.md' };
+const skillSrc = (file: string) => fileURLToPath(new URL(`../skill/${file}`, import.meta.url));
 
 /** Wires the PostToolUse gate and installs the skill. Never overwrites: invalid settings.json aborts, an existing hook is kept. */
 export function initProject(root: string): string[] {
@@ -23,12 +25,14 @@ export function initProject(root: string): string[] {
     writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n');
     done.push(`hook added to ${settingsPath}`);
   }
-  const skillPath = join(root, '.claude', 'skills', 'fringe', 'SKILL.md');
-  if (existsSync(skillPath)) done.push('skill already present');
-  else {
-    mkdirSync(dirname(skillPath), { recursive: true });
-    copyFileSync(SKILL, skillPath);
-    done.push(`skill installed at ${skillPath}`);
+  for (const [name, file] of Object.entries(SKILLS)) {
+    const skillPath = join(root, '.claude', 'skills', name, 'SKILL.md');
+    if (existsSync(skillPath)) done.push(`skill ${name} already present`);
+    else {
+      mkdirSync(dirname(skillPath), { recursive: true });
+      copyFileSync(skillSrc(file), skillPath);
+      done.push(`skill ${name} installed`);
+    }
   }
   return done;
 }

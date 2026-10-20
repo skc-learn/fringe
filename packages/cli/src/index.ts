@@ -24,9 +24,18 @@ function readManifest(path: string, warn: (s: string) => void): LedgerRecord['ma
   try {
     const parsed = JSON.parse(raw) as LedgerRecord['manifest'];
     if (!parsed || !Array.isArray(parsed.flows)) throw new Error('missing flows');
+    for (const f of parsed.flows) {
+      if (f.action === 'cut' && weakEvidence(f.evidence)) {
+        f.unsupported = true;
+        warn(`fringe: warning: cut '${f.what}' has no real evidence — recorded as unsupported\n`);
+      }
+    }
     return parsed;
   } catch { warn(`fringe: warning: manifest at ${path} is not valid '{ flows: [...] }' JSON — continuing without\n`); return undefined; }
 }
+
+/** A cut needs a reason a reviewer can check; empty or one-word filler does not count. */
+const weakEvidence = (e: unknown) => typeof e !== 'string' || e.trim().length < 12 || /^(n\/?a|none|tbd|obvious|unnecessary|clutter|unused)\.?$/i.test(e.trim());
 
 const HELP = `fringe check [--json] [--hook] [--record] [--manifest <path>] [path]
 fringe check --claude-hook [path]       for Claude Code hooks (feeds errors back to the agent)

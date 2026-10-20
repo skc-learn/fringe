@@ -5,6 +5,8 @@ description: Use when writing or changing frontend code (JSX/TSX, HTML, CSS, Vue
 
 # Fringe
 
+Command: use `fringe` if it is on the PATH, otherwise `npx -y @fringetools/cli` in its place (e.g. `npx -y @fringetools/cli check --json .`).
+
 Ponytail trims your code. Fringe handles your edges. Work the ladder in order.
 
 1. **Flow (judged).** Before building, ask what the user can skip. Cut steps, screens or options nobody needs. Write each decision with its evidence to `.fringe/manifest.json`: `{"flows":[{"action":"cut"|"kept","what":"...","evidence":"..."}]}`. No evidence, no cut.

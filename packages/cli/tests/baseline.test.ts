@@ -66,3 +66,22 @@ describe('inline suppression', () => {
     expect((await run(['check', other])).code).toBe(1); // wrong rule id does not silence
   });
 });
+
+describe('manifest evidence', () => {
+  afterEach(() => { while (dirs.length) rmSync(dirs.pop()!, { recursive: true, force: true }); });
+  it('flags a cut with vague or missing evidence as unsupported, keeps real evidence clean', async () => {
+    const m = { flows: [{ action: 'cut', what: 'export tab', evidence: '0 uses in analytics (90d)' }, { action: 'cut', what: 'footer', evidence: 'none' }, { action: 'kept', what: 'login', evidence: '' }] };
+    const d = mk({ 'a.html': '<html><body><p>ok</p></body></html>', 'm.json': JSON.stringify(m) });
+    const r = await run(['check', d, '--record', '--manifest', join(d, 'm.json')]);
+    expect(r.err).toContain("cut 'footer'");
+    expect(r.err).not.toContain('export tab');
+    expect(r.err).not.toContain('login');
+    const rec = JSON.parse(readFileSync(join(d, '.fringe', 'ledger.jsonl'), 'utf8').trim());
+    expect(rec.manifest.flows.map((f: any) => !!f.unsupported)).toEqual([false, true, false]);
+  });
+  it('init installs all three skills', async () => {
+    const d = mk({});
+    await run(['init', d]);
+    for (const n of ['fringe', 'fringe-review', 'fringe-audit']) expect(existsSync(join(d, '.claude/skills', n, 'SKILL.md'))).toBe(true);
+  });
+});

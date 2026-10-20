@@ -9,7 +9,7 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 export function renderBoard(records: LedgerRecord[], corrupt = 0): string {
   const rows = [...records].reverse().map((r) => {
     const flows = (r.manifest?.flows ?? [])
-      .map((f) => `<li>${esc(f.action)}: ${esc(f.what)} <small>(${esc(f.evidence)}) — judged</small></li>`).join('');
+      .map((f) => `<li>${esc(f.action)}: ${esc(f.what)} <small>(${esc(f.evidence)}) — judged${f.unsupported ? ', <b>no evidence</b>' : ''}</small></li>`).join('');
     return `<tr><td>${esc(r.ts)}</td><td>${r.score}</td><td>${r.counts.error}</td><td>${r.counts.review}</td><td>${r.counts.signal}</td>` +
       `<td>${r.files}</td><td>${r.suppressed ?? 0}</td><td>${flows ? `<ul>${flows}</ul>` : ''}</td></tr>`;
   }).join('');
