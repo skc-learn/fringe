@@ -1,0 +1,1 @@
+export default () => <><span className="rounded-full px-2 text-xs">beta</span><span className="rounded-full px-2 text-xs">new</span><span className="rounded-full px-2 text-xs">alpha</span><span className="rounded-full px-2 text-xs">draft</span><span className="rounded-full px-2 text-xs">live</span></>;

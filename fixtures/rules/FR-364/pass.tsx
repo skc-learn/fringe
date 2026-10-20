@@ -1,0 +1,1 @@
+export default () => <div className="rounded-xl bg-slate-100 p-4 flex items-center justify-center"></div>;
