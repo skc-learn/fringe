@@ -27,6 +27,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | D-21 | Inline suppression: rule IDs required, always counted | 2026-10-20 | 🔒 |
 | D-22 | Size-aware health score with soft decay | 2026-10-20 | 🔒 |
 | D-23 | Dashboard scope cut: minimal `fringe open` now, full dashboard later | 2026-10-20 | 🔒 / deferred |
+| D-24 | Flow evidence check; review/audit skills instead of levels | 2026-10-20 | 🔒 |
 
 ---
 
@@ -134,6 +135,10 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 ### D-23 — Dashboard scope
 **Decision:** ship `fringe open` as a dependency-free HTML page (loopback only, escaped output); defer the React dashboard, `fringe board`, and the ~20-platform adapter generator until real ledger data and real demand exist. The skill is plain Markdown that works on any platform reading skill/AGENTS files.
 **Supersedes:** D-17 for now (layout still approved, build deferred).
+
+### D-24 — Review/audit skills; evidence check; no levels
+**Decision:** add `fringe-review` and `fringe-audit` (Markdown only, built on `check --json`) rather than strictness levels — baseline and the severity tiers already cover that need. `--record --manifest` marks a `cut` with empty or one-word evidence `unsupported` (stderr warning, `unsupported: true` in the ledger, "no evidence" in `fringe open`). The Flow rung is still judged, but no longer silently unchecked.
+**Finding from testing:** with a plain "review this" prompt the agent did a manual review and never ran Fringe; invoking `/fringe-review` ran it. Skills need an explicit trigger, so the docs name the slash commands.
 
 ---
 

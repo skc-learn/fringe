@@ -5,7 +5,7 @@
 AI agents made UI fast — Figma's 2025 report pegs the gains at 78% efficiency but only 40% quality. Fringe closes the quality half: a static checker that measures whether agent-written frontends handle their **edges** — accessibility, interaction states, dark patterns, design-token drift, the generic "AI look" — gates the hard failures, and keeps a local ledger so the history is measurable, not vibes.
 
 ```sh
-npx @fringetools/cli init     # one command: wires the Claude Code hook + installs the skill
+npx @fringetools/cli init     # one command: wires the Claude Code hook + installs 3 skills (fringe, fringe-review, fringe-audit)
 npx @fringetools/cli check    # or run it by hand
 ```
 
@@ -38,7 +38,7 @@ Fringe encodes a ladder: **Flow** (cut what users don't need — agent-judged, w
 | | |
 |---|---|
 | **Published** | `@fringetools/cli@0.1.0` on npm — `npx @fringetools/cli init`. Source: [skc-learn/fringe](https://github.com/skc-learn/fringe). |
-| **Shipped** | 29 rules, calibrated size-aware health score, pretty/JSON/CI-hook/Claude-hook outputs, `init`, baseline, inline suppression, ledger + manifests + token sources, `fringe open` ledger page, the agent skill, stack auto-detection. Golden snapshots + three calibration apps; CI on every push. |
+| **Shipped** | 29 rules, calibrated size-aware health score, pretty/JSON/CI-hook/Claude-hook outputs, `init`, baseline, inline suppression, ledger + manifests + token sources, `fringe open` ledger page, three agent skills (`/fringe-review`, `/fringe-audit`), stack auto-detection. Golden snapshots + three calibration apps; CI on every push. |
 | **Verified** | Agent loop run end to end with real Claude Code sessions (three tasks): errors reach the agent and get fixed. Checker dogfooded on six real projects; false positives found there are fixed. |
 | **Next** | Per-rule precision view (data already recorded), richer dashboard (`fringe board`), skill adapters for other agent platforms. See [PRD](docs/PRD.md) §7. |
 

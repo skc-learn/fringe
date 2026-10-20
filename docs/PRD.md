@@ -52,7 +52,7 @@ Requirements use stable IDs; **Status** reflects v0.1 (shipped) unless marked *p
 | F-12 | Exit codes: 0 clean / 1 error findings / 2 internal failure with one-line stderr message | ✅ |
 | F-13 | `--update-baseline` → `fringe.baseline.json`; later runs gate only on new findings (key = rule+file+message, multiset; corrupt file exits 2) | ✅ |
 | F-14 | Inline `fringe-ignore FR-xxx` suppression (rule IDs required, line or line above); always reported as `N suppressed` | ✅ |
-| F-15 | `fringe init`: merges the Claude Code `PostToolUse` hook into `.claude/settings.json` and installs the skill; idempotent; never overwrites invalid JSON | ✅ |
+| F-15 | `fringe init`: merges the Claude Code `PostToolUse` hook into `.claude/settings.json` and installs the three skills; idempotent; never overwrites invalid JSON | ✅ |
 | F-16 | `fringe --help` / `-h` / `help` | ✅ |
 
 ### 4.2 Outputs
@@ -82,6 +82,7 @@ Requirements use stable IDs; **Status** reflects v0.1 (shipped) unless marked *p
 | ID | Requirement | Status |
 |---|---|---|
 | S-01 | Canonical SKILL.md teaching the ladder (Flow → Edges → Polish), no silencing rules to get green, suppression must be disclosed; shipped in the npm package and installed by `fringe init`. Loop verified with real Claude Code sessions (3 tasks) | ✅ (slash commands S-02 not built) |
+| S-02a | `fringe-review` and `fringe-audit` skills (`/fringe-review`, `/fringe-audit`): ranked plain-English report from `check --json`; whole-repo plan + baseline offer. Tried with a real session: runs the checker and reports score and findings (needs one Bash approval) | ✅ |
 | S-02 | Slash commands `/fringe [lite\|full\|ultra]` (ultra = multi-pass review), `/fringe-review` (named rubric: usability, hierarchy, consistency, accessibility), `/fringe-audit` (by WCAG criterion), `/fringe-open` | 🔜 Plan 4 |
 | S-03 | Adapter generation for ~20 agent platforms from one canonical source; CI freshness check | 🔜 Plan 4 |
 | S-04 | Skill built with trigger-description tuning + eval suite | 🔜 Plan 4 |
