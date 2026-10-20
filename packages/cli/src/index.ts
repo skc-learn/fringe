@@ -1,13 +1,15 @@
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { VERSION } from './version.js';
 import { runCheck } from './check.js';
 import { toJson } from './report/json.js';
 import { toHook } from './report/hook.js';
+import { toPretty } from './report/pretty.js';
 import { appendRecord } from './ledger.js';
 import type { LedgerRecord } from './ledger.js';
 
-export interface CliOpts { log?: (s: string) => void; err?: (s: string) => void; cwd?: string }
+export interface CliOpts { log?: (s: string) => void; cwd?: string; err?: (s: string) => void }
 const log = (o: CliOpts) => o.log ?? ((s: string) => console.log(s));
 const err = (o: CliOpts) => o.err ?? ((s: string) => process.stderr.write(s));
 
@@ -22,20 +24,35 @@ function readManifest(path: string, warn: (s: string) => void): LedgerRecord['ma
   } catch { warn(`fringe: warning: manifest at ${path} is not valid '{ flows: [...] }' JSON — continuing without\n`); return undefined; }
 }
 
+const KNOWN_FLAGS = new Set(['--json', '--hook', '--record', '--manifest']);
+
+/** Splits check args into positional paths, warning on (and ignoring) unknown flags. */
+function parseArgs(rest: string[], warn: (s: string) => void): string[] {
+  const paths: string[] = [];
+  for (let i = 0; i < rest.length; i++) {
+    const a = rest[i];
+    if (a === '--manifest') { i++; continue; } // consume its value
+    if (a.startsWith('--')) {
+      if (!KNOWN_FLAGS.has(a)) warn(`fringe: warning: unknown flag '${a}' — ignored\n`);
+      continue;
+    }
+    paths.push(a);
+  }
+  return paths;
+}
+
 export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number> {
   const [cmd, ...rest] = argv;
   if (cmd === '--version' || cmd === '-v') { log(opts)(VERSION); return 0; }
   if (cmd === 'check') {
-    const root = opts.cwd ?? process.cwd();
+    const paths = parseArgs(rest, err(opts));
+    const cwd = opts.cwd ?? process.cwd();
+    // First path is the check root (config + scan); extra paths accepted so agent-invoked runs never crash.
+    const root = paths.length > 0 ? resolve(cwd, paths[0]) : cwd;
     const result = await runCheck(root);
     if (rest.includes('--hook')) log(opts)(toHook(result));
     else if (rest.includes('--json')) log(opts)(toJson(result));
-    else {
-      log(opts)(`fringe: score ${result.score}/100 — ${result.counts.error} errors, ${result.counts.review} review, ${result.counts.signal} signal (${result.files} files)`);
-      for (const f of result.findings)
-        log(opts)(`  ${f.severity}  ${f.rule}  ${f.loc.file}:${f.loc.line}:${f.loc.col}  ${f.message}`);
-      for (const s of result.skipped) log(opts)(`  skipped: ${s}`);
-    }
+    else log(opts)(toPretty(result));
     if (rest.includes('--record')) {
       const rec: LedgerRecord = {
         id: randomUUID(),
