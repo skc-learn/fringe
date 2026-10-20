@@ -8,10 +8,15 @@ import { fr206 } from './fr206.js';
 import { fr207 } from './fr207.js';
 import { fr208 } from './fr208.js';
 import { fr209 } from './fr209.js';
+import { fr210 } from './fr210.js';
+import { fr211 } from './fr211.js';
+import { fr212 } from './fr212.js';
+import { fr213 } from './fr213.js';
+import { fr214 } from './fr214.js';
 
 export const ALL_RULES: Rule[] = [];
 
-ALL_RULES.push(fr201, fr202, fr203, fr204, fr205, fr206, fr207, fr208, fr209);
+ALL_RULES.push(fr201, fr202, fr203, fr204, fr205, fr206, fr207, fr208, fr209, fr210, fr211, fr212, fr213, fr214);
 
 export function activeRules(cfg: FringeConfig): Rule[] {
   return ALL_RULES.filter((r) => !cfg.disable.includes(r.id));
