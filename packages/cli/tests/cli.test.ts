@@ -104,3 +104,25 @@ describe('runCli', () => {
     expect(errs.join('')).toMatch(/internal error.*fringe\.config\.json/s);
   });
 });
+
+describe('explain and single-file check', () => {
+  afterEach(() => { while (dirs.length) rmSync(dirs.pop()!, { recursive: true, force: true }); });
+  it('explain prints why/fix/avoid for a rule, lists all with no id, exits 2 for an unknown id', async () => {
+    const out: string[] = [];
+    expect(await runCli(['explain', 'fr-203'], { log: (s) => out.push(s) })).toBe(0);
+    expect(out.join('\n')).toMatch(/Why:[\s\S]*Fix:[\s\S]*Avoid:/);
+    const all: string[] = [];
+    await runCli(['explain'], { log: (s) => all.push(s) });
+    expect(all.join('\n').split('\n').length).toBe(29);
+    expect(await runCli(['explain', 'FR-999'], { log: () => {}, err: () => {} })).toBe(2);
+  });
+  it('checks one file but still finds the project root', async () => {
+    const dir = makeDir({ 'package.json': '{}', 'a.html': FAILING_HTML, 'b.html': FAILING_HTML });
+    const logs: string[] = [];
+    const code = await runCli(['check', join(dir, 'a.html'), '--json'], { log: (s) => logs.push(s) });
+    const r = JSON.parse(logs.join('\n'));
+    expect(code).toBe(1);
+    expect(r.findings.map((f: any) => f.loc.file)).toEqual([join(dir, 'a.html')]);
+    expect(r.files).toBe(1);
+  });
+});

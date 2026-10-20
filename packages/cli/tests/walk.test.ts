@@ -38,3 +38,18 @@ describe('walk', () => {
     expect(files.some((f) => f.endsWith('b.tsx'))).toBe(false);
   });
 });
+
+import { DEFAULT_CONFIG } from '../src/config.js';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+describe('default ignores', () => {
+  it('skip nested build output (frontend/dist) as well as root dist', () => {
+    const d = mkdtempSync(join(tmpdir(), 'fringe-walk-'));
+    mkdirSync(join(d, 'frontend/dist/assets'), { recursive: true }); mkdirSync(join(d, 'dist'), { recursive: true }); mkdirSync(join(d, 'src'));
+    for (const f of ['frontend/dist/assets/x.js', 'dist/y.js', 'src/ok.tsx']) writeFileSync(join(d, f), 'x');
+    const found = walk(d, DEFAULT_CONFIG).map((p) => p.slice(d.length + 1));
+    rmSync(d, { recursive: true, force: true });
+    expect(found).toEqual(['src/ok.tsx']);
+  });
+});

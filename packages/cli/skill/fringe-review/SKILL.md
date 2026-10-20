@@ -7,7 +7,7 @@ description: Use when the user asks to review, check or critique a UI, page or c
 
 Command: use `fringe` if it is on the PATH, otherwise `npx -y @fringetools/cli` in its place (e.g. `npx -y @fringetools/cli check --json .`).
 
-1. Run `fringe check --json .` from the project root. Fringe takes directories, not single files, so if the user named one file or page, run on the folder and keep only the findings whose `loc.file` matches it.
+1. Run `fringe check --json <file or folder>` from the project root: the file or page the user named, else `.`. Each finding already carries `priority` and `fixability`; report highest priority first. For the fix text use `fringe explain <rule>` (why, recipe, what to avoid) rather than improvising.
 2. Report in plain English, no jargon left unexplained:
    - **Must fix** — `error` findings. Group by rule. For each: where (`file:line`), what is wrong in one sentence, the exact fix, and who is hurt (for example "a screen reader says only 'button'"). Cite the `wcag` criterion when present.
    - **Worth a look** — `review` findings. These are heuristics: say they need your judgment, and give your call on each.

@@ -54,6 +54,13 @@ Requirements use stable IDs; **Status** reflects v0.1 (shipped) unless marked *p
 | F-14 | Inline `fringe-ignore FR-xxx` suppression (rule IDs required, line or line above); always reported as `N suppressed` | ✅ |
 | F-15 | `fringe init`: merges the Claude Code `PostToolUse` hook into `.claude/settings.json` and installs the five skills; idempotent; never overwrites invalid JSON | ✅ |
 | F-16 | `fringe --help` / `-h` / `help` | ✅ |
+| F-17 | `fringe explain [FR-xxx]`: why / recipe / avoid / before-after per rule (guidance table kept apart from rules; a test fails if a rule lacks an entry) | ✅ |
+| F-18 | Priority + clusters on every finding (`priority`, `cluster`, `fixability`; top-level `clusters`): tier first, then WCAG level, critical path, blast radius; additive to `fringe/check.v1` | ✅ |
+| F-19 | `fringe plan [dir\|file] [--json] [--limit n]`: P0–P3 batches, shared components first, recipes once; `fringe/plan.v1` | ✅ |
+| F-20 | `fringe check <file>`: single-file judgement with project root found by climbing to package.json | ✅ |
+| F-21 | Config `critical: [globs]` raises priority for key paths | ✅ |
+| F-22 | Hook message carries each shown rule's fix recipe | ✅ |
+| F-23 | Regression receipts in the hook (what the last edit introduced) | 🔜 v0.2.x |
 
 ### 4.2 Outputs
 
@@ -120,8 +127,8 @@ The staged, evidence-driven version of this plan lives in [ROADMAP.md](ROADMAP.m
 
 | Release | Scope | Status |
 |---|---|---|
-| **v0.1** | Checker core: 29 rules, outputs, size-aware score, calibration, ledger, hooks, token sources, WCAG tags, baseline, suppression, `init`, minimal `open`, skill (Plans 1–2 + post-dogfood work) | ✅ published to npm as `@fringetools/cli@0.1.4` |
-| **v0.2** | Per-rule precision view from the ledger; full dashboard (`fringe board`, stat strip + ladder board + story drawer, handoff export) (Plan 3) | planned |
+| **v0.1** | Checker core: 29 rules, outputs, size-aware score, calibration, ledger, hooks, token sources, WCAG tags, baseline, suppression, `init`, minimal `open`, skill (Plans 1–2 + post-dogfood work) | ✅ published to npm as `@fringetools/cli@0.2.0` |
+| **v0.2** | ✅ `plan`, `explain`, recipes, priority/clusters, single-file check. Still planned: per-rule precision view from the ledger; full dashboard (`fringe board`, stat strip + ladder board + story drawer, handoff export) (Plan 3) | planned |
 | **v0.3** | Adapters for other agent platforms, slash commands, README site (Plan 4) — only if real use shows demand | planned |
 | **v0.4+** | Slop-tuning pass, Vue/Svelte tier-2 depth | backlog |
 | **v1.0** | Token drift, `fringe shot`, `--stamp verified`, hosted-ready data format review | backlog |

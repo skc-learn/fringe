@@ -1,6 +1,6 @@
 # Fringe — Test Strategy & Test-Case Catalog
 
-**Version:** 1.0 (v0.1: 36 test files, 295 tests, all green) · **Date:** 2026-10-20
+**Version:** 1.0 (v0.1: 39 test files, 309 tests, all green) · **Date:** 2026-10-20
 
 ## 1. Philosophy
 
@@ -26,8 +26,8 @@ pnpm build && node dist/bin.js check ../../fixtures/slop-app   # smoke vs a comm
 | Layer | Files | What it proves |
 |---|---|---|
 | **1. Unit — foundation** | `types`, `version`, `config`, `detect`, `walk`, `score`, `color`, `tokens`, `parse-jsx`, `parse-html`, `parse-css`, `parent-link`, `ledger` | Each module's contract in isolation: config defaults/validation/mutation-safety, glob semantics, WCAG math anchors (black/white 21:1, #777→4.48), token gathering per kind, parser IR shapes incl. parent linkage, ledger append/tolerant-read |
-| **2. Unit — rules** | `rules-a11y-attrs` (FR-201/202/203/209), `rules-fr204`, `rules-fr205`, `rules-fr208`, `rules-interactivity` (FR-206/207), `rules-dark-patterns` (FR-210–214), `fr215`, `rules-rung3-core` (FR-301–305), `rules-slop-text` (367/368/369), `rules-slop-shape` (361/362/365), `rules-slop-structural` (363/364/366), `wcag`, `registry` | Per-rule pass/fail via `expectRule` + edge/boundary cases beyond the fixtures |
-| **3. Integration** | `check`, `cli`, `hook`, `pretty`, `board`, `baseline` (baseline, suppression, init, manifest evidence), `plugin` (manifests ↔ skills ↔ init hook) | The orchestrated pipeline: dispatch by extension, skip-not-crash on unparseable files, exit codes (0/1/2) through the real CLI with temp dirs, `--record`/`--manifest` end-to-end, hook single-line contract + block semantics |
+| **2. Unit — rules** | `rules-a11y-attrs` (FR-201/202/203/209), `rules-fr204`, `rules-fr205`, `rules-fr208`, `rules-interactivity` (FR-206/207), `rules-dark-patterns` (FR-210–214), `fr215`, `rules-rung3-core` (FR-301–305), `rules-slop-text` (367/368/369), `rules-slop-shape` (361/362/365), `guidance` (every rule has a recipe), `prioritize` (tier-first invariant, WCAG, critical, blast radius, clusters), `rules-slop-structural` (363/364/366), `wcag`, `registry` | Per-rule pass/fail via `expectRule` + edge/boundary cases beyond the fixtures |
+| **3. Integration** | `check`, `cli`, `hook`, `pretty`, `board`, `baseline` (baseline, suppression, init, manifest evidence), `plugin` (manifests ↔ skills ↔ init hook), `plan` (batch order, JSON shape, limits) | The orchestrated pipeline: dispatch by extension, skip-not-crash on unparseable files, exit codes (0/1/2) through the real CLI with temp dirs, `--record`/`--manifest` end-to-end, hook single-line contract + block semantics |
 | **4. Golden** | `golden` (reference-app), `slop-golden` (slop-app) | Whole-app `runCheck` snapshots: reference pins the 8 rung-2 findings (score 34); slop pins 16 findings across every planted rung-3/review trigger (score 82). Both carry by-eye audit comments enumerating expectations |
 | **5. Calibration** | `calibration` | Band contracts: clean-app = **zero findings, ≥95** (actual 100); reference ∈ **25–40** (actual 34); slop ∈ **75–85** (actual 82) |
 

@@ -11,8 +11,9 @@ import { score } from './score.js';
 import { gatherTokenColors } from './tokens.js';
 import { applyBaseline } from './baseline.js';
 import { suppressedIds } from './suppress.js';
+import { prioritize } from './prioritize.js';
 
-export async function runCheck(root: string, cfg: FringeConfig = loadConfig(root), useBaseline = true): Promise<CheckResult> {
+export async function runCheck(root: string, cfg: FringeConfig = loadConfig(root), useBaseline = true, only?: Set<string>): Promise<CheckResult> {
   // Two-phase by design: walk+parse everything first, then run rules over the contexts.
   // ACCEPTED DEVIATION (memory profile): every RuleContext — including its full source
   // string — is retained until the run completes, because the token gather needs all CSS
@@ -48,6 +49,7 @@ export async function runCheck(root: string, cfg: FringeConfig = loadConfig(root
   const tokenColors = gatherTokenColors(root, cfg, cssSources);
   for (const ctx of contexts) ctx.tokenColors = tokenColors;
   for (const ctx of contexts) {
+    if (only && !only.has(ctx.file)) continue; // whole tree is still parsed (tokens need it); only these files are judged
     for (const rule of rules) findings.push(...rule.check(ctx));
   }
   const lines = new Map(contexts.map((c) => [c.file, c.source.split('\n')]));
@@ -56,5 +58,6 @@ export async function runCheck(root: string, cfg: FringeConfig = loadConfig(root
   const { fresh, known } = useBaseline ? applyBaseline(root, live) : { fresh: live, known: 0 };
   const counts: Counts = { error: 0, review: 0, signal: 0 };
   for (const f of fresh) counts[f.severity]++;
-  return { stack, files: files.length, skipped, findings: fresh, counts, score: score(counts, cfg.weights, files.length), ...(known ? { baselined: known } : {}), ...(suppressed ? { suppressed } : {}) };
+  const ranked = prioritize(fresh, new Map(contexts.map((c) => [c.file, c.source])), root, cfg.critical ?? []);
+  return { stack, files: only ? only.size : files.length, skipped, findings: ranked.findings, clusters: ranked.clusters, counts, score: score(counts, cfg.weights, only ? only.size : files.length), ...(known ? { baselined: known } : {}), ...(suppressed ? { suppressed } : {}) };
 }

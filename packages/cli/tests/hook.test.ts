@@ -100,3 +100,13 @@ describe('toClaudeHook', () => {
     expect(out.reason).not.toContain('/p/src');
   });
 });
+
+describe('toClaudeHook recipes', () => {
+  it('adds each shown rule\'s fix recipe once', () => {
+    const mk = (line: number) => ({ rule: 'FR-203', severity: 'error' as const, message: 'm', hint: 'h', loc: { file: '/p/A.tsx', line, col: 0 } });
+    const out = JSON.parse(toClaudeHook(result([mk(1), mk(2), mk(3)]), '/p')).reason as string;
+    expect(out.match(/- FR-203: /g)).toHaveLength(1);
+    expect(out).toContain('visible <label');
+    expect(out.length).toBeLessThan(2500);
+  });
+});

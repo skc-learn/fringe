@@ -48,6 +48,9 @@ One package does everything today: `packages/cli`. The dashboard (Plan 3) and sk
 | `skill/<name>/SKILL.md` | Five skills (`fringe`, `-review`, `-audit`, `-debt`, `-help`) — one folder each; shipped in the npm package, copied by `init`, and loaded by the Claude Code plugin (`.claude-plugin/plugin.json` → `./packages/cli/skill/`) | — |
 | `.claude-plugin/`, `hooks/hooks.json` | Claude Code plugin + marketplace manifests; hook = the same `--claude-hook` command as `init` (a test keeps them in sync) | — |
 | `AGENTS.md`, `INSTALL.md` | Rules file for agents without hooks; per-agent install steps | — |
+| `src/guidance.ts` | Per-rule `why` / `recipe` / `avoid` / example / fixability (rules stay pure); `renderExplain` for `fringe explain` | `GUIDANCE`, `renderExplain` |
+| `src/prioritize.ts` | Post-pass: `priority`, `cluster`, `fixability` per finding and the `clusters` list; blast radius from import counts | `prioritize` |
+| `src/report/plan.ts` | Orders clusters into P0–P3 batches; Markdown and `fringe/plan.v1` | `buildPlan`, `toPlanMarkdown`, `toPlanJson` |
 | `src/ledger.ts` | Append JSONL; tolerant reader | `appendRecord`, `readLedger`, `LedgerRecord` |
 | `src/report/pretty.ts` | Human formatter (severity-rank + file:line ordering) | `toPretty(result)` |
 | `src/report/json.ts` | `fringe/check.v1` | `toJson(result)` |
@@ -64,7 +67,8 @@ runCheck(root)
   ├─ gatherTokenColors(root,cfg,cssSources)   once, after walk
   ├─ phase 2: for each context        activeRules(cfg) → findings
   ├─ suppress inline `fringe-ignore` → applyBaseline(fringe.baseline.json)
-  └─ counts → score(counts, weights, files)   → CheckResult (+ baselined?, suppressed?)
+  ├─ prioritize(findings, sources, critical)    priority, cluster, fixability, clusters[]
+  └─ counts → score(counts, weights, files)   → CheckResult (+ clusters, baselined?, suppressed?)
 ```
 
 **Parsing tiers** (the anti-false-positive strategy):
@@ -102,6 +106,8 @@ Health: penalty = `(10·e + 3·r + 1·s) × 10 / max(files, 10)` (weights in con
 ## 6. Data contracts
 
 **`fringe/check.v1`** (`--json`): `{ schema, stack, files, skipped, findings[{rule,severity,wcag?,message,hint,loc}], counts, score }`
+
+**`fringe/plan.v1`** (`plan --json`): `{ schema, score, counts, batches[{id: P0..P3, title, why, items[{cluster fields, lines, recipe, avoid}], more}] }`.
 
 **Claude Code hook** (`--claude-hook`): nothing when clean; with errors `{"decision":"block","reason":"…"}` on exit 0 — the only form Claude Code feeds back to the agent. **`fringe/hook.v1`** (`--hook`, single line, for CI; exits 1, ignored by Claude Code): `{ schema, errors, review, signals, block: errors>0, reason }` — `reason` names the top finding (`FR-201: … (file:line)`); deterministic ordering (severity rank → file → line).
 

@@ -3,7 +3,8 @@ import { join } from 'node:path';
 import type { FringeConfig } from './types.js';
 
 export const DEFAULT_CONFIG: FringeConfig = {
-  ignore: ['node_modules/**', 'dist/**', 'build/**', 'out/**', 'coverage/**', '.fringe/**', '*.min.*'],
+  // Both forms: `dist/**` matches only at the root, `**/dist/**` matches nested build output (e.g. frontend/dist).
+  ignore: ['node_modules/**', 'dist/**', 'build/**', 'out/**', 'coverage/**', '**/dist/**', '**/build/**', '**/out/**', '**/coverage/**', '.fringe/**', '*.min.*'],
   disable: [],
   weights: { error: 10, review: 3, signal: 1 },
 };
@@ -20,6 +21,10 @@ export function loadConfig(root: string): FringeConfig {
       weights: { ...DEFAULT_CONFIG.weights, ...(user.weights ?? {}) },
     };
     validateWeights(cfg.weights);
+    if (user.critical !== undefined) {
+      if (!Array.isArray(user.critical) || user.critical.some((g) => typeof g !== 'string')) throw new Error('fringe.config.json: critical must be an array of glob strings');
+      cfg.critical = user.critical;
+    }
     if (user.tokenSource !== undefined) {
       cfg.tokenSource = validateTokenSource(user.tokenSource);
     }

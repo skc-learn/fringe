@@ -21,7 +21,9 @@ Prefer a permanent command? `npm install -D @fringetools/cli`, then `npx fringe 
 
 | Command | What it does |
 |---|---|
-| `fringe check [path]` | Scan a directory (default `.`) and print findings + health score. Exit `1` on any `error`. |
+| `fringe check [dir\|file]` | Scan a directory (default `.`) or judge one file (the project root is found by climbing to the nearest `package.json`). Prints findings and the health score. Exit `1` on any `error`. |
+| `fringe plan [dir\|file] [--json] [--limit n]` | **Fix order for a repo with many findings**: P0 (errors in shared components or critical paths) → P1 (other errors, mechanical first) → P2 review → P3 polish, each cluster with its fix recipe. Never gates (exit 0). `--json` = `fringe/plan.v1`. |
+| `fringe explain [FR-203]` | Why a rule matters, the preferred fix and the tempting fix to avoid. No id lists all 29 rules. |
 | `fringe check --json` | Full report as JSON, schema `fringe/check.v1` (stack, files, findings, counts, score). |
 | `fringe check --claude-hook` | **For Claude Code hooks.** Silent when clean; on errors prints `{"decision":"block","reason":…}` (exit 0) so the agent sees and fixes them. |
 | `fringe check --hook` | One-line `fringe/hook.v1` JSON for CI / pre-commit. Exits `1` on errors. Claude Code does **not** feed this back — use `--claude-hook` for agents. Wins over `--json`. |
@@ -31,7 +33,7 @@ Prefer a permanent command? `npm install -D @fringetools/cli`, then `npx fringe 
 | `fringe open [path] [--port <n>]` | Serve the ledger as a plain HTML page on `127.0.0.1:4173` (loopback only). Ctrl+C to stop. |
 | `fringe --help` · `--version` | Usage / version. |
 
-Notes: the first path is the check root (config + scan); extra paths are accepted and ignored so agent-invoked runs never crash. v0.1 takes directories, not single files. Unknown flags warn on stderr and are ignored.
+Notes: the first path is the check root (config + scan); extra paths are accepted and ignored so agent-invoked runs never crash. Unknown flags warn on stderr and are ignored.
 
 Default (human) output:
 
@@ -56,6 +58,23 @@ When a baseline or inline suppressions are in play, the last line adds `· N bas
 ## Health score
 
 Each finding costs its weight (default error 10, review 3, signal 1). The total is scaled to a 10-file baseline (`× 10 / max(files, 10)`), so repo size doesn't flatten the score. Score = `100 − penalty` up to a penalty of 75; beyond that it decays smoothly (`25·75/penalty`) and never pins at 0. Repos under 10 files score exactly `100 − total`. Weights live in `fringe.config.json`.
+
+## Priority, clusters and fix plans
+
+Every finding in `--json` carries `priority`, `cluster` and `fixability`, and the result has a `clusters` list. A cluster is one rule in one file: usually one root cause and one fix.
+
+`priority = tier + WCAG level + critical path + blast radius`
+
+| Part | Value |
+|---|---|
+| Tier | error 1000 · review 400 · signal 100 (so any error outranks any review, whatever else is true) |
+| WCAG level | A +30 · AA +15 |
+| Critical path | +40 when the file matches `critical` in `fringe.config.json` (e.g. `"critical": ["src/checkout/**", "src/auth/**"]`) |
+| Blast radius | up to +20, growing with the number of files that import this one |
+
+A cluster is a **shared component** when 3 or more files import its file; fix those first, since one change clears every use. Repeats lift a cluster slightly (never across a tier). Blast radius matches importers by file base name, a deliberate shortcut.
+
+`fringe plan` turns this into the work order; `fringe explain FR-203` gives the recipe for one rule. The `--claude-hook` message includes each shown rule's recipe once, so the agent gets "how to fix it well", not just "what is wrong".
 
 ## Baseline
 
@@ -170,12 +189,13 @@ Optional, at the check root. Everything defaults sensibly; all keys are optional
 
 ```json
 {
-  "ignore": ["node_modules/**", "dist/**", "build/**", "out/**", "coverage/**", ".fringe/**", "*.min.*", "examples/**"],
+  "ignore": ["node_modules/**", "**/dist/**", "**/build/**", "**/out/**", "**/coverage/**", ".fringe/**", "*.min.*", "examples/**"],
   "disable": ["FR-214"],
   "weights": { "error": 10, "review": 3, "signal": 1 }
 }
 ```
 
+- `critical` — globs for the files that matter most (checkout, auth, sign-up). Their findings rank higher in `plan` and `--json`.
 - `ignore` — glob list matched against paths relative to the root. **Use the `dir/**` form to skip a directory** — a bare-dir glob like `"dist"` matches only the directory entry itself and does **not** prune the files inside it. (`node_modules` and dot-directories are always skipped.)
 - `disable` — rule IDs to turn off.
 - `weights` — per-finding penalties into the health score (see [Health score](#health-score)).

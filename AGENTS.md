@@ -8,6 +8,7 @@ Run it from the project root: `npx -y @fringetools/cli check` (or `fringe check`
 
 1. **Flow.** Before building UI, ask what the user can skip. Cut steps, screens and options nobody needs, and say why with evidence (a metric, a usage count, a requirement). No evidence, no cut.
 2. **Edges.** After every edit to a frontend file, run `fringe check`. Fix every `[ERROR]` before you finish: missing `alt`, unnamed buttons, unlabeled inputs, skipped headings, removed focus rings, `onClick` on non-interactive elements, invalid `aria-*`. Do not finish with errors outstanding.
+   Many findings? `fringe plan` orders them (shared components first) with a fix recipe each; `fringe explain FR-203` shows why a rule matters and the preferred fix.
 3. **Polish.** Fix `[REVIEW]` items you agree with and cheap `[SIGNAL]` items; say which you left and why.
 
 ## Rules

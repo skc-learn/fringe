@@ -24,6 +24,8 @@ Fringe checks agent-written frontends for accessibility, state, dark-pattern and
 | `check [dir]` | Scan and print findings and the health score; exit 1 on any error |
 | `check --json` / `--hook` / `--claude-hook` | Machine output; CI gate; agent feedback form |
 | `check --update-baseline` | Accept today's findings; only new ones gate |
+| `plan [dir\|file]` | Ordered fix batches (shared components first) with recipes |
+| `explain [FR-203]` | Why a rule matters and how to fix it well |
 | `check --record [--manifest f]` | Append the run to `.fringe/ledger.jsonl` |
 | `init` | Add the hook and install the skills |
 | `open` | View the ledger at 127.0.0.1:4173 |

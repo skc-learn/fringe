@@ -10,9 +10,9 @@ How Fringe grows from "a checker one person trusts" to "a tool a stranger instal
 4. **Small surface.** New rules, flags and skills must earn their place with a failing test and a real case (the benchmark and the dogfooding each found a false positive; that is the bar).
 5. **Honest claims.** Every number in the README has a method behind it, with its limits stated.
 
-## Where we are (v0.1.4)
+## Where we are (v0.2.0)
 
-Shipped: 29 rules, size-aware health score, baseline, inline suppression, `init`, Claude Code plugin, five skills, `AGENTS.md`, minimal ledger page, automated releases, a 24-run benchmark. Known gaps: `check` takes a folder not a file; no per-rule feedback loop; only Claude Code gets the live hook; the benchmark is small.
+Shipped in 0.2: `fringe plan` (priority order, clusters, shared components first), `fringe explain` and fix recipes (also inside the agent hook), single-file `check`, `critical` paths, nested build output ignored by default. Shipped before: 29 rules, size-aware health score, baseline, inline suppression, `init`, Claude Code plugin, five skills, `AGENTS.md`, minimal ledger page, automated releases, a 24-run benchmark. Known gaps: no regression receipts in the hook yet; no per-rule feedback loop; only Claude Code gets the live hook; the benchmark is small.
 
 ## Stage 1: Easy to try, easy to trust (v0.1.x, now)
 
@@ -34,13 +34,23 @@ Shipped: 29 rules, size-aware health score, baseline, inline suppression, `init`
 
 | Item | Why |
 |---|---|
-| `fringe explain FR-203` | Per-rule page: why it matters, who it affects, WCAG link, a before/after fix. Doubles as public rule docs |
-| `fringe check path/to/File.tsx` | Single-file checks (today the skills work around it by checking the folder) |
+| ✅ `fringe explain FR-203` | Per-rule page: why it matters, who it affects, WCAG link, a before/after fix. Doubles as public rule docs |
+| ✅ `fringe check path/to/File.tsx` | Single-file checks (today the skills work around it by checking the folder) |
 | Per-rule precision view | The ledger already records findings per rule and suppressions; show which rules your repo overrides most. Candidate rules to retune |
 | Machine-readable suppression report | `fringe debt` as a command, not only a skill, so CI can track debt over time |
 | FR-206 and similar second-pass tuning | Remaining known false-positive classes (e.g. backdrop whose dialog is not the first child) |
 
 **Moves up if:** users ask the same "what does this mean?" question repeatedly, or the same rule is suppressed in many repos.
+
+## Stage 2b: Close the loop (v0.2.x, next)
+
+*For an agent mid-task: know what your last edit broke.*
+
+| Item | Why |
+|---|---|
+| Regression receipts in the hook ("your last edit introduced 1 new error") | Separates what the agent just did from pre-existing debt; state in `.fringe/last.json` |
+| Messy-repo benchmark (100+ findings) with and without `plan` + recipes | The gate for claiming plan helps; measures time-to-clean and fix quality (visible label vs aria-label) |
+| FR-216 advisory: input labelled only by `aria-label` | Only if the benchmark shows agents keep choosing the weaker pattern |
 
 ## Stage 3: Works wherever you work (v0.3)
 

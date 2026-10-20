@@ -28,6 +28,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | D-22 | Size-aware health score with soft decay | 2026-10-20 | 🔒 |
 | D-23 | Dashboard scope cut: minimal `fringe open` now, full dashboard later | 2026-10-20 | 🔒 / deferred |
 | D-24 | Flow evidence check; review/audit skills instead of levels | 2026-10-20 | 🔒 |
+| D-27 | Priority is tier-first and published; guidance lives apart from rules | 2026-10-21 | 🔒 |
 | D-26 | Automated publishing via tag + npm trusted publishing | 2026-10-20 | 🔒 |
 | D-25 | Align with Ponytail's distribution: plugin, AGENTS.md, INSTALL.md, debt/help skills | 2026-10-20 | 🔒 |
 
@@ -151,6 +152,13 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 ### D-26 — Automated publishing
 **Decision:** a `v*` tag triggers `.github/workflows/publish.yml`: tag-vs-version check, tests, `npm publish --provenance` via npm trusted publishing (GitHub OIDC), then a GitHub Release with generated notes. **Alternatives:** an `NPM_TOKEN` secret (a long-lived credential; npm is restricting bypass-2FA tokens); manual publish (needs a human authenticator code every release — what we had).
 **Consequence:** no secret to leak or expire; releases are reproducible and carry provenance. Requires the one-time Trusted Publisher setting on npmjs.com.
+
+### D-27 — Priority, clusters, recipes, plan
+**Context:** the tool listed problems in gate order and gave one-line hints; a developer triaging a legacy repo got 300 lines and no order, and an agent got "what is wrong" without "how to fix it well".
+**Decision:** `priority = tier (error 1000 / review 400 / signal 100) + WCAG level + critical path + blast radius`, adders summing under the tier gap so severity is never inverted (tested). Findings cluster by rule+file; a file imported by ≥ 3 others is a *shared component* and ranks into P0 of `fringe plan`. Guidance (why / recipe / avoid / example) sits in `src/guidance.ts`, not in the 29 rule files, so rules stay pure (D-09); a drift test requires an entry per rule. All new JSON fields are additive to `fringe/check.v1`; `fringe plan` has its own `fringe/plan.v1`.
+**Alternatives:** weighting by an opaque score (unexplainable); component-level root cause via a real import graph (deferred, base-name matching is a documented shortcut); auto-fixing (still out of scope, D-24 era decision).
+**Audience:** triage of existing repos first, agent mid-task second (receipts, v0.2.x).
+**Consequence:** the claim that plans and recipes help agents is *not yet measured*; the messy-repo benchmark is the gate before the README says so.
 
 ---
 

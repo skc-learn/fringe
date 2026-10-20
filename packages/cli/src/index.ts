@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, readFileSync, statSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { VERSION } from './version.js';
 import { runCheck } from './check.js';
 import { toJson } from './report/json.js';
@@ -12,6 +12,8 @@ import { loadConfig } from './config.js';
 import { startBoard } from './board.js';
 import { writeBaseline } from './baseline.js';
 import { initProject } from './init.js';
+import { renderExplain } from './guidance.js';
+import { toPlanJson, toPlanMarkdown } from './report/plan.js';
 
 export interface CliOpts { log?: (s: string) => void; cwd?: string; err?: (s: string) => void }
 const log = (o: CliOpts) => o.log ?? ((s: string) => console.log(s));
@@ -34,12 +36,25 @@ function readManifest(path: string, warn: (s: string) => void): LedgerRecord['ma
   } catch { warn(`fringe: warning: manifest at ${path} is not valid '{ flows: [...] }' JSON — continuing without\n`); return undefined; }
 }
 
+/** Resolves a path argument to the project root plus, for a file, the single file to judge. Climbs to the nearest package.json / fringe.config.json so config and baseline are found. */
+function resolveTarget(arg: string): { root: string; only?: Set<string> } {
+  if (!statSync(arg).isFile()) return { root: arg };
+  let dir = dirname(arg);
+  for (let d = dir, i = 0; i < 12; i++, d = dirname(d)) {
+    if (existsSync(join(d, 'package.json')) || existsSync(join(d, 'fringe.config.json'))) { dir = d; break; }
+    if (dirname(d) === d) break;
+  }
+  return { root: dir, only: new Set([arg]) };
+}
+
 /** A cut needs a reason a reviewer can check; empty or one-word filler does not count. */
 const weakEvidence = (e: unknown) => typeof e !== 'string' || e.trim().length < 12 || /^(n\/?a|none|tbd|obvious|unnecessary|clutter|unused)\.?$/i.test(e.trim());
 
 const HELP = `fringe check [--json] [--hook] [--record] [--manifest <path>] [path]
 fringe check --claude-hook [path]       for Claude Code hooks (feeds errors back to the agent)
 fringe check --update-baseline [path]   accept today's findings; only new ones gate
+fringe plan [dir|file] [--json] [--limit n]   ordered fix batches with recipes
+fringe explain [FR-203]                 why a rule matters and how to fix it well
 fringe init [path]                       add the Claude Code hook + skill
 fringe open [path] [--port <n>]   serve the .fringe ledger on 127.0.0.1
 fringe --help | --version`;
@@ -69,7 +84,7 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
       const paths = parseArgs(rest, err(opts));
       const cwd = opts.cwd ?? process.cwd();
       // First path is the check root (config + scan); extra paths accepted so agent-invoked runs never crash.
-      const root = paths.length > 0 ? resolve(cwd, paths[0]) : cwd;
+      const { root, only } = resolveTarget(paths.length > 0 ? resolve(cwd, paths[0]) : cwd);
       // Loaded once here and passed through, so the --record path can cite the same config.
       const cfg = loadConfig(root);
       if (rest.includes('--update-baseline')) {
@@ -78,7 +93,7 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
         log(opts)(`fringe: baseline written — ${all.findings.length} known findings in fringe.baseline.json (commit it); only new ones gate from now on`);
         return 0;
       }
-      const result = await runCheck(root, cfg);
+      const result = await runCheck(root, cfg, true, only);
       if (rest.includes('--claude-hook')) {
         const out = toClaudeHook(result, root);
         if (out) log(opts)(out);
@@ -109,6 +124,24 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
       err(opts)(`fringe: internal error: ${(e as Error).message}\n`);
       return 2;
     }
+  }
+  if (cmd === 'plan') {
+    try {
+      const li = rest.indexOf('--limit');
+      const limit = li !== -1 ? Number(rest[li + 1]) || undefined : undefined;
+      const paths = parseArgs(rest.filter((a, i) => a !== '--limit' && rest[i - 1] !== '--limit' && a !== '--json'), err(opts));
+      const arg = resolve(opts.cwd ?? process.cwd(), paths[0] ?? '.');
+      const { root, only } = resolveTarget(arg);
+      const result = await runCheck(root, loadConfig(root), true, only);
+      log(opts)(rest.includes('--json') ? toPlanJson(result, limit) : toPlanMarkdown(result, paths[0] ?? '.', limit));
+      return 0;
+    } catch (e) { err(opts)(`fringe: internal error: ${(e as Error).message}\n`); return 2; }
+  }
+  if (cmd === 'explain') {
+    const out = renderExplain(rest[0]);
+    if (out === undefined) { err(opts)(`fringe: unknown rule '${rest[0]}' — run 'fringe explain' to list them\n`); return 2; }
+    log(opts)(out);
+    return 0;
   }
   if (cmd === 'init') {
     try {

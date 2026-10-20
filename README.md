@@ -98,7 +98,9 @@ Full rule table: **[CLI reference](packages/cli/README.md#rules)**.
 
 | I want to… | Do this |
 |---|---|
-| Check my project | `npx @fringetools/cli check` (takes a folder, default `.`) |
+| Check my project | `npx @fringetools/cli check` (a folder, default `.`, or one file) |
+| Know what to fix first | `npx @fringetools/cli plan`: batches ordered by impact, shared components first, with the fix for each rule |
+| Understand a rule | `npx @fringetools/cli explain FR-203`: why it matters, the right fix, the tempting wrong one |
 | Use it on a repo that already has problems | `npx @fringetools/cli check --update-baseline`, commit `fringe.baseline.json`. Now only **new** problems gate |
 | Silence a real false positive | Put `// fringe-ignore FR-203` on the line or the line above (JSX: `{/* fringe-ignore FR-203 */}`, HTML: `<!-- … -->`). It is always counted in the report |
 | Turn a rule off everywhere | `fringe.config.json`: `{ "disable": ["FR-214"] }` |
@@ -143,7 +145,8 @@ Where Fringe is going, in plain terms (the full plan, with the reasons and the e
 | When | Theme | What you'll get |
 |---|---|---|
 | **Now** (v0.1.x) | **Easy to try and trust** | Real-world false-positive fixes, issue templates, a larger public benchmark |
-| **Next** (v0.2) | **Understand every finding** | `fringe explain FR-203` (why it matters + a fix example), check a single file, see which rules are noisy in your repo |
+| **Shipped** (v0.2) | **Know what to fix, and how** | `fringe plan` (priority order, shared components first), `fringe explain` (recipes), single-file checks, fix recipes inside the agent hook |
+| **Next** | **Close the loop** | Tell the agent what its last edit broke, see which rules your repo overrides most |
 | **Then** (v0.3) | **Works wherever you work** | A GitHub Action with PR annotations, SARIF for GitHub code scanning, pre-commit config, rules files for Cursor/Copilot/Windsurf |
 | **Later** (v0.4) | **See the trend** | A proper dashboard: health over time, per-project board, handoff report |
 | **v1.0** | **Beyond static** | Design-token drift, real-browser checks (screenshots, rendered contrast), stable output schemas |
