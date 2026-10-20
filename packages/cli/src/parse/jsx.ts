@@ -27,8 +27,9 @@ export function parseJsx(file: string, source: string): Elem[] {
     throw new Error(`parse-skip: ${(e as Error).message}`);
   }
   const elems: Elem[] = [];
-  (function walkNode(node: any) {
+  (function walkNode(node: any, parent?: { tag: string; attrs: Record<string, string> }) {
     if (!node || typeof node.type !== 'string') return;
+    let nextParent = parent;
     if (node.type === 'JSXElement') {
       const nameNode = node.openingElement.name;
       const tag = nameNode.type === 'JSXIdentifier' ? nameNode.name : `${nameNode.object?.name ?? ''}.${nameNode.property?.name ?? ''}`;
@@ -36,12 +37,16 @@ export function parseJsx(file: string, source: string): Elem[] {
       for (const a of node.openingElement.attributes) {
         if (a.type === 'JSXAttribute') attrs[a.name.name as string] = attrValue(a.value);
       }
-      elems.push({ tag, attrs, text: collectText(node), loc: { file, line: node.loc?.start.line ?? 0, col: node.loc?.start.column ?? 0 } });
+      const el: Elem = { tag, attrs, text: collectText(node), loc: { file, line: node.loc?.start.line ?? 0, col: node.loc?.start.column ?? 0 } };
+      if (parent) el.parentTag = parent.tag;
+      if (parent?.attrs?.className !== undefined) el.parentClass = parent.attrs.className;
+      elems.push(el);
+      nextParent = { tag, attrs };
     }
     for (const k of Object.keys(node)) {
       const c = (node as any)[k];
-      if (Array.isArray(c)) c.forEach((x) => typeof x === 'object' && x && typeof x.type === 'string' && walkNode(x));
-      else if (c && typeof c === 'object' && typeof c.type === 'string') walkNode(c);
+      if (Array.isArray(c)) c.forEach((x) => typeof x === 'object' && x && typeof x.type === 'string' && walkNode(x, nextParent));
+      else if (c && typeof c === 'object' && typeof c.type === 'string') walkNode(c, nextParent);
     }
   })(ast.program);
   return elems;

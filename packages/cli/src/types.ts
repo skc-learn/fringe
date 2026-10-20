@@ -22,6 +22,10 @@ export interface Elem {
   attrs: Record<string, string>;
   text: string;
   loc: Loc;
+  /** Tag of the nearest ancestor element; absent for top-level elements. */
+  parentTag?: string;
+  /** className/class attr of the nearest ancestor element; absent when the ancestor has none. */
+  parentClass?: string;
 }
 
 export interface CssDecl {
