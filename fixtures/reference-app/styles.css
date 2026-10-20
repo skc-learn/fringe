@@ -1,0 +1,13 @@
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.x {
+  outline: none;
+}
+
+.promo {
+  border: 1px solid #eee;
+  padding: 12px;
+}

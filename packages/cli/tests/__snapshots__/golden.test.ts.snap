@@ -1,0 +1,22 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`reference app golden > matches snapshot 1`] = `
+{
+  "counts": {
+    "error": 6,
+    "review": 2,
+    "signal": 0,
+  },
+  "rules": [
+    "FR-201:App.tsx:15",
+    "FR-204:App.tsx:17",
+    "FR-204:App.tsx:19",
+    "FR-206:App.tsx:24",
+    "FR-207:App.tsx:25",
+    "FR-212:Pricing.tsx:8",
+    "FR-214:Pricing.tsx:7",
+    "FR-205:styles.css:7",
+  ],
+  "score": 34,
+}
+`;
