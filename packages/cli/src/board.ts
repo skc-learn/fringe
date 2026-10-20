@@ -11,11 +11,11 @@ export function renderBoard(records: LedgerRecord[], corrupt = 0): string {
     const flows = (r.manifest?.flows ?? [])
       .map((f) => `<li>${esc(f.action)}: ${esc(f.what)} <small>(${esc(f.evidence)}) — judged</small></li>`).join('');
     return `<tr><td>${esc(r.ts)}</td><td>${r.score}</td><td>${r.counts.error}</td><td>${r.counts.review}</td><td>${r.counts.signal}</td>` +
-      `<td>${r.files}</td><td>${flows ? `<ul>${flows}</ul>` : ''}</td></tr>`;
+      `<td>${r.files}</td><td>${r.suppressed ?? 0}</td><td>${flows ? `<ul>${flows}</ul>` : ''}</td></tr>`;
   }).join('');
   const body = records.length === 0
     ? '<p>No runs yet. Run <code>fringe check --record</code> and reload.</p>'
-    : `<table><tr><th>When</th><th>Health</th><th>Errors</th><th>Review</th><th>Signals</th><th>Files</th><th>Flow cuts</th></tr>${rows}</table>`;
+    : `<table><tr><th>When</th><th>Health</th><th>Errors</th><th>Review</th><th>Signals</th><th>Files</th><th>Suppressed</th><th>Flow cuts</th></tr>${rows}</table>`;
   const warn = corrupt ? `<p>${corrupt} unreadable ledger line(s) skipped.</p>` : '';
   return `<!doctype html><html lang="en"><meta charset="utf-8"><title>Fringe ledger</title>` +
     `<style>body{font:16px system-ui;margin:2rem;max-width:70rem}td,th{padding:.4rem .8rem;text-align:left;vertical-align:top}</style>` +

@@ -29,6 +29,7 @@ fringe --version
 - `--record` — append one JSONL record to `<root>/.fringe/ledger.jsonl` (id, ts, stack, files, counts, score). The ledger is the task-by-task history; it is gitignoreable.
 - `--manifest <path>` — merge an agent flow manifest `{ "flows": [{ "action": "cut"|"kept", "what", "evidence" }] }` into the record written by `--record`. Missing/invalid manifests warn to stderr and are skipped.
 - `--update-baseline` — write today's findings to `fringe.baseline.json` (commit it). Later `check` runs ignore those and gate only on new findings; the output shows `N baselined`. Matching ignores line numbers, so edits above a known finding don't bring it back.
+- **Inline suppression** — a comment `fringe-ignore FR-203` (also `FR-203, FR-202`) on the finding's line or the line above silences those rules there: `// fringe-ignore FR-203`, `{/* fringe-ignore FR-203 */}`, `<!-- fringe-ignore FR-203 -->`. Rule ids are required (no blanket ignore) and every run reports `N suppressed`.
 - `fringe init [path]` — adds the `PostToolUse` hook to `.claude/settings.json` (existing settings kept) and installs the skill at `.claude/skills/fringe/`. Needs `fringe` on the PATH.
 - `fringe open` — serves the project's ledger as a plain HTML page on `127.0.0.1:4173` (loopback only; reload to see new runs). Stop with Ctrl+C.
 - **Unknown flags** produce a warning on stderr and are otherwise ignored — `fringe` never crashes mid-run because an agent passed an unexpected flag.

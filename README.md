@@ -37,8 +37,8 @@ Fringe encodes a ladder: **Flow** (cut what users don't need — agent-judged, w
 | | |
 |---|---|
 | **Now (v0.1)** | Checker complete: 29 rules, health score (calibrated), pretty/JSON/hook outputs, ledger + manifests + token sources, stack auto-detection. Golden snapshots and three calibration apps. |
-| **Also shipped** | `fringe init` (hook + skill in one command), `--update-baseline` (adopt on a messy repo; only new findings gate), `fringe open` (minimal ledger page), canonical agent skill at [packages/cli/skill/SKILL.md](packages/cli/skill/SKILL.md). |
-| **Next** | Richer dashboard (ladder board, cross-project `fringe board`), per-platform skill adapters, npm publish. |
+| **Also shipped** | `fringe init` (hook + skill in one command), inline `fringe-ignore FR-123` suppression (always counted), `--update-baseline` (adopt on a messy repo; only new findings gate), `fringe open` (minimal ledger page), canonical agent skill at [packages/cli/skill/SKILL.md](packages/cli/skill/SKILL.md). |
+| **Next** | Per-rule precision view (data now in the ledger), richer dashboard (ladder board, cross-project `fringe board`), per-platform skill adapters, npm publish. |
 | **Not yet published** | install from source (see top) |
 
 ## Documentation

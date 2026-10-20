@@ -53,3 +53,15 @@ describe('init', () => {
     expect(readFileSync(join(d, '.claude/settings.json'), 'utf8')).toBe('{bad');
   });
 });
+
+describe('inline suppression', () => {
+  afterEach(() => { while (dirs.length) rmSync(dirs.pop()!, { recursive: true, force: true }); });
+  it('silences the named rule on the next line, reports it, and nothing else', async () => {
+    const d = mk({ 'a.html': '<!-- fringe-ignore FR-201 -->\n<img src="a.png">\n<img src="b.png">' });
+    const r = await run(['check', d]);
+    expect(r.out).toContain('1 suppressed');
+    expect(r.out).toContain('1 errors');              // the second <img> is not covered
+    const other = mk({ 'a.html': '<!-- fringe-ignore FR-202 -->\n<img src="a.png">' });
+    expect((await run(['check', other])).code).toBe(1); // wrong rule id does not silence
+  });
+});

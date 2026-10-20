@@ -16,5 +16,6 @@ When done: `fringe check --record --manifest .fringe/manifest.json`. Report the 
 Rules of the road:
 - Never grade your own work where the checker can measure it.
 - Do not silence a rule with `ignore`/`disable` in `fringe.config.json` to get green. Fix the code, or tell the user why the rule is wrong.
+- A `// fringe-ignore FR-123` comment is allowed only for a real false positive. Say so in your final message with the rule and why; the run output counts suppressions (`N suppressed`) and a reviewer will see them.
 - If `fringe` is not installed, say so. Do not skip the check silently.
 - Hook wiring and the full rule table: `packages/cli/README.md`.

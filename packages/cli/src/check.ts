@@ -10,6 +10,7 @@ import { activeRules } from './rules/registry.js';
 import { score } from './score.js';
 import { gatherTokenColors } from './tokens.js';
 import { applyBaseline } from './baseline.js';
+import { suppressedIds } from './suppress.js';
 
 export async function runCheck(root: string, cfg: FringeConfig = loadConfig(root), useBaseline = true): Promise<CheckResult> {
   // Two-phase by design: walk+parse everything first, then run rules over the contexts.
@@ -49,8 +50,11 @@ export async function runCheck(root: string, cfg: FringeConfig = loadConfig(root
   for (const ctx of contexts) {
     for (const rule of rules) findings.push(...rule.check(ctx));
   }
-  const { fresh, known } = useBaseline ? applyBaseline(root, findings) : { fresh: findings, known: 0 };
+  const lines = new Map(contexts.map((c) => [c.file, c.source.split('\n')]));
+  const live = findings.filter((f) => !suppressedIds(lines.get(f.loc.file) ?? [], f.loc.line).has(f.rule));
+  const suppressed = findings.length - live.length;
+  const { fresh, known } = useBaseline ? applyBaseline(root, live) : { fresh: live, known: 0 };
   const counts: Counts = { error: 0, review: 0, signal: 0 };
   for (const f of fresh) counts[f.severity]++;
-  return { stack, files: files.length, skipped, findings: fresh, counts, score: score(counts, cfg.weights, files.length), ...(known ? { baselined: known } : {}) };
+  return { stack, files: files.length, skipped, findings: fresh, counts, score: score(counts, cfg.weights, files.length), ...(known ? { baselined: known } : {}), ...(suppressed ? { suppressed } : {}) };
 }

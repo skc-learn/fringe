@@ -1,6 +1,6 @@
 # Fringe — Test Strategy & Test-Case Catalog
 
-**Version:** 1.0 (v0.1: 35 test files, 285 tests, all green) · **Date:** 2026-10-20
+**Version:** 1.0 (v0.1: 35 test files, 286 tests, all green) · **Date:** 2026-10-20
 
 ## 1. Philosophy
 

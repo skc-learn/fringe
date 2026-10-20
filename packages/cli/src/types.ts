@@ -85,6 +85,8 @@ export interface CheckResult {
   score: number;
   /** Findings suppressed by fringe.baseline.json; absent when none. */
   baselined?: number;
+  /** Findings silenced by inline `fringe-ignore` comments; shown so suppression is never invisible. */
+  suppressed?: number;
 }
 
 export interface StackInfo {

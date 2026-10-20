@@ -80,6 +80,8 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
           files: result.files,
           counts: result.counts,
           score: result.score,
+          byRule: result.findings.reduce<Record<string, number>>((m, f) => ((m[f.rule] = (m[f.rule] ?? 0) + 1), m), {}),
+          suppressed: result.suppressed,
           tokenSource: cfg.tokenSource?.kind,
         };
         const mIdx = rest.indexOf('--manifest');

@@ -10,6 +10,9 @@ export interface LedgerRecord {
   files: number;
   counts: Counts;
   score: number;
+  /** Findings per rule id and suppressions, so per-rule fixed-vs-silenced trends can be read later. */
+  byRule?: Record<string, number>;
+  suppressed?: number;
   tokenSource?: 'css-vars' | 'theme-factory' | 'design-tokens-json';
   shots?: string[];
   manifest?: { flows: Array<{ action: 'cut' | 'kept'; what: string; evidence: string }> };
