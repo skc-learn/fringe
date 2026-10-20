@@ -27,7 +27,7 @@ Prefer a permanent command? `npm install -D @fringetools/cli`, then `npx fringe 
 | `fringe check --hook` | One-line `fringe/hook.v1` JSON for CI / pre-commit. Exits `1` on errors. Claude Code does **not** feed this back — use `--claude-hook` for agents. Wins over `--json`. |
 | `fringe check --update-baseline` | Accept today's findings into `fringe.baseline.json` (commit it). Exit `0`. |
 | `fringe check --record [--manifest <path>]` | Also append this run to `.fringe/ledger.jsonl`, optionally merging an agent flow manifest. |
-| `fringe init [path]` | Add the Claude Code hook and install the three skills. Safe to re-run; refuses to touch an invalid `settings.json`. |
+| `fringe init [path]` | Add the Claude Code hook and install the five skills. Safe to re-run; refuses to touch an invalid `settings.json`. |
 | `fringe open [path] [--port <n>]` | Serve the ledger as a plain HTML page on `127.0.0.1:4173` (loopback only). Ctrl+C to stop. |
 | `fringe --help` · `--version` | Usage / version. |
 
@@ -101,7 +101,7 @@ After each edit the hook runs; with errors it returns, for example:
 
 This was verified end to end with real agent runs: the agent receives the findings and fixes them (see [docs/architecture.md](../../docs/architecture.md)). Why `--claude-hook` and not `--hook`: Claude Code only passes a hook's output to the agent as `decision`/`reason` JSON on exit 0 (or stderr on exit 2); the CI contract `--hook` exits 1 and is ignored.
 
-**Skills** — `fringe init` installs three into `.claude/skills/` (sources in [skill/](skill/)): `fringe` (below), `fringe-review` ("review this page": runs the checker and reports ranked, plain-English findings with fixes; invoke as `/fringe-review`) and `fringe-audit` (whole-repo plan: top rules and files, a suggested fix order, offers `--update-baseline`; `/fringe-audit`). Reviews run `fringe check`, so Claude Code will ask you to approve that command once (or allow `Bash(fringe:*)` / `Bash(npx:*)`).
+**Skills** — `fringe init` installs five into `.claude/skills/` (sources in [skill/](skill/), one folder each); the Claude Code plugin ships the same folders, namespaced `/fringe:…`: `fringe` (below), `fringe-review` ("review this page": ranked, plain-English findings with fixes), `fringe-audit` (whole-repo plan: top rules and files, a fix order, offers `--update-baseline`), `fringe-debt` (lists `fringe-ignore` suppressions and the baseline) and `fringe-help` (quick reference). Invoke as `/fringe-review` etc. Reviews run `fringe check`, so Claude Code will ask you to approve that command once (or allow `Bash(fringe:*)` / `Bash(npx:*)`).
 
 **The main skill** (`.claude/skills/fringe/SKILL.md`) teaches the agent the ladder: *Flow* (cut what users don't need, with evidence in `.fringe/manifest.json`) → *Edges* (fix every hook finding, never silence a rule to get green) → *Polish* (tokens, scales, no AI look), then record the run. It is plain Markdown, so any agent platform that reads `AGENTS.md`/skill files can use it as-is.
 

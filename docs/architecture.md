@@ -45,7 +45,9 @@ One package does everything today: `packages/cli`. The dashboard (Plan 3) and sk
 | `src/suppress.ts` | Inline `fringe-ignore FR-xxx` comment lookup (line or line above) | `suppressedIds` |
 | `src/init.ts` | Merge the hook into `.claude/settings.json`, install the skill; never overwrites invalid JSON | `initProject` |
 | `src/board.ts` | Loopback-only ledger page (`fringe open`); output escaped | `renderBoard`, `startBoard` |
-| `skill/` | `SKILL.md` (the ladder), `review.md`, `audit.md` — shipped in the package, copied by `init` to `.claude/skills/{fringe,fringe-review,fringe-audit}/` | — |
+| `skill/<name>/SKILL.md` | Five skills (`fringe`, `-review`, `-audit`, `-debt`, `-help`) — one folder each; shipped in the npm package, copied by `init`, and loaded by the Claude Code plugin (`.claude-plugin/plugin.json` → `./packages/cli/skill/`) | — |
+| `.claude-plugin/`, `hooks/hooks.json` | Claude Code plugin + marketplace manifests; hook = the same `--claude-hook` command as `init` (a test keeps them in sync) | — |
+| `AGENTS.md`, `INSTALL.md` | Rules file for agents without hooks; per-agent install steps | — |
 | `src/ledger.ts` | Append JSONL; tolerant reader | `appendRecord`, `readLedger`, `LedgerRecord` |
 | `src/report/pretty.ts` | Human formatter (severity-rank + file:line ordering) | `toPretty(result)` |
 | `src/report/json.ts` | `fringe/check.v1` | `toJson(result)` |

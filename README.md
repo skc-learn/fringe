@@ -4,8 +4,10 @@
 
 AI agents made UI fast — Figma's 2025 report pegs the gains at 78% efficiency but only 40% quality. Fringe closes the quality half: a static checker that measures whether agent-written frontends handle their **edges** — accessibility, interaction states, dark patterns, design-token drift, the generic "AI look" — gates the hard failures, and keeps a local ledger so the history is measurable, not vibes.
 
+**Claude Code plugin** (hook + skills, one step): `/plugin marketplace add skc-learn/fringe`, then `/plugin install fringe@fringe`. **Other agents / CI / manual setup:** see [INSTALL.md](INSTALL.md).
+
 ```sh
-npx @fringetools/cli init     # one command: wires the Claude Code hook + installs 3 skills (fringe, fringe-review, fringe-audit)
+npx @fringetools/cli init     # one command: wires the Claude Code hook + installs 5 skills (fringe, review, audit, debt, help)
 npx @fringetools/cli check    # or run it by hand
 ```
 
@@ -38,17 +40,17 @@ Fringe encodes a ladder: **Flow** (cut what users don't need — agent-judged, w
 | | |
 |---|---|
 | **Published** | `@fringetools/cli@0.1.1` on npm — `npx @fringetools/cli init`. Source: [skc-learn/fringe](https://github.com/skc-learn/fringe). |
-| **Shipped** | 29 rules, calibrated size-aware health score, pretty/JSON/CI-hook/Claude-hook outputs, `init`, baseline, inline suppression, ledger + manifests + token sources, `fringe open` ledger page, three agent skills (`/fringe-review`, `/fringe-audit`), stack auto-detection. Golden snapshots + three calibration apps; CI on every push. |
+| **Shipped** | 29 rules, calibrated size-aware health score, pretty/JSON/CI-hook/Claude-hook outputs, `init`, baseline, inline suppression, ledger + manifests + token sources, `fringe open` ledger page, five agent skills (`/fringe-review`, `/fringe-audit`, `/fringe-debt`, `/fringe-help`), a Claude Code plugin, `AGENTS.md`, stack auto-detection. Golden snapshots + three calibration apps; CI on every push. |
 | **Verified** | Agent loop run end to end with real Claude Code sessions (three tasks): errors reach the agent and get fixed. Checker dogfooded on six real projects; false positives found there are fixed. |
 | **Next** | Per-rule precision view (data already recorded), richer dashboard (`fringe board`), skill adapters for other agent platforms. See [PRD](docs/PRD.md) §7. |
 
 ## Documentation
 
-**Using it:** [CLI reference — every command, flag, rule and config key](packages/cli/README.md) · [the agent skill](packages/cli/skill/SKILL.md)
+**Using it:** [Install for your agent](INSTALL.md) · [`AGENTS.md` for any agent](AGENTS.md) · [CLI reference — every command, flag, rule and config key](packages/cli/README.md) · [the agent skill](packages/cli/skill/SKILL.md)
 
 **Understanding it:** [Product](docs/product.md) · [PRD](docs/PRD.md) · [Architecture](docs/architecture.md) · [Decision matrix](docs/decisions.md) · [Test strategy](docs/test-strategy.md) · [Docs index](docs/README.md)
 
-Plays well with [ponytail](https://github.com/dietrichgebert/ponytail) (run both), [Impeccable](https://impeccable.style/), [Design with Intent](https://designwithintent.ai) — positioning in [docs/product.md](docs/product.md).
+Plays well with [ponytail](https://github.com/dietrichgebert/ponytail) (run both: Ponytail promises never to cut accessibility, Fringe is the check that verifies it), [Impeccable](https://impeccable.style/), [Design with Intent](https://designwithintent.ai) — positioning in [docs/product.md](docs/product.md).
 
 ## Contributing
 

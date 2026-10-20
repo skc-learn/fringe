@@ -82,6 +82,6 @@ describe('manifest evidence', () => {
   it('init installs all three skills', async () => {
     const d = mk({});
     await run(['init', d]);
-    for (const n of ['fringe', 'fringe-review', 'fringe-audit']) expect(existsSync(join(d, '.claude/skills', n, 'SKILL.md'))).toBe(true);
+    for (const n of ['fringe', 'fringe-review', 'fringe-audit', 'fringe-debt', 'fringe-help']) expect(existsSync(join(d, '.claude/skills', n, 'SKILL.md'))).toBe(true);
   });
 });

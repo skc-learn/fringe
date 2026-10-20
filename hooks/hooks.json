@@ -1,0 +1,12 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "npx -y @fringetools/cli check --claude-hook", "timeout": 60 }
+        ]
+      }
+    ]
+  }
+}
