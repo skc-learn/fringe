@@ -10,7 +10,9 @@ describe('Claude Code plugin manifests', () => {
     const plugin = json('.claude-plugin/plugin.json');
     expect(plugin.version).toBe(json('packages/cli/package.json').version);
     expect(plugin.skills).toBe('./packages/cli/skill/');
-    for (const h of plugin.hooks) expect(existsSync(join(root, h))).toBe(true);
+    // hooks/hooks.json is auto-loaded by Claude Code; listing it in the manifest breaks the plugin ("Duplicate hooks file").
+    expect(plugin.hooks).toBeUndefined();
+    expect(existsSync(join(root, 'hooks/hooks.json'))).toBe(true);
     const market = json('.claude-plugin/marketplace.json');
     expect(market.plugins[0].name).toBe(plugin.name);
   });
