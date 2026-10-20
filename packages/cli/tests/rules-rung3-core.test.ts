@@ -8,6 +8,7 @@ import { fr304 } from '../src/rules/fr304.js';
 import { fr301 } from '../src/rules/fr301.js';
 import { fr302 } from '../src/rules/fr302.js';
 import { fr303 } from '../src/rules/fr303.js';
+import { fr305 } from '../src/rules/fr305.js';
 import { ALL_RULES } from '../src/rules/registry.js';
 
 function cssCtxOf(file: string, source: string): RuleContext {
@@ -265,5 +266,52 @@ describe('FR-302/303 registration', () => {
   it('registers both rules in ALL_RULES at rung 3', () => {
     expect(ALL_RULES.some((r) => r.id === 'FR-302' && r.rung === 3)).toBe(true);
     expect(ALL_RULES.some((r) => r.id === 'FR-303' && r.rung === 3)).toBe(true);
+  });
+});
+
+expectRule(fr305, 'FR-305');
+
+describe('FR-305 hit areas', () => {
+  it('flags the fail fixture with one finding at signal severity', () => {
+    const { file, source } = fixtureOf('FR-305', 'fail');
+    const out = fr305.check(ctxOf(file, source));
+    expect(fr305.severity).toBe('signal');
+    expect(out.length).toBe(1);
+    expect(out[0].rule).toBe('FR-305');
+    expect(out[0].severity).toBe('signal');
+    expect(out[0].message).toBe('tiny hit area: text-xs interactive element without adequate padding');
+    expect(out[0].hint).toBe('add py-2+ padding or a larger text size (WCAG 2.5.8 target size)');
+    expect(out[0].loc.file).toBe(file);
+    expect(out[0].loc.line).toBe(1);
+  });
+
+  it('accepts py-2, p-10 and plain class attributes', () => {
+    expect(fr305.check(ctxOf('a.tsx', 'export default () => <button className="text-xs py-2">ok</button>;'))).toEqual([]);
+    expect(fr305.check(ctxOf('a.tsx', 'export default () => <a className="text-xs p-10" href="/x">x</a>;'))).toEqual([]);
+    expect(fr305.check(ctxOf('a.tsx', 'export default () => <a class="text-xs py-3" href="/x">x</a>;'))).toEqual([]);
+  });
+
+  it('still flags padding below the threshold (p-1, py-0)', () => {
+    expect(fr305.check(ctxOf('a.tsx', 'export default () => <button className="text-xs p-1">a</button>;')).length).toBe(1);
+    expect(fr305.check(ctxOf('a.tsx', 'export default () => <button className="text-xs py-0">a</button>;')).length).toBe(1);
+  });
+
+  it('ignores text-xs on non-interactive elements and larger text sizes on links', () => {
+    expect(fr305.check(ctxOf('a.tsx', 'export default () => <p className="text-xs">fine</p>;'))).toEqual([]);
+    expect(fr305.check(ctxOf('a.tsx', 'export default () => <a className="text-sm" href="/x">x</a>;'))).toEqual([]);
+  });
+
+  it('does not confuse px-2 or unrelated prefixes with vertical padding', () => {
+    expect(fr305.check(ctxOf('a.tsx', 'export default () => <a className="text-xs px-2" href="/x">x</a>;')).length).toBe(1);
+  });
+
+  it('does not treat text-xsl or similar as text-xs', () => {
+    expect(fr305.check(ctxOf('a.tsx', 'export default () => <a className="text-xsl" href="/x">x</a>;'))).toEqual([]);
+  });
+});
+
+describe('FR-305 registration', () => {
+  it('is registered in ALL_RULES at rung 3', () => {
+    expect(ALL_RULES.some((r) => r.id === 'FR-305' && r.rung === 3)).toBe(true);
   });
 });

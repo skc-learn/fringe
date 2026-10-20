@@ -17,10 +17,11 @@ import { fr301 } from './fr301.js';
 import { fr302 } from './fr302.js';
 import { fr303 } from './fr303.js';
 import { fr304 } from './fr304.js';
+import { fr305 } from './fr305.js';
 
 export const ALL_RULES: Rule[] = [];
 
-ALL_RULES.push(fr201, fr202, fr203, fr204, fr205, fr206, fr207, fr208, fr209, fr210, fr211, fr212, fr213, fr214, fr301, fr302, fr303, fr304);
+ALL_RULES.push(fr201, fr202, fr203, fr204, fr205, fr206, fr207, fr208, fr209, fr210, fr211, fr212, fr213, fr214, fr301, fr302, fr303, fr304, fr305);
 
 export function activeRules(cfg: FringeConfig): Rule[] {
   return ALL_RULES.filter((r) => !cfg.disable.includes(r.id));
