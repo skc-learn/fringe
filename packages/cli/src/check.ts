@@ -9,8 +9,9 @@ import { parseCss } from './parse/css.js';
 import { activeRules } from './rules/registry.js';
 import { score } from './score.js';
 import { gatherTokenColors } from './tokens.js';
+import { applyBaseline } from './baseline.js';
 
-export async function runCheck(root: string, cfg: FringeConfig = loadConfig(root)): Promise<CheckResult> {
+export async function runCheck(root: string, cfg: FringeConfig = loadConfig(root), useBaseline = true): Promise<CheckResult> {
   // Two-phase by design: walk+parse everything first, then run rules over the contexts.
   // ACCEPTED DEVIATION (memory profile): every RuleContext — including its full source
   // string — is retained until the run completes, because the token gather needs all CSS
@@ -23,7 +24,6 @@ export async function runCheck(root: string, cfg: FringeConfig = loadConfig(root
   const rules = activeRules(cfg);
   const findings = [] as CheckResult['findings'];
   const skipped: string[] = [];
-  const counts: Counts = { error: 0, review: 0, signal: 0 };
   const cssSources: Array<{ file: string; source: string }> = [];
   const contexts: RuleContext[] = [];
   for (const file of files) {
@@ -47,7 +47,10 @@ export async function runCheck(root: string, cfg: FringeConfig = loadConfig(root
   const tokenColors = gatherTokenColors(root, cfg, cssSources);
   for (const ctx of contexts) ctx.tokenColors = tokenColors;
   for (const ctx of contexts) {
-    for (const rule of rules) for (const f of rule.check(ctx)) { findings.push(f); counts[f.severity]++; }
+    for (const rule of rules) findings.push(...rule.check(ctx));
   }
-  return { stack, files: files.length, skipped, findings, counts, score: score(counts, cfg.weights) };
+  const { fresh, known } = useBaseline ? applyBaseline(root, findings) : { fresh: findings, known: 0 };
+  const counts: Counts = { error: 0, review: 0, signal: 0 };
+  for (const f of fresh) counts[f.severity]++;
+  return { stack, files: files.length, skipped, findings: fresh, counts, score: score(counts, cfg.weights, files.length), ...(known ? { baselined: known } : {}) };
 }

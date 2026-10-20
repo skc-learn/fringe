@@ -16,6 +16,10 @@ npx @fringetool/cli check
 
 ```
 fringe check [--json] [--hook] [--record] [--manifest <path>] [paths...]
+fringe check --update-baseline [path]
+fringe init [path]
+fringe open [path] [--port <n>]
+fringe --help
 fringe --version
 ```
 
@@ -24,6 +28,9 @@ fringe --version
 - `--hook` — one-line JSON, schema `fringe/hook.v1` (`errors`, `review`, `signals`, `block`, `reason`). For pre-commit/CI gates and Claude Code hooks. Takes precedence over `--json` when both are given.
 - `--record` — append one JSONL record to `<root>/.fringe/ledger.jsonl` (id, ts, stack, files, counts, score). The ledger is the task-by-task history; it is gitignoreable.
 - `--manifest <path>` — merge an agent flow manifest `{ "flows": [{ "action": "cut"|"kept", "what", "evidence" }] }` into the record written by `--record`. Missing/invalid manifests warn to stderr and are skipped.
+- `--update-baseline` — write today's findings to `fringe.baseline.json` (commit it). Later `check` runs ignore those and gate only on new findings; the output shows `N baselined`. Matching ignores line numbers, so edits above a known finding don't bring it back.
+- `fringe init [path]` — adds the `PostToolUse` hook to `.claude/settings.json` (existing settings kept) and installs the skill at `.claude/skills/fringe/`. Needs `fringe` on the PATH.
+- `fringe open` — serves the project's ledger as a plain HTML page on `127.0.0.1:4173` (loopback only; reload to see new runs). Stop with Ctrl+C.
 - **Unknown flags** produce a warning on stderr and are otherwise ignored — `fringe` never crashes mid-run because an agent passed an unexpected flag.
 
 Default (human) output is the pretty formatter:

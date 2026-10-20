@@ -29,7 +29,7 @@ export function toPretty(r: CheckResult): string {
   }
 
   lines.push(
-    `health ${r.score}/100 · ${r.counts.error} errors · ${r.counts.review} review · ${r.counts.signal} signals`,
+    `health ${r.score}/100 · ${r.counts.error} errors · ${r.counts.review} review · ${r.counts.signal} signals` + (r.baselined ? ` · ${r.baselined} baselined` : ''),
   );
 
   if (r.skipped.length > 0) {

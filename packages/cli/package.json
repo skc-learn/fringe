@@ -10,11 +10,13 @@
     "node": ">=18"
   },
   "files": [
-    "dist"
+    "dist",
+    "skill"
   ],
   "scripts": {
     "build": "tsup src/index.ts src/bin.ts --format esm --dts --outDir dist",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "pnpm build && pnpm test"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
@@ -26,5 +28,14 @@
     "@babel/parser": "^7.29.9",
     "parse5": "^7.3.0",
     "postcss": "^8.5.31"
-  }
+  },
+  "description": "UX-quality checker for AI coding agents: accessibility, states, dark patterns, token drift, AI-look.",
+  "keywords": [
+    "accessibility",
+    "a11y",
+    "lint",
+    "ux",
+    "ai-agents",
+    "claude-code"
+  ]
 }
