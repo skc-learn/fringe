@@ -118,7 +118,7 @@ Requirements use stable IDs; **Status** reflects v0.1 (shipped) unless marked *p
 
 | Release | Scope | Status |
 |---|---|---|
-| **v0.1** | Checker core: 29 rules, outputs, size-aware score, calibration, ledger, hooks, token sources, WCAG tags, baseline, suppression, `init`, minimal `open`, skill (Plans 1–2 + post-dogfood work) | ✅ published to npm as `@fringetools/cli@0.1.1` |
+| **v0.1** | Checker core: 29 rules, outputs, size-aware score, calibration, ledger, hooks, token sources, WCAG tags, baseline, suppression, `init`, minimal `open`, skill (Plans 1–2 + post-dogfood work) | ✅ published to npm as `@fringetools/cli@0.1.2` |
 | **v0.2** | Per-rule precision view from the ledger; full dashboard (`fringe board`, stat strip + ladder board + story drawer, handoff export) (Plan 3) | planned |
 | **v0.3** | Adapters for other agent platforms, slash commands, README site (Plan 4) — only if real use shows demand | planned |
 | **v0.4+** | Slop-tuning pass, Vue/Svelte tier-2 depth | backlog |
