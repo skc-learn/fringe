@@ -1,0 +1,30 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`slop app golden > matches snapshot 1`] = `
+{
+  "counts": {
+    "error": 0,
+    "review": 1,
+    "signal": 15,
+  },
+  "rules": [
+    "FR-215:Landing.tsx:1",
+    "FR-301:Landing.tsx:1",
+    "FR-302:Landing.tsx:25",
+    "FR-303:Landing.tsx:92",
+    "FR-303:Landing.tsx:92",
+    "FR-305:Landing.tsx:101",
+    "FR-361:Landing.tsx:22",
+    "FR-362:Landing.tsx:19",
+    "FR-363:Landing.tsx:90",
+    "FR-364:Landing.tsx:1",
+    "FR-366:Landing.tsx:1",
+    "FR-367:Landing.tsx:44",
+    "FR-368:Landing.tsx:18",
+    "FR-369:Landing.tsx:78",
+    "FR-304:styles.css:2",
+    "FR-368:styles.css:8",
+  ],
+  "score": 82,
+}
+`;
