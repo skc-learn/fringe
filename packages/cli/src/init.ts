@@ -2,7 +2,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, copyFileSync } from
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const HOOK = 'fringe check --claude-hook';
+// npx runs a locally installed copy if there is one and downloads otherwise, so init needs no prior install.
+const HOOK = 'npx -y @fringetool/cli check --claude-hook';
 const SKILL = fileURLToPath(new URL('../skill/SKILL.md', import.meta.url));
 
 /** Wires the PostToolUse gate and installs the skill. Never overwrites: invalid settings.json aborts, an existing hook is kept. */
@@ -15,7 +16,7 @@ export function initProject(root: string): string[] {
     catch { throw new Error(`${settingsPath} is not valid JSON — fix it and rerun`); }
   }
   const post: any[] = ((settings.hooks ??= {}).PostToolUse ??= []);
-  if (JSON.stringify(post).includes('fringe check')) done.push('hook already present');
+  if (/(fringe|@fringetool\/cli) check/.test(JSON.stringify(post))) done.push('hook already present');
   else {
     post.push({ matcher: 'Edit|Write', hooks: [{ type: 'command', command: HOOK }] });
     mkdirSync(dirname(settingsPath), { recursive: true });

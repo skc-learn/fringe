@@ -12,7 +12,9 @@ AI coding agents made UI fast but not good. Figma's 2025 AI report puts agent ga
 
 ```sh
 npx @fringetool/cli check            # scan the repo, print findings + health score
-fringe check --hook                  # one-line JSON gate for CI / Claude Code hooks
+fringe check --hook                  # one-line JSON gate for CI / pre-commit
+fringe check --claude-hook           # the form Claude Code feeds back to the agent
+fringe init                          # wire the hook + install the skill
 fringe check --record --manifest .fringe/manifest.json   # append to the task ledger
 ```
 
@@ -59,8 +61,8 @@ Fringe is complementary, not competitive, with the taste-and-strategy layers:
 
 ## Status
 
-- **Shipped (v0.1):** full checker — 29 rules, stack auto-detection, pretty/JSON/hook outputs, health score, ledger with manifest merge and token-source recording, WCAG criterion tags, test suite with golden snapshots and score calibration.
-- **Next:** Plan 3 — the local dashboard (`fringe open` / `fringe board`: stat strip, ladder board, task story drawer). Plan 4 — the canonical skill, ~20-platform adapter matrix, README site, npm publish.
+- **Shipped (v0.1):** full checker — 29 rules, stack auto-detection, pretty/JSON/CI-hook/Claude-hook outputs, size-aware health score, baseline mode, inline suppression, `fringe init`, ledger with manifest merge and token-source recording, minimal `fringe open`, WCAG criterion tags, the agent skill, golden snapshots and score calibration, CI. Agent loop verified with real Claude Code runs; checker dogfooded on six real projects.
+- **Next:** npm publish (blocked on account 2FA); per-rule precision view; the full dashboard (`fringe board`: stat strip, ladder board, task story drawer); adapters for other agent platforms, only if wanted.
 - **Later (v2):** token-drift checks against the design source, `fringe shot` visual verification, `--stamp verified` manifest stamping, Vue/Svelte tier-2 depth.
 
 See [PRD.md](PRD.md) for requirements, [architecture.md](architecture.md) for how it works, [decisions.md](decisions.md) for why it's built this way.

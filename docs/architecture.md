@@ -41,10 +41,15 @@ One package does everything today: `packages/cli`. The dashboard (Plan 3) and sk
 | `src/rules/*` | 29 pure rules (one file per rule) + `registry.ts` (`ALL_RULES`, `activeRules(cfg)` with disable filter) | `Rule` objects |
 | `src/check.ts` | Orchestration: detect → walk → parse+rule per file (two-phase: CSS sources collected for token gathering) → `CheckResult` | `runCheck(root, cfg)` |
 | `src/score.ts` | `max(0, 100 − weighted findings)` | `score(counts, weights)` |
+| `src/baseline.ts` | `fringe.baseline.json` read/write; multiset match on rule+file+message | `writeBaseline`, `applyBaseline` |
+| `src/suppress.ts` | Inline `fringe-ignore FR-xxx` comment lookup (line or line above) | `suppressedIds` |
+| `src/init.ts` | Merge the hook into `.claude/settings.json`, install the skill; never overwrites invalid JSON | `initProject` |
+| `src/board.ts` | Loopback-only ledger page (`fringe open`); output escaped | `renderBoard`, `startBoard` |
+| `skill/SKILL.md` | Canonical agent skill; shipped in the package, copied by `init` | — |
 | `src/ledger.ts` | Append JSONL; tolerant reader | `appendRecord`, `readLedger`, `LedgerRecord` |
 | `src/report/pretty.ts` | Human formatter (severity-rank + file:line ordering) | `toPretty(result)` |
 | `src/report/json.ts` | `fringe/check.v1` | `toJson(result)` |
-| `src/report/hook.ts` | `fringe/hook.v1` one-line gate contract | `toHook(result)` |
+| `src/report/hook.ts` | `fringe/hook.v1` one-line CI gate; and Claude Code's `{decision,reason}` form | `toHook`, `toClaudeHook` |
 
 ## 3. The pipeline
 
@@ -55,8 +60,9 @@ runCheck(root)
   ├─ walk(root, cfg)                  checkable files
   ├─ phase 1: for each file           read → parse by extension → RuleContext
   ├─ gatherTokenColors(root,cfg,cssSources)   once, after walk
-  ├─ phase 2: for each context        activeRules(cfg) → findings → counts
-  └─ score(counts, cfg.weights)       → CheckResult
+  ├─ phase 2: for each context        activeRules(cfg) → findings
+  ├─ suppress inline `fringe-ignore` → applyBaseline(fringe.baseline.json)
+  └─ counts → score(counts, weights, files)   → CheckResult (+ baselined?, suppressed?)
 ```
 
 **Parsing tiers** (the anti-false-positive strategy):
@@ -95,12 +101,13 @@ Health: penalty = `(10·e + 3·r + 1·s) × 10 / max(files, 10)` (weights in con
 
 **`fringe/check.v1`** (`--json`): `{ schema, stack, files, skipped, findings[{rule,severity,wcag?,message,hint,loc}], counts, score }`
 
-**`fringe/hook.v1`** (`--hook`, single line): `{ schema, errors, review, signals, block: errors>0, reason }` — `reason` names the top finding (`FR-201: … (file:line)`); deterministic ordering (severity rank → file → line).
+**Claude Code hook** (`--claude-hook`): nothing when clean; with errors `{"decision":"block","reason":"…"}` on exit 0 — the only form Claude Code feeds back to the agent. **`fringe/hook.v1`** (`--hook`, single line, for CI; exits 1, ignored by Claude Code): `{ schema, errors, review, signals, block: errors>0, reason }` — `reason` names the top finding (`FR-201: … (file:line)`); deterministic ordering (severity rank → file → line).
 
 **Ledger record** (`.fringe/ledger.jsonl`, one JSON per line, append-only):
 ```json
 { "id": "uuid", "ts": "ISO-8601", "stack": {…}, "files": 12,
   "counts": {"error":0,"review":1,"signal":3}, "score": 94,
+  "byRule": {"FR-203":2}, "suppressed": 1,
   "tokenSource": "css-vars",                       // present when configured
   "manifest": { "flows": [ { "action": "cut", "what": "export tab", "evidence": "0 uses in analytics (90d)" } ] },
   "shots": [] }                                     // v2 reservation, unwritten
@@ -134,8 +141,9 @@ Honest, documented deviations (tracked for follow-up, not hidden):
 
 ## 10. Roadmap architecture
 
-- **Plan 3 — dashboard:** `packages/dashboard` (Vite + React), served by `fringe open` (tiny local server reading the project ledger) and `fringe board` (cross-project via `~/.config/fringe/projects.json`). Layout approved by mockup: stat strip (health/errors/review/signals/states%), ladder board (three rung columns, judged/verified footed), task story drawer (manifest cuts with evidence, verified results, diff, re-run, handoff Markdown export). The dashboard's own empty/loading/error states are a demo of the product's philosophy.
-- **Plan 4 — skill + adapters:** canonical `skills/fringe/SKILL.md` (the ladder, Rule Zero, evidence discipline, dials incl. ultra multi-pass) → generated adapters for ~20 agent platforms; `scripts/build-adapters.ts` with a CI freshness check; README site with the slop catalog's public rule pages.
+- **Shipped from the original Plan 3/4:** `fringe open` (minimal), the skill, `init`. **Still planned:**
+- **Plan 3 — full dashboard:** `packages/dashboard` (Vite + React), served by `fringe open` (tiny local server reading the project ledger) and `fringe board` (cross-project via `~/.config/fringe/projects.json`). Layout approved by mockup: stat strip (health/errors/review/signals/states%), ladder board (three rung columns, judged/verified footed), task story drawer (manifest cuts with evidence, verified results, diff, re-run, handoff Markdown export). The dashboard's own empty/loading/error states are a demo of the product's philosophy.
+- **Adapters (only if wanted):** the skill (`packages/cli/skill/SKILL.md`) is plain Markdown and already usable on any platform that reads skill/AGENTS files; per-platform copies would be generated from it by a script with a CI freshness check. Slash commands (`/fringe`, `/fringe-review`) are unbuilt.
 
 ## 11. References
 

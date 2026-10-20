@@ -29,10 +29,11 @@ function readManifest(path: string, warn: (s: string) => void): LedgerRecord['ma
 }
 
 const HELP = `fringe check [--json] [--hook] [--record] [--manifest <path>] [path]
+fringe check --claude-hook [path]       for Claude Code hooks (feeds errors back to the agent)
 fringe check --update-baseline [path]   accept today's findings; only new ones gate
 fringe init [path]                       add the Claude Code hook + skill
 fringe open [path] [--port <n>]   serve the .fringe ledger on 127.0.0.1
-fringe --version`;
+fringe --help | --version`;
 
 const KNOWN_FLAGS = new Set(['--json', '--hook', '--claude-hook', '--record', '--manifest', '--update-baseline']);
 
@@ -103,7 +104,6 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
   if (cmd === 'init') {
     try {
       for (const line of initProject(resolve(opts.cwd ?? process.cwd(), rest[0] ?? '.'))) log(opts)(`fringe: ${line}`);
-      log(opts)('fringe: the hook runs `fringe check --claude-hook` — install the CLI so that command resolves');
       return 0;
     } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }
   }

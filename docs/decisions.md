@@ -4,7 +4,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 
 | # | Decision | Date | Status |
 |---|---|---|---|
-| D-01 | Product form: skill + CLI + local dashboard ("both") | 2026-10-20 | 🔒 CLI shipped; skill/dashboards on roadmap |
+| D-01 | Product form: skill + CLI + local dashboard ("both") | 2026-10-20 | 🔒 CLI + skill shipped; full dashboard deferred (D-23) |
 | D-02 | Measurement model: CLI-verified (static analysis) + judged manifests | 2026-10-20 | 🔒 |
 | D-03 | Core discipline: three-rung ladder (Flow → Edges → Polish) | 2026-10-20 | 🔒 |
 | D-04 | Name: **Fringe**; package `@fringetool/cli`, bin `fringe` | 2026-10-20 | 🔒 |
@@ -22,6 +22,11 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | D-16 | Ecosystem positioning: complementary; differentiation = measured edges + history | 2026-10-20 | 🔒 |
 | D-17 | Dashboard layout: hybrid (stat strip + ladder board + story drawer) | 2026-10-20 | approved mockup, Plan 3 |
 | D-18 | Execution process: TDD + per-task review + whole-branch review | 2026-10-20 | 🔒 |
+| D-19 | Two hook outputs: `--claude-hook` (agent feedback) vs `--hook` (CI contract) | 2026-10-20 | 🔒 |
+| D-20 | Baseline mode for adopting on existing repos | 2026-10-20 | 🔒 |
+| D-21 | Inline suppression: rule IDs required, always counted | 2026-10-20 | 🔒 |
+| D-22 | Size-aware health score with soft decay | 2026-10-20 | 🔒 |
+| D-23 | Dashboard scope cut: minimal `fringe open` now, full dashboard later | 2026-10-20 | 🔒 / deferred |
 
 ---
 
@@ -107,6 +112,29 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 **Decision:** every change TDD (failing test first); implementation via fresh-subagent-per-task with independent two-verdict review (spec compliance + quality), whole-branch review before merge, one consolidated fix wave per plan. All decisions that contradicted reviews amended the plan docs in-commit.
 **Consequence:** the process caught, among others: two plan-code bugs (parse5 attrs, FR-202 fixture contradiction), two error-severity false positives (aria-haspopup, nested-span buttons), a Node-floor dependency incident, a golden-snapshot coverage gap (the un-planted second h1), and three rung-3 false positives before merge. All tests green at merge.
 
+### D-19 — Two hook outputs
+**Context:** the first real agent test showed `fringe/hook.v1` (JSON, exit 1) is ignored by Claude Code; only `{"decision":"block","reason"}` on exit 0 (or stderr on exit 2) reaches the agent.
+**Decision:** keep `--hook` unchanged as the CI/pre-commit contract; add `--claude-hook` for agents (silent when clean, up to 8 findings, relative paths, exit 0). `fringe init` writes the latter via `npx -y @fringetool/cli check --claude-hook`, so setup needs no prior install.
+**Consequence:** a hook format is a contract with the host agent — verify it with a real session, not by reading docs.
+
+### D-20 — Baseline mode
+**Decision:** `--update-baseline` writes `fringe.baseline.json`; key = rule + relative file + message (no line numbers), matched as a multiset so duplicates still surface. Corrupt file → exit 2.
+**Alternatives:** line-based keys (break on any edit); config-level `ignore` (too blunt, hides new problems in the same file).
+**Consequence:** a repo with hundreds of existing findings can adopt the gate on day one.
+
+### D-21 — Inline suppression
+**Decision:** `fringe-ignore FR-xxx[, FR-yyy]` on the finding's line or the line above; IDs mandatory (no blanket ignore); each run reports `N suppressed`; the skill requires the agent to disclose any use.
+**Consequence:** an escape hatch for real false positives that cannot be used silently.
+
+### D-22 — Health score
+**Context:** the original linear, uncapped penalty scored 5 of 6 real projects at 0.
+**Decision:** penalty scaled per 10 files; `100 − penalty` up to 75, then `25·75/penalty`. Repos under 10 files score as before, so calibration bands are unchanged.
+**Consequence:** big repos stay distinguishable; the score works as a trend, not just a gate.
+
+### D-23 — Dashboard scope
+**Decision:** ship `fringe open` as a dependency-free HTML page (loopback only, escaped output); defer the React dashboard, `fringe board`, and the ~20-platform adapter generator until real ledger data and real demand exist. The skill is plain Markdown that works on any platform reading skill/AGENTS files.
+**Supersedes:** D-17 for now (layout still approved, build deferred).
+
 ---
 
 ## Deferral log (tracked, deliberate)
@@ -118,4 +146,5 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | Slop-tuning pass: px-2/px-20 + flex-1 word boundaries, emoji narrowing (©®™), Tailwind v4 `bg-linear-*`, FR-304 cascade modeling, `text-[rgba()]` FR-302 leak | signals never gate; batch tuning beats dribbles | backlog plan |
 | FR-364/366 thresholds fixed (3 tiles / 5 chips) | deliberately conservative first cut | tuning pass |
 | Token-drift checks, `fringe shot`, `--stamp verified` | v2 scope, schema already reserved | PRD §4.5 |
-| `package.json` description/keywords/repository/exports | publish-time (Plan 4) | Plan 4 intake |
+| npm publish | package ready; blocked on account 2FA | owner action |
+| Per-rule precision view | ledger records `byRule`/`suppressed`; needs real data | v0.2 |

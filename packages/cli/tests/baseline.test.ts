@@ -45,6 +45,7 @@ describe('init', () => {
     const s = JSON.parse(readFileSync(join(d, '.claude/settings.json'), 'utf8'));
     expect(s.permissions.allow).toEqual(['x']);
     expect(s.hooks.PostToolUse).toHaveLength(1);
+    expect(s.hooks.PostToolUse[0].hooks[0].command).toContain('@fringetool/cli check --claude-hook');
     expect(existsSync(join(d, '.claude/skills/fringe/SKILL.md'))).toBe(true);
   });
   it('refuses to overwrite invalid settings.json', async () => {

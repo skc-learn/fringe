@@ -5,7 +5,8 @@
 AI agents made UI fast — Figma's 2025 report pegs the gains at 78% efficiency but only 40% quality. Fringe closes the quality half: a static checker that measures whether agent-written frontends handle their **edges** — accessibility, interaction states, dark patterns, design-token drift, the generic "AI look" — gates the hard failures, and keeps a local ledger so the history is measurable, not vibes.
 
 ```sh
-pnpm --filter @fringetool/cli build && node packages/cli/dist/bin.js check .
+npx @fringetool/cli init     # one command: wires the Claude Code hook + installs the skill
+npx @fringetool/cli check    # or run it by hand
 ```
 
 ```
@@ -16,9 +17,11 @@ fringe · stack jsx,tailwind · 3 files
 health 34/100 · 6 errors · 2 review · 0 signals
 ```
 
-Not on npm yet; `npx @fringetool/cli check` will work once published.
+Once wired, every time Claude Code edits a file Fringe checks the project and hands accessibility errors back to the agent to fix — verified with real agent runs. For CI, `fringe check` exits `1` on any error. Review-level heuristics and taste-level signals never gate; they inform.
 
-**Exit 1.** The agent (or CI) cannot finish with broken markup unnoticed. Review-level heuristics and taste-level signals never gate — they inform.
+> **Until the first npm release** (package not published yet): `pnpm install && pnpm --filter @fringetool/cli build`, then run `node packages/cli/dist/bin.js <command>` instead of `npx @fringetool/cli <command>`.
+
+**Messy existing repo?** `fringe check --update-baseline` once; from then on only *new* problems gate. **False positive?** `// fringe-ignore FR-203` on the line (counted in every report).
 
 ## What it checks — 29 rules, three severities
 
@@ -32,18 +35,19 @@ Full rule table, configuration (`ignore` / `disable` / `weights` / `tokenSource`
 
 Fringe encodes a ladder: **Flow** (cut what users don't need — agent-judged, with evidence, via manifests) → **Edges** (never skip states/a11y — CLI-verified, gated) → **Polish** (tokens, scales, no AI-look — CLI-verified signals). Every number it shows is labeled **verified** or **judged** — the agent never grades its own homework where measurement is possible. Runs can `--record` to an append-only local ledger (`.fringe/ledger.jsonl`), the substrate for the upcoming dashboard and trends.
 
-## Status
+## Status (v0.1)
 
 | | |
 |---|---|
-| **Now (v0.1)** | Checker complete: 29 rules, health score (calibrated), pretty/JSON/hook outputs, ledger + manifests + token sources, stack auto-detection. Golden snapshots and three calibration apps. |
-| **Also shipped** | `fringe init` (hook + skill in one command), inline `fringe-ignore FR-123` suppression (always counted), `--update-baseline` (adopt on a messy repo; only new findings gate), `fringe open` (minimal ledger page), canonical agent skill at [packages/cli/skill/SKILL.md](packages/cli/skill/SKILL.md). |
-| **Next** | Per-rule precision view (data now in the ledger), richer dashboard (ladder board, cross-project `fringe board`), per-platform skill adapters, npm publish. |
-| **Not yet published** | install from source (see top) |
+| **Shipped** | 29 rules, calibrated size-aware health score, pretty/JSON/CI-hook/Claude-hook outputs, `init`, baseline, inline suppression, ledger + manifests + token sources, `fringe open` ledger page, the agent skill, stack auto-detection. Golden snapshots + three calibration apps; CI on every push. |
+| **Verified** | Agent loop run end to end with real Claude Code sessions (three tasks): errors reach the agent and get fixed. Checker dogfooded on six real projects; false positives found there are fixed. |
+| **Next** | Per-rule precision view (data already recorded), richer dashboard (`fringe board`), skill adapters for other agent platforms, npm publish. See [PRD](docs/PRD.md) §7. |
 
 ## Documentation
 
-**[Product](docs/product.md)** · **[PRD](docs/PRD.md)** · **[Architecture](docs/architecture.md)** · **[Decision matrix](docs/decisions.md)** · **[Test strategy](docs/test-strategy.md)** · **[Docs index](docs/README.md)**
+**Using it:** [CLI reference — every command, flag, rule and config key](packages/cli/README.md) · [the agent skill](packages/cli/skill/SKILL.md)
+
+**Understanding it:** [Product](docs/product.md) · [PRD](docs/PRD.md) · [Architecture](docs/architecture.md) · [Decision matrix](docs/decisions.md) · [Test strategy](docs/test-strategy.md) · [Docs index](docs/README.md)
 
 Plays well with [ponytail](https://github.com/dietrichgebert/ponytail) (run both), [Impeccable](https://impeccable.style/), [Design with Intent](https://designwithintent.ai) — positioning in [docs/product.md](docs/product.md).
 

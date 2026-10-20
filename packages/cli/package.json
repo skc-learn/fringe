@@ -14,7 +14,7 @@
     "skill"
   ],
   "scripts": {
-    "build": "tsup src/index.ts src/bin.ts --format esm --dts --outDir dist",
+    "build": "tsup src/index.ts src/bin.ts --format esm --dts --outDir dist --clean",
     "test": "vitest run",
     "prepublishOnly": "pnpm build && pnpm test"
   },

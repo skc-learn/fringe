@@ -1,59 +1,119 @@
 # @fringetool/cli
 
-`fringe` — a UX-sanity checker for agent-written frontends. It scans JSX/TSX/HTML/CSS for the accessibility and interaction mistakes LLMs commonly make, prints findings, and exits nonzero when there are hard errors — so a coding agent (or CI) cannot finish with broken markup unnoticed.
+`fringe` — a UX-quality checker for agent-written frontends. It scans JSX/TSX/HTML/CSS (and Vue/Svelte/Astro templates, text rules only) for the accessibility, state-handling, dark-pattern and "AI look" mistakes coding agents commonly make, gates the hard failures, and keeps a local history.
 
-- Package: `@fringetool/cli` · binary: `fringe` · Node ≥ 18 · zero config by default.
+Package `@fringetool/cli` · binary `fringe` · Node ≥ 18 · zero config by default.
 
-## Install
+## Quick start
+
+In your project root:
 
 ```sh
-npm install -D @fringetool/cli
-# or run once:
-npx @fringetool/cli check
+npx @fringetool/cli init     # wires the Claude Code hook + installs the skill (nothing to install first)
+npx @fringetool/cli check    # run it by hand
 ```
 
-## Usage
+That is the whole setup. `init` adds a `PostToolUse` hook to `.claude/settings.json` (your existing settings are kept) and copies the skill to `.claude/skills/fringe/`. From then on, every time Claude Code edits a file, Fringe checks the project and feeds any accessibility errors back to the agent to fix.
 
-```
-fringe check [--json] [--hook] [--record] [--manifest <path>] [paths...]
-fringe check --claude-hook
-fringe check --update-baseline [path]
-fringe init [path]
-fringe open [path] [--port <n>]
-fringe --help
-fringe --version
-```
+Prefer a permanent command? `npm install -D @fringetool/cli`, then `npx fringe check`. Existing messy repo? Run `npx @fringetool/cli check --update-baseline` once so only *new* problems gate (see [Baseline](#baseline)).
 
-- `[paths...]` — the directory to check. Defaults to `.` (current directory). The **first path** is the root used for config loading (`fringe.config.json`) and the scan; extra paths are accepted and ignored beyond that, so an agent-invoked run never crashes on argument shape. **v0.1 supports directory roots only** — a path must be a directory, not a single file.
-- `--json` — full machine-readable report, schema `fringe/check.v1` (stack, files, findings with `rule`/`severity`/`loc`/`message`/`hint`, counts, health score).
-- `--hook` — one-line JSON, schema `fringe/hook.v1` (`errors`, `review`, `signals`, `block`, `reason`). For pre-commit/CI gates and Claude Code hooks. Takes precedence over `--json` when both are given.
-- `--record` — append one JSONL record to `<root>/.fringe/ledger.jsonl` (id, ts, stack, files, counts, score). The ledger is the task-by-task history; it is gitignoreable.
-- `--manifest <path>` — merge an agent flow manifest `{ "flows": [{ "action": "cut"|"kept", "what", "evidence" }] }` into the record written by `--record`. Missing/invalid manifests warn to stderr and are skipped.
-- `--update-baseline` — write today's findings to `fringe.baseline.json` (commit it). Later `check` runs ignore those and gate only on new findings; the output shows `N baselined`. Matching ignores line numbers, so edits above a known finding don't bring it back.
-- **Inline suppression** — a comment `fringe-ignore FR-203` (also `FR-203, FR-202`) on the finding's line or the line above silences those rules there: `// fringe-ignore FR-203`, `{/* fringe-ignore FR-203 */}`, `<!-- fringe-ignore FR-203 -->`. Rule ids are required (no blanket ignore) and every run reports `N suppressed`.
-- `fringe init [path]` — adds the `PostToolUse` hook to `.claude/settings.json` (existing settings kept) and installs the skill at `.claude/skills/fringe/`. Needs `fringe` on the PATH.
-- `fringe open` — serves the project's ledger as a plain HTML page on `127.0.0.1:4173` (loopback only; reload to see new runs). Stop with Ctrl+C.
-- **Unknown flags** produce a warning on stderr and are otherwise ignored — `fringe` never crashes mid-run because an agent passed an unexpected flag.
+> **Until the first npm release:** build from source — `pnpm install && pnpm --filter @fringetool/cli build`, then use `node packages/cli/dist/bin.js` in place of `npx @fringetool/cli`.
 
-Default (human) output is the pretty formatter:
+## Commands
+
+| Command | What it does |
+|---|---|
+| `fringe check [path]` | Scan a directory (default `.`) and print findings + health score. Exit `1` on any `error`. |
+| `fringe check --json` | Full report as JSON, schema `fringe/check.v1` (stack, files, findings, counts, score). |
+| `fringe check --claude-hook` | **For Claude Code hooks.** Silent when clean; on errors prints `{"decision":"block","reason":…}` (exit 0) so the agent sees and fixes them. |
+| `fringe check --hook` | One-line `fringe/hook.v1` JSON for CI / pre-commit. Exits `1` on errors. Claude Code does **not** feed this back — use `--claude-hook` for agents. Wins over `--json`. |
+| `fringe check --update-baseline` | Accept today's findings into `fringe.baseline.json` (commit it). Exit `0`. |
+| `fringe check --record [--manifest <path>]` | Also append this run to `.fringe/ledger.jsonl`, optionally merging an agent flow manifest. |
+| `fringe init [path]` | Add the Claude Code hook and install the skill. Safe to re-run; refuses to touch an invalid `settings.json`. |
+| `fringe open [path] [--port <n>]` | Serve the ledger as a plain HTML page on `127.0.0.1:4173` (loopback only). Ctrl+C to stop. |
+| `fringe --help` · `--version` | Usage / version. |
+
+Notes: the first path is the check root (config + scan); extra paths are accepted and ignored so agent-invoked runs never crash. v0.1 takes directories, not single files. Unknown flags warn on stderr and are ignored.
+
+Default (human) output:
 
 ```
 fringe · stack jsx,tailwind · 3 files
-[ERROR] FR-201 src/App.tsx:12 — <img> missing alt text (add alt="description" (or alt="" if decorative))
-health 70/100 · 3 errors · 0 review · 0 signals
+[ERROR] FR-201 /path/to/app/src/App.tsx:15 — <img> missing alt text (add alt="description" (or alt="" if decorative))
+health 34/100 · 6 errors · 2 review · 0 signals
 ```
+
+When a baseline or inline suppressions are in play, the last line adds `· N baselined` / `· N suppressed`.
 
 ## Exit codes
 
 | Code | Meaning |
 |---|---|
-| `0` | Clean (no `error` findings) |
-| `1` | One or more `error`-severity findings |
-| `2` | Internal failure — the run itself broke (unreadable root, invalid config, unexpected error); one-line message on stderr |
+| `0` | Clean (no `error` findings), or a mode that never gates (`--claude-hook`, `--update-baseline`) |
+| `1` | One or more `error`-severity findings (`check`, `--hook`, `--json`) |
+| `2` | Internal failure — unreadable root, invalid config, corrupt `fringe.baseline.json`, invalid `.claude/settings.json`, unknown command. One line on stderr |
 
-An unknown command also exits `2` with a usage hint.
+`review` and `signal` findings never change the exit code.
 
-`review` and `signal` findings never change the exit code — they need human judgment, not a gate.
+## Health score
+
+Each finding costs its weight (default error 10, review 3, signal 1). The total is scaled to a 10-file baseline (`× 10 / max(files, 10)`), so repo size doesn't flatten the score. Score = `100 − penalty` up to a penalty of 75; beyond that it decays smoothly (`25·75/penalty`) and never pins at 0. Repos under 10 files score exactly `100 − total`. Weights live in `fringe.config.json`.
+
+## Baseline
+
+Adopting Fringe on a repo that already has problems? Don't fix 300 findings first.
+
+```sh
+fringe check --update-baseline   # writes fringe.baseline.json — commit it
+fringe check                     # now only NEW findings count and gate
+```
+
+Entries match on rule + file + message (not line numbers), so edits above a known finding don't bring it back. Each entry covers one finding: adding a second identical problem still gates. Fixed findings simply stop matching; rerun `--update-baseline` to shrink the file. A corrupt baseline exits `2` rather than passing silently.
+
+## Inline suppression
+
+For a genuine false positive, put a comment on the finding's line or the line above, naming the rule(s):
+
+```tsx
+{/* fringe-ignore FR-203 */}
+<input type="search" />
+```
+
+Also `// fringe-ignore FR-203, FR-202` and `<!-- fringe-ignore FR-203 -->`. Rule IDs are required (no blanket ignore), and every run reports `N suppressed`, so suppression is never invisible.
+
+## The Claude Code hook and skill
+
+`fringe init` does this for you. By hand, add to `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      { "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "npx -y @fringetool/cli check --claude-hook" }] }
+    ]
+  }
+}
+```
+
+After each edit the hook runs; with errors it returns, for example:
+
+```json
+{"decision":"block","reason":"Fringe found 2 accessibility error(s). Fix them before finishing:\n- FR-203 src/Signup.tsx:9 — input not associated with a label (add id + <label htmlFor>, or aria-label)\n…"}
+```
+
+This was verified end to end with real agent runs: the agent receives the findings and fixes them (see [docs/architecture.md](../../docs/architecture.md)). Why `--claude-hook` and not `--hook`: Claude Code only passes a hook's output to the agent as `decision`/`reason` JSON on exit 0 (or stderr on exit 2); the CI contract `--hook` exits 1 and is ignored.
+
+**The skill** (`.claude/skills/fringe/SKILL.md`, source: [skill/SKILL.md](skill/SKILL.md)) teaches the agent the ladder: *Flow* (cut what users don't need, with evidence in `.fringe/manifest.json`) → *Edges* (fix every hook finding, never silence a rule to get green) → *Polish* (tokens, scales, no AI look), then record the run. It is plain Markdown, so any agent platform that reads `AGENTS.md`/skill files can use it as-is.
+
+For CI or pre-commit use `fringe check --hook` (or just the exit code):
+
+```json
+{"schema":"fringe/hook.v1","errors":1,"review":0,"signals":0,"block":true,"reason":"FR-201: <img> missing alt text (src/App.tsx:12)"}
+```
+
+## Ledger, manifest and dashboard
+
+`--record` appends one JSON line per run to `.fringe/ledger.jsonl` (gitignore it): id, timestamp, stack, files, counts, score, findings per rule (`byRule`), `suppressed`, optional `tokenSource` and agent `manifest`. The manifest (`.fringe/manifest.json`, written by the agent before `--record --manifest …`) is `{"flows":[{"action":"cut"|"kept","what":"…","evidence":"…"}]}` — flow decisions the agent *judged*, shown as such. `fringe open` renders the ledger (newest first, with flow cuts) at `http://127.0.0.1:4173`; reload to see new runs. A richer dashboard is on the roadmap.
 
 ## Rules
 
@@ -118,7 +178,7 @@ Optional, at the check root. Everything defaults sensibly; all keys are optional
 
 - `ignore` — glob list matched against paths relative to the root. **Use the `dir/**` form to skip a directory** — a bare-dir glob like `"dist"` matches only the directory entry itself and does **not** prune the files inside it. (`node_modules` and dot-directories are always skipped.)
 - `disable` — rule IDs to turn off.
-- `weights` — per-finding penalties subtracted from the 100-point health score (floor 0).
+- `weights` — per-finding penalties into the health score (see [Health score](#health-score)).
 - `tokenSource` — where your design-token colors live (see below). Optional; when unset, FR-301 hints simply report `0 colors found`.
 
 ### Token sources
@@ -151,33 +211,6 @@ with `tokens/colors.json` shaped like:
 ```
 
 `path` is resolved relative to the check root (absolute paths work too). Gathered colors are deduped and reported in FR-301 hints (`tokenSource: 2 colors found`); an unreadable or malformed token file is not a crash — it just yields no tokens. `css-vars` and `theme-factory` need no `path`; they read the same CSS files the scan already covers.
-
-## Wiring as a Claude Code hook
-
-`--hook` emits the stable `fringe/hook.v1` contract so enforcement does not depend on the agent remembering to check. Add to `.claude/settings.json` (project) or `~/.claude/settings.json`:
-
-```json
-{
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          { "type": "command", "command": "fringe check --claude-hook" }
-        ]
-      }
-    ]
-  }
-}
-```
-
-`--claude-hook` prints nothing when clean; when there are errors it prints Claude Code's own `{"decision":"block","reason":…}` (exit 0) listing up to 8 findings with relative paths, which is what actually reaches the agent. (`--hook`, below, is the CI/pre-commit contract: it exits 1 and Claude Code does **not** feed it back.) `fringe init` writes the `--claude-hook` form. For `--hook`, after each file edit the hook prints one line:
-
-```json
-{"schema":"fringe/hook.v1","errors":1,"review":0,"signals":0,"block":true,"reason":"FR-201: <img> missing alt text (src/App.tsx:12)"}
-```
-
-`block: true` means there are error-severity findings the agent should fix before finishing. The same contract works for `Stop` hooks, pre-commit, and CI gates.
 
 ## What it looks for, and where
 
