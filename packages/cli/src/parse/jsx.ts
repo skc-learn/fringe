@@ -5,7 +5,8 @@ function attrValue(v: any): string {
   if (v == null) return 'true';
   if (v.type === 'StringLiteral') return v.value;
   if (v.type === 'JSXExpressionContainer' && v.expression?.type === 'StringLiteral') return v.expression.value;
-  return '';
+  // Dynamic value: present but unknowable. Non-empty so name/label rules don't flag `title={t('x')}`.
+  return '{…}';
 }
 
 /** Collects literal text from an element's children, recursing into nested JSXElements. */
@@ -14,6 +15,7 @@ function collectText(node: any): string {
   for (const c of node.children ?? []) {
     if (c.type === 'JSXText') t += c.value;
     else if (c.type === 'JSXExpressionContainer' && c.expression?.type === 'StringLiteral') t += c.expression.value;
+    else if (c.type === 'JSXExpressionContainer' && c.expression?.type !== 'JSXEmptyExpression') t += '{…}';
     else if (c.type === 'JSXElement') t += collectText(c);
   }
   return t.trim();
@@ -27,7 +29,7 @@ export function parseJsx(file: string, source: string): Elem[] {
     throw new Error(`parse-skip: ${(e as Error).message}`);
   }
   const elems: Elem[] = [];
-  (function walkNode(node: any, parent?: { tag: string; attrs: Record<string, string> }) {
+  (function walkNode(node: any, parent?: { tag: string; attrs: Record<string, string>; inLabel?: boolean }) {
     if (!node || typeof node.type !== 'string') return;
     let nextParent = parent;
     if (node.type === 'JSXElement') {
@@ -39,9 +41,10 @@ export function parseJsx(file: string, source: string): Elem[] {
       }
       const el: Elem = { tag, attrs, text: collectText(node), loc: { file, line: node.loc?.start.line ?? 0, col: node.loc?.start.column ?? 0 } };
       if (parent) el.parentTag = parent.tag;
+      if (parent?.inLabel) el.inLabel = true;
       if (parent?.attrs?.className !== undefined) el.parentClass = parent.attrs.className;
       elems.push(el);
-      nextParent = { tag, attrs };
+      nextParent = { tag, attrs, inLabel: tag === 'label' || parent?.inLabel };
     }
     for (const k of Object.keys(node)) {
       const c = (node as any)[k];

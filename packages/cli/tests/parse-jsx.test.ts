@@ -6,7 +6,7 @@ describe('parseJsx', () => {
     const els = parseJsx('a.tsx', `export default () => <button className="btn" onClick={go}>Save</button>;`);
     const btn = els.find((e) => e.tag === 'button')!;
     expect(btn.attrs.className).toBe('btn');
-    expect(btn.attrs.onClick).toBe('');
+    expect(btn.attrs.onClick).toBe('{…}');
     expect(btn.text).toBe('Save');
     expect(btn.loc.line).toBe(1);
   });

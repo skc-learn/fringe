@@ -2,7 +2,7 @@ import type { Rule } from '../types.js';
 export const fr203: Rule = {
   id: 'FR-203', rung: 2, severity: 'error',
   check: (ctx) => ctx.elems
-    .filter((e) => e.tag === 'input' && e.attrs.type !== 'hidden')
+    .filter((e) => e.tag === 'input' && e.attrs.type !== 'hidden' && !e.inLabel && e.attrs.hidden === undefined)
     .filter((e) => {
       const labeled = e.attrs['aria-label'] || e.attrs['aria-labelledby'] ||
         (e.attrs.id && new RegExp(`(htmlFor|for)=["'\`{]${e.attrs.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["'\`}]`).test(ctx.source));

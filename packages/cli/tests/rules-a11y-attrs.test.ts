@@ -10,6 +10,19 @@ expectRule(fr203, 'FR-203');
 expectRule(fr209, 'FR-209');
 
 describe('review fixes', () => {
+  it('real-repo regressions: label-wrapped input and nested-text link are fine', () => {
+    expect(fr203.check(ctxOf('r.tsx', 'export default () => <label>Name<input /></label>;'))).toEqual([]);
+    expect(fr203.check(ctxOf('r.tsx', 'export default () => <label><div><input type="checkbox" /></div>Has</label>;'))).toEqual([]);
+    expect(fr203.check(ctxOf('r.tsx', 'export default () => <input type="file" hidden />;'))).toEqual([]);
+    expect(fr203.check(ctxOf('r.tsx', 'export default () => <div><input /></div>;')).length).toBe(1);
+    expect(fr202.check(ctxOf('r.html', '<a href="/x"><div>Read more</div></a>'))).toEqual([]);
+  });
+  it('real-repo regressions: aria-pressed valid; dynamic children/title count as a name', () => {
+    expect(fr209.check(ctxOf('r.tsx', 'export default () => <button aria-pressed="true">x</button>;'))).toEqual([]);
+    expect(fr202.check(ctxOf('r.tsx', 'export default () => <button>{label || doc}</button>;'))).toEqual([]);
+    expect(fr202.check(ctxOf('r.tsx', 'export default () => <button title={`Open ${id}`} />;'))).toEqual([]);
+    expect(fr202.check(ctxOf('r.tsx', 'export default () => <button>{/* c */}</button>;')).length).toBe(1);
+  });
   it('FR-209 accepts aria-activedescendant', () => {
     expect(fr209.check(ctxOf('inline.tsx', 'export default () => <div aria-activedescendant="x" />;'))).toEqual([]);
   });

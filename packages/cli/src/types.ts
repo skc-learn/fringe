@@ -26,6 +26,8 @@ export interface Elem {
   loc: Loc;
   /** Tag of the nearest ancestor element; absent for top-level elements. */
   parentTag?: string;
+  /** Some ancestor is a <label>: the control is implicitly labeled. */
+  inLabel?: boolean;
   /** className/class attr of the nearest ancestor element; absent when the ancestor has none. */
   parentClass?: string;
 }
@@ -81,6 +83,8 @@ export interface CheckResult {
   findings: Finding[];
   counts: Counts;
   score: number;
+  /** Findings suppressed by fringe.baseline.json; absent when none. */
+  baselined?: number;
 }
 
 export interface StackInfo {
