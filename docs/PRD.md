@@ -104,7 +104,7 @@ Requirements use stable IDs; **Status** reflects v0.1 (shipped) unless marked *p
 - **Adoption (G5/OSS goal):** installs work out of the box; README sells the concept; plays-well-with ecosystem coverage.
 - **Trust:** zero known error-severity false positives on idiomatic React+Tailwind (regression-pinned by fixtures + goldens); every severity claim auditable in the rule table.
 - **Quality bar (from spec §9):** `npx @fringetool/cli check` on any React+Tailwind repo produces useful, true-positive findings; hook contract works as a Claude Code PostToolUse/Stop hook; ledger records carry manifests and tokenSource.
-- **Process:** 274/274 tests green; goldens byte-stable across unrelated changes; calibration bands hold.
+- **Process:** Full test suite green; goldens byte-stable across unrelated changes; calibration bands hold.
 
 ## 7. Release plan
 

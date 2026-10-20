@@ -77,7 +77,7 @@ Rule     { id, rung: 2|3, severity, check(ctx): Finding[] }
 Finding  { rule, severity, wcag?, message, hint, loc: {file,line,col} }
 ```
 
-Conventions that matter: attribute values as written (`className` in JSX, `class` in HTML; valueless attrs → `'true'`; non-literal expressions → `''`); `text` = trimmed direct text children (JSX recurses into child elements after the Plan-2 fix wave); parent linkage = nearest ancestor element (fragments pass through); `source` always present so text rules work on every tier.
+Conventions that matter: attribute values as written (`className` in JSX, `class` in HTML; valueless attrs → `'true'`; non-literal expressions → `'{…}'`: present but unknowable, so name/label rules don't flag `title={t('x')}`; `inLabel` marks any `<label>` ancestor); `text` = trimmed direct text children (JSX recurses into child elements after the Plan-2 fix wave); parent linkage = nearest ancestor element (fragments pass through); `source` always present so text rules work on every tier.
 
 ## 5. Severity, scoring, and gating
 
@@ -87,7 +87,7 @@ Conventions that matter: attribute values as written (`className` in JSX, `class
 | `review` | 7 | No | FR-208 states heuristic, FR-210…215 |
 | `signal` | 14 | No | FR-301 tokens, FR-361…369 slop |
 
-Health = `max(0, 100 − (10·e + 3·r + 1·s))`, weights in config. The score is **calibrated**, not arbitrary: three committed fixture apps pin the bands (clean 100/zero findings, reference 34 in 25–40, slop 82 in 75–85) — any weight or rule change that moves a band outside tolerance fails CI.
+Health: penalty = `(10·e + 3·r + 1·s) × 10 / max(files, 10)` (weights in config); score = `100 − penalty` up to a penalty of 75, then decays as `25·75/penalty` so big repos never pin at 0. Repos under 10 files score exactly as before. The score is **calibrated**, not arbitrary: three committed fixture apps pin the bands (clean 100/zero findings, reference 34 in 25–40, slop 82 in 75–85) — any weight or rule change that moves a band outside tolerance fails CI (`.github/workflows/ci.yml` runs `pnpm test`).
 
 ## 6. Data contracts
 
@@ -126,6 +126,9 @@ Honest, documented deviations (tracked for follow-up, not hidden):
 
 - **Sequential parse, no per-file timeout** (spec §3 aspirational): measured fast on fixture-scale and mid-size repos; revisit if real-repo scans exceed seconds.
 - **Two-phase contexts retained in memory** (`check.ts`): all `RuleContext`s held simultaneously (source + IR for the whole repo) because token gathering needs the CSS walk first. Fine at v0.1 scale; the tracked restructure is a CSS pre-pass + streaming rule phase. A code comment marks this at the structure.
+
+- **Score saturation (fixed).** Dogfooding showed five of six real projects scoring 0 under the old linear, size-blind penalty. The per-10-files penalty and soft decay now give 12–100 on the same repos.
+- **Real-repo false positives fixed (v0.1.1):** `aria-pressed` missing from the allowlist, dynamic `{expr}` children/`title` read as empty, label-wrapped and `hidden` inputs flagged, HTML links wrapping `<div>text</div>` read as nameless. Error-severity false positives dropped about 40% on one app (174 → 1 on pointvault).
 
 ## 10. Roadmap architecture
 

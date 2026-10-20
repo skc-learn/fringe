@@ -10,7 +10,7 @@
 | [PRD.md](PRD.md) | Requirements, personas, releases, success metrics | current (v0.1) |
 | [architecture.md](architecture.md) | System design, pipeline, IR, data contracts, extension recipe | current (v0.1) |
 | [decisions.md](decisions.md) | Decision matrix (D-01…D-18) + deferral log | current |
-| [test-strategy.md](test-strategy.md) | Test philosophy, suite layers, per-rule test-case catalog | current (33 files / 274 tests) |
+| [test-strategy.md](test-strategy.md) | Test philosophy, suite layers, per-rule test-case catalog | current |
 | [../packages/cli/README.md](../packages/cli/README.md) | **User-facing**: install, usage, full 29-rule table, config, hook wiring | current |
 
 ## Historical records (do not edit; superseded by the docs above)

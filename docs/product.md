@@ -59,7 +59,7 @@ Fringe is complementary, not competitive, with the taste-and-strategy layers:
 
 ## Status
 
-- **Shipped (v0.1):** full checker — 29 rules, stack auto-detection, pretty/JSON/hook outputs, health score, ledger with manifest merge and token-source recording, WCAG criterion tags, 274-test suite with golden snapshots and score calibration.
+- **Shipped (v0.1):** full checker — 29 rules, stack auto-detection, pretty/JSON/hook outputs, health score, ledger with manifest merge and token-source recording, WCAG criterion tags, test suite with golden snapshots and score calibration.
 - **Next:** Plan 3 — the local dashboard (`fringe open` / `fringe board`: stat strip, ladder board, task story drawer). Plan 4 — the canonical skill, ~20-platform adapter matrix, README site, npm publish.
 - **Later (v2):** token-drift checks against the design source, `fringe shot` visual verification, `--stamp verified` manifest stamping, Vue/Svelte tier-2 depth.
 

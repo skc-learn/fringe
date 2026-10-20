@@ -5,15 +5,18 @@
 AI agents made UI fast — Figma's 2025 report pegs the gains at 78% efficiency but only 40% quality. Fringe closes the quality half: a static checker that measures whether agent-written frontends handle their **edges** — accessibility, interaction states, dark patterns, design-token drift, the generic "AI look" — gates the hard failures, and keeps a local ledger so the history is measurable, not vibes.
 
 ```sh
-npx @fringetool/cli check
+pnpm --filter @fringetool/cli build && node packages/cli/dist/bin.js check .
 ```
 
 ```
 fringe · stack jsx,tailwind · 3 files
-[ERROR] FR-201 src/App.tsx:12 — <img> missing alt text (add alt="description" (or alt="" if decorative))
-[ERROR] FR-205 src/Button.tsx:8 — outline removed without focus-visible alternative (add focus-visible:outline-*)
-health 70/100 · 3 errors · 0 review · 0 signals
+[ERROR] FR-201 /path/to/app/src/App.tsx:15 — <img> missing alt text (add alt="description" (or alt="" if decorative))
+[ERROR] FR-204 /path/to/app/src/App.tsx:17 — heading skips from h1 to h3 (don't skip heading levels for visual size)
+…
+health 34/100 · 6 errors · 2 review · 0 signals
 ```
+
+Not on npm yet; `npx @fringetool/cli check` will work once published.
 
 **Exit 1.** The agent (or CI) cannot finish with broken markup unnoticed. Review-level heuristics and taste-level signals never gate — they inform.
 
@@ -33,9 +36,10 @@ Fringe encodes a ladder: **Flow** (cut what users don't need — agent-judged, w
 
 | | |
 |---|---|
-| **Now (v0.1)** | Checker complete: 29 rules, health score (calibrated), pretty/JSON/hook outputs, ledger + manifests + token sources, stack auto-detection. 274 tests, two golden snapshots, three calibration apps. |
-| **Next** | Plan 3 — local dashboard (`fringe open` / `fringe board`). Plan 4 — the agent skill, ~20-platform adapters, publish. |
-| **Not yet published** | install from source: `pnpm --filter @fringetool/cli build && node packages/cli/dist/bin.js check .` |
+| **Now (v0.1)** | Checker complete: 29 rules, health score (calibrated), pretty/JSON/hook outputs, ledger + manifests + token sources, stack auto-detection. Golden snapshots and three calibration apps. |
+| **Also shipped** | `fringe init` (hook + skill in one command), `--update-baseline` (adopt on a messy repo; only new findings gate), `fringe open` (minimal ledger page), canonical agent skill at [packages/cli/skill/SKILL.md](packages/cli/skill/SKILL.md). |
+| **Next** | Richer dashboard (ladder board, cross-project `fringe board`), per-platform skill adapters, npm publish. |
+| **Not yet published** | install from source (see top) |
 
 ## Documentation
 

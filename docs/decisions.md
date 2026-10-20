@@ -21,7 +21,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | D-15 | Dark patterns from Design with Intent (CC0, attributed); slop rules written in-house | 2026-10-20 | 🔒 |
 | D-16 | Ecosystem positioning: complementary; differentiation = measured edges + history | 2026-10-20 | 🔒 |
 | D-17 | Dashboard layout: hybrid (stat strip + ladder board + story drawer) | 2026-10-20 | approved mockup, Plan 3 |
-| D-18 | Execution process: TDD + per-task review + whole-branch review | 2026-10-20 | 🔒 (274 tests) |
+| D-18 | Execution process: TDD + per-task review + whole-branch review | 2026-10-20 | 🔒 |
 
 ---
 
@@ -105,7 +105,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 
 ### D-18 — Execution process
 **Decision:** every change TDD (failing test first); implementation via fresh-subagent-per-task with independent two-verdict review (spec compliance + quality), whole-branch review before merge, one consolidated fix wave per plan. All decisions that contradicted reviews amended the plan docs in-commit.
-**Consequence:** the process caught, among others: two plan-code bugs (parse5 attrs, FR-202 fixture contradiction), two error-severity false positives (aria-haspopup, nested-span buttons), a Node-floor dependency incident, a golden-snapshot coverage gap (the un-planted second h1), and three rung-3 false positives before merge. 274/274 green at merge.
+**Consequence:** the process caught, among others: two plan-code bugs (parse5 attrs, FR-202 fixture contradiction), two error-severity false positives (aria-haspopup, nested-span buttons), a Node-floor dependency incident, a golden-snapshot coverage gap (the un-planted second h1), and three rung-3 false positives before merge. All tests green at merge.
 
 ---
 
