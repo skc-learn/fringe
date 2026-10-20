@@ -22,6 +22,7 @@ Prefer a permanent command? `npm install -D @fringetools/cli`, then `npx fringe 
 | Command | What it does |
 |---|---|
 | `fringe check [dir\|file]` | Scan a directory (default `.`) or judge one file (the project root is found by climbing to the nearest `package.json`). Prints findings and the health score. Exit `1` on any `error`. |
+| `fringe scan <url> [--json]` | **Runtime check of a live page** (needs `npm i -D playwright-core axe-core`; uses your installed Chrome). Runs axe-core for real contrast, computed names and ARIA relations (`FR-400`; critical/serious = `error`, the rest `review`), then walks the page with Tab and reports keyboard traps (`FR-401`, error) and controls Tab never reaches (review). Accepts `http(s)://` and `file://` URLs. Exit `1` on errors. |
 | `fringe plan [dir\|file] [--json] [--limit n]` | **Fix order for a repo with many findings**: P0 (errors in shared components or critical paths) → P1 (other errors, mechanical first) → P2 review → P3 polish, each cluster with its fix recipe. Never gates (exit 0). `--json` = `fringe/plan.v1`. |
 | `fringe explain [FR-203]` | Why a rule matters, the preferred fix and the tempting fix to avoid. No id lists all 36 rules. |
 | `fringe explain pattern [form]` | Build-time best-practice checklist for a component type (`form`, `modal`, `navigation`, `data-view`); each item is marked *verified* (a rule checks it) or *judged*. |
@@ -59,6 +60,19 @@ When a baseline or inline suppressions are in play, the last line adds `· N bas
 ## Health score
 
 Each finding costs its weight (default error 10, review 3, signal 1). The total is scaled to a 10-file baseline (`× 10 / max(files, 10)`), so repo size doesn't flatten the score. Score = `100 − penalty` up to a penalty of 75; beyond that it decays smoothly (`25·75/penalty`) and never pins at 0. Repos under 10 files score exactly `100 − total`. Weights live in `fringe.config.json`.
+
+## Runtime scan (`fringe scan`)
+
+Static checks read source; `scan` looks at the page as a browser renders it, so it can see real colors (a CSS variable, a theme, text over an image), the names a browser actually computes, and how the keyboard behaves.
+
+```sh
+npm i -D playwright-core axe-core      # once, in the project being scanned (not installed by default)
+npx @fringetools/cli scan http://localhost:3000
+```
+
+What it reports: every axe-core WCAG 2.0 to 2.2 A/AA violation, one finding per element (`FR-400`, WCAG criterion attached), and a Tab walk (`FR-401`): focus that keeps landing on one element is a *keyboard trap*; interactive elements Tab never reaches are listed. Radio buttons (reached by arrow keys) and hidden controls are excluded.
+
+Example: on a real project page the static check reported no findings and `scan` reported 17 color-contrast errors. Limits, plainly: it scans one URL in its initial state (no login, no opening of menus or modals yet); it needs the page running; findings have no source line (they carry a CSS selector); automated checks only find part of the real problems. It does not feed `plan`, baseline or suppression yet, and is not part of the edit hook (it needs a running app and takes seconds).
 
 ## Priority, clusters and fix plans
 

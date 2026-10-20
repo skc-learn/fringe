@@ -10,7 +10,7 @@ How Fringe grows from "a checker one person trusts" to "a tool a stranger instal
 4. **Small surface.** New rules, flags and skills must earn their place with a failing test and a real case (the benchmark and the dogfooding each found a false positive; that is the bar).
 5. **Honest claims.** Every number in the README has a method behind it, with its limits stated.
 
-## Where we are (v0.2.2)
+## Where we are (v0.3.0)
 
 Shipped in 0.2: `fringe plan` (priority order, clusters, shared components first), `fringe explain` and fix recipes (also inside the agent hook), single-file `check`, `critical` paths, nested build output ignored by default. Shipped before: 29 rules, size-aware health score, baseline, inline suppression, `init`, Claude Code plugin, five skills, `AGENTS.md`, minimal ledger page, automated releases, a 24-run benchmark. Known gaps: no per-rule feedback loop; only Claude Code gets the live hook; the benchmark is small.
 
@@ -79,14 +79,16 @@ Shipped in 0.2: `fringe plan` (priority order, clusters, shared components first
 
 **Moves up if:** people run `--record` regularly and ask for charts. Until then the ledger page is enough, and building a dashboard first would be guessing.
 
-## Stage 5: Beyond static (v1.0)
+## Stage 5: Beyond static (v1.0; first slice shipped in 0.3.0)
+
+Shipped: `fringe scan <url>`: axe-core + keyboard walk on one URL. Still ahead: multi-state scans (login, open menus/modals), reduced-motion/zoom/dark-mode passes, screenshots, feeding scan results into `plan`/baseline.
 
 *For a user who needs more than source analysis can say.*
 
 | Item | Why |
 |---|---|
 | Token drift: declared design tokens vs values used in code | Config field already reserved (`tokenSource`) |
-| `fringe shot`: real-browser checks (screenshots, rendered contrast, runtime focus order) | Static analysis cannot see these; large and a different runtime, so only after the static product is solid |
+| `fringe shot` and richer scans: screenshots, stress modes (zoom, dark, reduced motion), state forcing | The next layer on top of the shipped `scan` |
 | Vue/Svelte/Astro template parsing (today: text rules only) | Coverage honesty: the docs say "text rules only" for a reason |
 | Frozen output schemas (`fringe/check.v2`, hook formats) with a deprecation policy | Integrations need stability before 1.0 |
 | `--stamp verified` on agent manifests | Tamper-evident record that a measurement, not a claim, backs a number |

@@ -12,6 +12,7 @@ import { loadConfig } from './config.js';
 import { startBoard } from './board.js';
 import { writeBaseline } from './baseline.js';
 import { receipts } from './receipts.js';
+import { scan } from './scan.js';
 import { initProject } from './init.js';
 import { renderExplain } from './guidance.js';
 import { renderPatterns } from './patterns.js';
@@ -55,6 +56,7 @@ const weakEvidence = (e: unknown) => typeof e !== 'string' || e.trim().length < 
 const HELP = `fringe check [--json] [--hook] [--record] [--manifest <path>] [path]
 fringe check --claude-hook [path]       for Claude Code hooks (feeds errors back to the agent)
 fringe check --update-baseline [path]   accept today's findings; only new ones gate
+fringe scan <url> [--json]               runtime check in a real browser (axe-core + keyboard walk); needs playwright-core and axe-core
 fringe plan [dir|file] [--json] [--limit n]   ordered fix batches with recipes
 fringe explain pattern [form]           best-practice checklist for a component type
 fringe explain [FR-203]                 why a rule matters and how to fix it well
@@ -127,6 +129,15 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
       err(opts)(`fringe: internal error: ${(e as Error).message}\n`);
       return 2;
     }
+  }
+  if (cmd === 'scan') {
+    try {
+      const url = rest.find((a) => !a.startsWith('--'));
+      if (!url) { err(opts)('fringe: scan needs a URL, e.g. fringe scan http://localhost:3000\n'); return 2; }
+      const result = await scan(url, opts.cwd ?? process.cwd());
+      log(opts)(rest.includes('--json') ? toJson(result) : toPretty(result));
+      return result.counts.error > 0 ? 1 : 0;
+    } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }
   }
   if (cmd === 'plan') {
     try {

@@ -100,6 +100,7 @@ Full rule table: **[CLI reference](packages/cli/README.md#rules)**.
 |---|---|
 | Check my project | `npx @fringetools/cli check` (a folder, default `.`, or one file) |
 | Know what to fix first | `npx @fringetools/cli plan`: batches ordered by impact, shared components first, with the fix for each rule |
+| See the running page (real contrast, keyboard) | `npm i -D playwright-core axe-core`, then `npx @fringetools/cli scan http://localhost:3000` |
 | Understand a rule | `npx @fringetools/cli explain FR-203`: why it matters, the right fix, the tempting wrong one |
 | Use it on a repo that already has problems | `npx @fringetools/cli check --update-baseline`, commit `fringe.baseline.json`. Now only **new** problems gate |
 | Silence a real false positive | Put `// fringe-ignore FR-203` on the line or the line above (JSX: `{/* fringe-ignore FR-203 */}`, HTML: `<!-- … -->`). It is always counted in the report |

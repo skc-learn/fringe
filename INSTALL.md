@@ -39,6 +39,15 @@ npx -y @fringetools/cli check            # human output, same exit code
 
 On an existing repo, run `npx -y @fringetools/cli check --update-baseline` once and commit `fringe.baseline.json` so only new problems fail the build.
 
+## Optional: check the running page
+
+For real contrast and keyboard behaviour (needs your app running and Chrome installed):
+
+```sh
+npm i -D playwright-core axe-core
+npx @fringetools/cli scan http://localhost:3000
+```
+
 ## Check it worked
 
 ```sh

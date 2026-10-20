@@ -28,6 +28,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | D-22 | Size-aware health score with soft decay | 2026-10-20 | 🔒 |
 | D-23 | Dashboard scope cut: minimal `fringe open` now, full dashboard later | 2026-10-20 | 🔒 / deferred |
 | D-24 | Flow evidence check; review/audit skills instead of levels | 2026-10-20 | 🔒 |
+| D-29 | Runtime scan is opt-in, built on axe-core + Playwright, not a new engine | 2026-10-21 | 🔒 |
 | D-28 | UX best-practice rules (FR-216..222) start at review/signal and are validated on real repos first | 2026-10-21 | 🔒 |
 | D-27 | Priority is tier-first and published; guidance lives apart from rules | 2026-10-21 | 🔒 |
 | D-26 | Automated publishing via tag + npm trusted publishing | 2026-10-20 | 🔒 |
@@ -166,6 +167,11 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 **Decision:** seven rules FR-216..222, all `review` (FR-222 `signal`): never `error` until real use shows precision. Before shipping, each was run on six real projects; that run exposed one false positive (a search box whose placeholder mentions "phone" read as a phone field), fixed with a regression test. FR-218 only judges full HTML documents (parse5 invents `<html>` for fragments, which would flag every template). FR-219 is judged per file because a global stylesheet elsewhere may already honour reduced motion. `fringe explain pattern <form|modal|navigation|data-view>` gives build-time checklists whose items name the rules that verify them or are marked *judged*; a test requires every named rule to exist.
 **Receipts:** the hook now compares the error set with the previous run (`.fringe/last.json`) and puts what the last edit introduced first, marked NEW. It deliberately still blocks on every remaining error: blocking only on new ones would let an agent stop with half its own errors unfixed. Legacy debt is the baseline's job.
 **Consequence:** 36 rules (error 8 / review 13 / signal 15). Honest limit: these checks overlap with Lighthouse and jsx-a11y; Fringe's addition is the agent loop, priority order and recipes, not the checks themselves.
+
+### D-29 — Runtime scan
+**Decision:** `fringe scan <url>` uses the existing proven engine (axe-core) in headless Chrome via `playwright-core`, plus our own Tab walk, and maps results onto the same `Finding` shape (`FR-400` axe, `FR-401` keyboard). Dependencies are *optional peers resolved from the scanned project*, so the default `npx` check stays tiny and instant; Chrome is the user's installed one. Not in the edit hook (needs a running app, takes seconds). Only http(s)/file URLs are accepted.
+**Alternatives:** write our own contrast/name computation (reinventing axe, worse); bundle Playwright (150 MB, slows every install); drive Chrome by remote debugging (more setup).
+**Consequence / limits:** one URL, initial state; no source line; scan results do not yet flow through `plan`/baseline. On a real HTML page from one of the author's projects the static check found nothing and the scan found 17 contrast errors (invisible to source analysis because the colors come from CSS rules in other blocks and variables). The first test run also proved the idea on a probe page: real computed contrast 1.91:1 (invisible to source analysis) and a deliberate keyboard trap were both caught.
 
 ---
 
