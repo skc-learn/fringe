@@ -82,6 +82,7 @@ fringe/
 | FR-208 | states coverage heuristic — data-fetch present (fetch/useQuery/useSWR) but no loading/empty/error branch. Fires as `review`, not `error` |
 | FR-209 | invalid/misspelled `aria-*` attributes |
 | FR-210–214 | **dark patterns** (severity `review`): fake countdown timers ("expires in 09:59"), prechecked consent boxes, confirm-shaming copy ("No thanks, I hate saving money"), infinite scroll without opt-out, bait-and-switch pricing. Taxonomy adapted (with attribution) from [Design with Intent](https://designwithintent.ai)'s CC0 anti-pattern library |
+| FR-215 | generic error copy — error-state UI whose message matches /something went wrong|an error occurred|oops/i with no retry/recovery action nearby. Severity `review` (Plan 2; from the UX-Copy discipline — half a good error state is the copy) |
 
 **Rung 3 — polish (signals):**
 
@@ -96,7 +97,7 @@ fringe/
 
 **Token source declaration:** `fringe.config.json` declares where truth lives — repo CSS vars, a theme-factory output, or a Figma-exported W3C design-tokens JSON. FR-301 measures adoption against that source. The ledger records `tokenSource`. **Token-drift checks** (design says 16px, code says 15px) are v2 — schema reserved now.
 
-**Output & behavior:** pretty terminal report (ID, severity, `file:line`, one-line fix hint); `--json` for machines; `--record` merges findings + manifest into the ledger; `--hook` emits the hook JSON contract. Files parsed in parallel with a per-file timeout. Exit codes: `0` clean / `1` errors found (CI-friendly) / `2` internal failure.
+**Output & behavior:** pretty terminal report (ID, severity, `file:line`, one-line fix hint); `--json` for machines; `--record` merges findings + manifest into the ledger; `--hook` emits the hook JSON contract. A11y findings carry an optional WCAG 2.1 criterion tag (`wcag: "1.1.1"` etc. — alt 1.1.1, contrast 1.4.3, focus 2.4.7, labels 3.3.2, headings 1.3.1; Plan 2 schema addition) so `/fringe-audit` can report by criterion. Files parsed in parallel with a per-file timeout. Exit codes: `0` clean / `1` errors found (CI-friendly) / `2` internal failure.
 
 ## 4. The dashboard
 
@@ -182,3 +183,19 @@ Research base: six sources reviewed 2026-10-19/20 (Composio top-10 design skills
 | Figma skills cluster | Design-to-code drift tooling | Confirms drift as a gap; our token-source → drift path (v2) |
 
 README includes a "plays well with" section listing these. One-sentence pitch: **agents made UI fast (78% efficiency); Fringe is how you make it good (the 40%) — measured edges, no drift, a ledger that remembers.**
+
+## 12. Skill-ecosystem adoptions (Collective Brain review, 2026-10-20)
+
+Reviewed the [68-skill Collective Brain directory](https://collectivebrain.de/en/skills/); seven adoptions, recorded here so Plans 2–4 inherit them (reference-and-attribute only — no verbatim copying of Anthropic-plugin skill content):
+
+| Adoption | Lands in | From |
+|---|---|---|
+| FR-215 generic-error-copy rule (§3) | Plan 2 (rules) | UX Copy / UX Copy Refiner |
+| WCAG 2.1 criterion tags on a11y findings; `/fringe-audit` reports by criterion (§3) | Plan 2 (schema) | Accessibility Review (WCAG 2.1 AA) |
+| Named critique rubric for `/fringe-review` — usability, hierarchy, consistency, accessibility, merged with the ladder | Plan 4 (skill) | Design Critique |
+| Rule Zero flow sketches: optional text-wireframe artifact as manifest `evidence` | Plan 4 (skill) | UX Flow & Wireframer |
+| Handoff export structure: tokens, props, interaction states, edge cases per component | Plan 3 (story-drawer export) | Design Handoff Spec |
+| FR-3xx rule quarry: mine the 100+ heuristics for statically-checkable ones; token-drift direction re-validated | Plan 2 (rung 3) | Vercel Web Design Guidelines; Design System Audit & Extend |
+| Canonical SKILL.md built with trigger-description tuning + eval suite | Plan 4 (process) | Skill Creator |
+
+**Deliberately out of scope** (already covered by interop or off-mission): research synthesis/planning and personas ([Design with Intent](https://designwithintent.ai) territory), the SEO/marketing cluster, office/data skills. Theme Factory and Figma-to-Code are already integrated by design (tokenSource). Plays-well-with additions for the README: Design Critique, UX Copy, Accessibility Review, Figma-to-Code, UX Flow & Wireframer.
