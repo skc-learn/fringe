@@ -9,10 +9,12 @@
 | [product.md](product.md) | What Fringe is, who it's for, how it's positioned | current |
 | [PRD.md](PRD.md) | Requirements, personas, releases, success metrics | current (v0.1) |
 | [architecture.md](architecture.md) | System design, pipeline, IR, data contracts, extension recipe | current (v0.1) |
-| [decisions.md](decisions.md) | Decision matrix (D-01…D-24) + deferral log | current |
+| [decisions.md](decisions.md) | Decision matrix (D-01…D-25) + deferral log | current |
 | [test-strategy.md](test-strategy.md) | Test philosophy, suite layers, per-rule test-case catalog | current |
 | [../packages/cli/README.md](../packages/cli/README.md) | **User-facing reference**: quick start, every command and flag, exit codes, score, baseline, suppression, hook + skill, ledger, 29-rule table, config | current |
-| [../packages/cli/skill/SKILL.md](../packages/cli/skill/SKILL.md) | The agent skill (installed by `fringe init`) | current |
+| [../INSTALL.md](../INSTALL.md) | Install per agent: Claude Code plugin, `init`, other agents, CI | current |
+| [../AGENTS.md](../AGENTS.md) | Compact rules file for any agent | current |
+| [../packages/cli/skill/](../packages/cli/skill/) | The five skills (installed by `fringe init`, loaded by the plugin) | current |
 
 ## Historical records (do not edit; superseded by the docs above)
 

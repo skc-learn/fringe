@@ -28,6 +28,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | D-22 | Size-aware health score with soft decay | 2026-10-20 | 🔒 |
 | D-23 | Dashboard scope cut: minimal `fringe open` now, full dashboard later | 2026-10-20 | 🔒 / deferred |
 | D-24 | Flow evidence check; review/audit skills instead of levels | 2026-10-20 | 🔒 |
+| D-25 | Align with Ponytail's distribution: plugin, AGENTS.md, INSTALL.md, debt/help skills | 2026-10-20 | 🔒 |
 
 ---
 
@@ -139,6 +140,12 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 ### D-24 — Review/audit skills; evidence check; no levels
 **Decision:** add `fringe-review` and `fringe-audit` (Markdown only, built on `check --json`) rather than strictness levels — baseline and the severity tiers already cover that need. `--record --manifest` marks a `cut` with empty or one-word evidence `unsupported` (stderr warning, `unsupported: true` in the ledger, "no evidence" in `fringe open`). The Flow rung is still judged, but no longer silently unchecked.
 **Finding from testing:** with a plain "review this" prompt the agent did a manual review and never ran Fringe; invoking `/fringe-review` ran it. Skills need an explicit trigger, so the docs name the slash commands.
+
+### D-25 — Alignment with Ponytail's distribution model
+**Context:** reviewed [Ponytail](https://github.com/dietrichgebert/ponytail): one canonical prompt, a Claude Code plugin marketplace, a compact `AGENTS.md` for rules-file agents, `INSTALL.md` per agent, six commands (`ponytail`, `-review`, `-audit`, `-debt`, `-gain`, `-help`), levels, an always-on session hook, a benchmark behind every claim.
+**Adopted:** Claude Code plugin + marketplace (one-step install, skills namespaced `/fringe:…`); root `AGENTS.md`; `INSTALL.md`; `fringe-debt` (our debt = suppressions + baseline) and `fringe-help`; skills in one folder-per-skill source shared by plugin, npm package and `init`.
+**Deliberately not adopted:** intensity levels (baseline + severity tiers cover it, D-24); `-gain` (it reports benchmark savings, and Fringe has no benchmark to cite — a ledger trend view is the honest analogue, already on the roadmap); a status band; ~20 per-agent adapter files (AGENTS.md covers them until demand shows otherwise).
+**Open gap:** Ponytail backs its claims with a published benchmark (39 tasks, 5 runs each). Fringe has three real-agent trials and a six-repo dogfood; a small published benchmark is the credibility step still missing.
 
 ---
 

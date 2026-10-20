@@ -12,4 +12,6 @@ pnpm --filter @fringetools/cli build && node packages/cli/dist/bin.js check fixt
 
 **Before opening a PR:** tests green; if a rule changed, regenerate goldens (`vitest run <golden> -u`) and verify the diff by eye; run the checker on a real repo and look for new false positives. Severity rule of thumb: `error` only if AST-exact, heuristics are `review`, taste is `signal`.
 
+**Releasing:** bump `packages/cli/package.json`, `.claude-plugin/plugin.json` and `packages/cli/src/version.ts` together (a test fails if they drift), then `npm publish` from `packages/cli`.
+
 Design decisions live in [docs/decisions.md](docs/decisions.md); add an entry when you change one.
