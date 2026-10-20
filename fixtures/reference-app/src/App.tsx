@@ -16,7 +16,7 @@ export default function App() {
       <h1>Fringe</h1>
       <h3>Why Fringe</h3>
       <p>Kinder UI, checked automatically.</p>
-      <h3>What it checks</h3>
+      <h1>What it checks</h1>
       <ul>
         <li>Alt text</li>
         <li>Heading order</li>
