@@ -2,7 +2,7 @@
 
 **A UX-quality layer for AI coding agents.** *Ponytail trims your code. Fringe handles your edges.*
 
-AI agents made UI fast — Figma's 2025 report pegs the gains at 78% efficiency but only 40% quality. Fringe closes the quality half: a static checker that measures whether agent-written frontends handle their **edges** — accessibility, interaction states, dark patterns, design-token drift, the generic "AI look" — gates the hard failures, and keeps a local ledger so the history is measurable, not vibes.
+AI agents made UI fast, not reliably good: in our [benchmark](benchmarks/README.md) an agent asked for ordinary UI left error-level accessibility problems in 4 of 12 runs when nobody checked, and 1 of 12 with Fringe. Fringe closes the quality half: a static checker that measures whether agent-written frontends handle their **edges** — accessibility, interaction states, dark patterns, design-token drift, the generic "AI look" — gates the hard failures, and keeps a local ledger so the history is measurable, not vibes.
 
 **Claude Code plugin** (hook + skills, one step): `/plugin marketplace add skc-learn/fringe`, then `/plugin install fringe@fringe`. **Other agents / CI / manual setup:** see [INSTALL.md](INSTALL.md).
 

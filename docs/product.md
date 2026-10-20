@@ -6,7 +6,7 @@
 
 ## The problem
 
-AI coding agents made UI fast but not good. Figma's 2025 AI report puts agent gains at **78% efficiency but only 40% quality**: agents ship the median implementation on the first pass — missing alt text, state-less data fetching, outline-free buttons, purple gradients — and nothing in the loop notices. Human review is the bottleneck the agent was supposed to remove.
+AI coding agents made UI fast but not good. agents ship the median implementation on the first pass — missing alt text, state-less data fetching, outline-free buttons, purple gradients — and nothing in the loop notices. Human review is the bottleneck the agent was supposed to remove.
 
 ## The product in one minute
 
@@ -57,7 +57,7 @@ Fringe is complementary, not competitive, with the taste-and-strategy layers:
 | [Perception-First Design](https://github.com/skovalik/perception-first-design) | Perception diagnosis, ordered gates | Cite-only (CC BY-SA + trademark); independently validates the ladder shape |
 | Figma skills cluster | Design↔code sync | Confirms drift as a gap; Fringe's v2 token-drift path |
 
-**One-sentence pitch:** agents made UI fast (78%); Fringe is how you make it good (the 40%) — measured edges, no drift, a ledger that remembers.
+**One-sentence pitch:** agents made UI fast; Fringe is how you make it good — measured edges, no drift, a ledger that remembers.
 
 ## Status
 

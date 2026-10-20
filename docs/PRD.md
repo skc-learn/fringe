@@ -4,7 +4,7 @@
 
 ## 1. Problem statement
 
-AI coding agents produce frontend code at 78% efficiency gains but only 40% quality gains (Figma 2025 AI report). The specific quality gaps are consistent and mechanical: missing accessibility attributes, data fetching without loading/empty/error states, removed focus outlines, hardcoded colors ignoring design tokens, and a recognizable "AI look." Nothing in the agent loop measures these, so they reach human review — the bottleneck agents were meant to remove — or ship.
+AI coding agents produce frontend code quickly but not reliably well (see the [benchmark](../benchmarks/README.md)). The specific quality gaps are consistent and mechanical: missing accessibility attributes, data fetching without loading/empty/error states, removed focus outlines, hardcoded colors ignoring design tokens, and a recognizable "AI look." Nothing in the agent loop measures these, so they reach human review — the bottleneck agents were meant to remove — or ship.
 
 ## 2. Goals
 

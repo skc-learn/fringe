@@ -146,7 +146,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 **Context:** reviewed [Ponytail](https://github.com/dietrichgebert/ponytail): one canonical prompt, a Claude Code plugin marketplace, a compact `AGENTS.md` for rules-file agents, `INSTALL.md` per agent, six commands (`ponytail`, `-review`, `-audit`, `-debt`, `-gain`, `-help`), levels, an always-on session hook, a benchmark behind every claim.
 **Adopted:** Claude Code plugin + marketplace (one-step install, skills namespaced `/fringe:…`); root `AGENTS.md`; `INSTALL.md`; `fringe-debt` (our debt = suppressions + baseline) and `fringe-help`; skills in one folder-per-skill source shared by plugin, npm package and `init`.
 **Deliberately not adopted:** intensity levels (baseline + severity tiers cover it, D-24); `-gain` (it reports benchmark savings, and Fringe has no benchmark to cite — a ledger trend view is the honest analogue, already on the roadmap); a status band; ~20 per-agent adapter files (AGENTS.md covers them until demand shows otherwise).
-**Open gap:** Ponytail backs its claims with a published benchmark (39 tasks, 5 runs each). Fringe has three real-agent trials and a six-repo dogfood; a small published benchmark is the credibility step still missing.
+**Open gap (partly closed):** Ponytail publishes a 39-task, 5-run benchmark. Fringe now has [benchmarks/](../benchmarks/README.md): 6 tasks × 2 runs × 2 arms — errors left in 4/12 plain runs vs 1/12 with Fringe, same cost. Small; a larger run is still the credibility step.
 
 ### D-26 — Automated publishing
 **Decision:** a `v*` tag triggers `.github/workflows/publish.yml`: tag-vs-version check, tests, `npm publish --provenance` via npm trusted publishing (GitHub OIDC), then a GitHub Release with generated notes. **Alternatives:** an `NPM_TOKEN` secret (a long-lived credential; npm is restricting bypass-2FA tokens); manual publish (needs a human authenticator code every release — what we had).
@@ -162,5 +162,6 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | Sequential parse, no per-file timeout | measured fast; spec aspiration | revisit on perf evidence |
 | Slop-tuning pass: px-2/px-20 + flex-1 word boundaries, emoji narrowing (©®™), Tailwind v4 `bg-linear-*`, FR-304 cascade modeling, `text-[rgba()]` FR-302 leak | signals never gate; batch tuning beats dribbles | backlog plan |
 | FR-364/366 thresholds fixed (3 tiles / 5 chips) | deliberately conservative first cut | tuning pass |
+| FR-206 on modal backdrops (`<div onClick={onClose}>` with a Close button present) | seen in the benchmark; a common defensible pattern, but loosening needs a precise rule (skip overlays whose only handler closes, or `stopPropagation`-only handlers) | tuning pass |
 | Token-drift checks, `fringe shot`, `--stamp verified` | v2 scope, schema already reserved | PRD §4.5 |
 | Per-rule precision view | ledger records `byRule`/`suppressed`; needs real data | v0.2 |
