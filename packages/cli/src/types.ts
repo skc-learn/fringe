@@ -21,6 +21,8 @@ export interface Finding {
   priority?: number;
   /** `rule@file` cluster this finding belongs to. */
   cluster?: string;
+  /** Runtime findings: the CSS selector of the failing element (static findings use loc.line). */
+  target?: string;
   fixability?: 'mechanical' | 'judgment';
 }
 

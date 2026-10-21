@@ -1,7 +1,8 @@
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { score } from './score.js';
-import type { CheckResult, Finding } from './types.js';
+import { TIER, wcagBonus } from './prioritize.js';
+import type { CheckResult, Cluster, Finding } from './types.js';
 
 /** Runtime accessibility scan of a live page: axe-core inside headless Chrome, plus a Tab-key walk. Needs the optional `playwright-core` and `axe-core` packages in the project being scanned. */
 export const SCAN_HELP = 'fringe scan needs two optional packages in your project: npm i -D playwright-core axe-core (it uses your installed Google Chrome; otherwise run npx playwright-core install chromium)';
@@ -20,10 +21,12 @@ export function axeToFindings(url: string, violations: AxeViolation[]): Finding[
     const tag = v.tags.map((t) => WCAG_TAG.exec(t)).find(Boolean);
     const wcag = tag ? `${tag[1]}.${tag[2]}.${tag[3]}` : undefined;
     const severity = v.impact === 'critical' || v.impact === 'serious' ? 'error' as const : 'review' as const;
-    return v.nodes.map((n) => ({
-      rule: 'FR-400', severity, message: `${v.id} at ${n.target.join(' ')}: ${v.help}`,
-      hint: `${(n.failureSummary ?? '').split('\n').slice(1, 2).join('').trim() || v.help} (${v.helpUrl})`, loc: at(url), ...(wcag ? { wcag } : {}),
-    }));
+    return v.nodes.map((n) => {
+      const detail = (n.failureSummary ?? '').split('\n').slice(1, 2).join('').trim() || v.help;
+      return {
+      rule: 'FR-400', severity, target: n.target.join(' '), cluster: `${v.id}@${url}`, message: `${v.id} at ${n.target.join(' ')}: ${detail}`,
+      hint: `${v.help} (${v.helpUrl})`, loc: at(url), ...(wcag ? { wcag } : {}),
+    }; });
   });
 }
 
@@ -65,9 +68,30 @@ export async function scan(url: string, cwd = process.cwd()): Promise<CheckResul
       if (now === null && visits.length > 0) break; // focus left the page content: the walk wrapped around
       visits.push(now);
     }
-    const findings = [...axeToFindings(url, axeRes.violations), ...tabWalkFindings(url, focusables, visits)];
+    const { findings, clusters } = rankScan(url, [...axeToFindings(url, axeRes.violations), ...tabWalkFindings(url, focusables, visits)]);
     const counts = { error: 0, review: 0, signal: 0 };
     for (const f of findings) counts[f.severity]++;
-    return { stack: { jsx: false, tailwind: false, vue: false, svelte: false, html: true }, files: 1, skipped: [], findings, counts, score: score(counts, { error: 10, review: 3, signal: 1 }, 1) };
+    return { stack: { jsx: false, tailwind: false, vue: false, svelte: false, html: true }, files: 1, skipped: [], findings, clusters, counts, score: score(counts, { error: 10, review: 3, signal: 1 }, 1) };
   } finally { await browser.close(); }
+}
+
+/** Puts runtime findings on the same footing as static ones: a priority each, and one cluster per axe rule (one root cause, many elements). */
+export function rankScan(url: string, findings: Finding[]): { findings: Finding[]; clusters: Cluster[] } {
+  const clusters = new Map<string, Cluster>();
+  const ranked = findings.map((f) => {
+    const priority = Math.round(TIER[f.severity] + wcagBonus(f.wcag));
+    const id = f.cluster ?? `${f.rule}@${url}`;
+    const c = clusters.get(id) ?? { id, rule: f.rule, file: url, count: 0, priority: 0, fixability: 'judgment', rootCause: 'local', importedBy: 0, critical: false } as Cluster;
+    c.count++; c.priority = Math.max(c.priority, priority);
+    clusters.set(id, c);
+    return { ...f, priority, cluster: id, fixability: c.fixability };
+  });
+  for (const c of clusters.values()) c.priority += Math.round(Math.min(15, 3 * Math.log2(c.count)));
+  return { findings: ranked, clusters: [...clusters.values()] };
+}
+
+/** One CheckResult from a static run plus a runtime scan: the input `fringe plan --scan` orders. */
+export function mergeScan(base: CheckResult, scanned: CheckResult, weights: { error: number; review: number; signal: number }): CheckResult {
+  const counts = { error: base.counts.error + scanned.counts.error, review: base.counts.review + scanned.counts.review, signal: base.counts.signal + scanned.counts.signal };
+  return { ...base, findings: [...base.findings, ...scanned.findings], clusters: [...(base.clusters ?? []), ...(scanned.clusters ?? [])].sort((a, b) => b.priority - a.priority), counts, score: score(counts, weights, base.files) };
 }

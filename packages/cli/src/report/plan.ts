@@ -1,7 +1,7 @@
 import { GUIDANCE } from '../guidance.js';
 import type { CheckResult, Cluster } from '../types.js';
 
-export interface PlanItem extends Cluster { lines: number[]; recipe?: string; avoid?: string }
+export interface PlanItem extends Cluster { lines: number[]; targets: string[]; recipe?: string; avoid?: string }
 export interface Batch { id: 'P0' | 'P1' | 'P2' | 'P3'; title: string; why: string; items: PlanItem[]; more: number }
 
 const TITLES: Record<Batch['id'], [string, string]> = {
@@ -13,10 +13,14 @@ const TITLES: Record<Batch['id'], [string, string]> = {
 
 /** Orders a result's clusters into fix batches. Pure: same result in, same plan out. */
 export function buildPlan(r: CheckResult, limit = 15): Batch[] {
-  const lines = new Map<string, number[]>();
-  for (const f of r.findings) if (f.cluster) lines.set(f.cluster, [...(lines.get(f.cluster) ?? []), f.loc.line]);
+  const lines = new Map<string, number[]>(), targets = new Map<string, string[]>(), hints = new Map<string, string>();
+  for (const f of r.findings) if (f.cluster) {
+    if (f.target) targets.set(f.cluster, [...(targets.get(f.cluster) ?? []), f.target]);
+    else lines.set(f.cluster, [...(lines.get(f.cluster) ?? []), f.loc.line]);
+    if (!hints.has(f.cluster)) hints.set(f.cluster, f.hint);
+  }
   const sev = new Map(r.findings.map((f) => [f.cluster, f.severity]));
-  const items: PlanItem[] = (r.clusters ?? []).map((c) => ({ ...c, lines: lines.get(c.id) ?? [], recipe: GUIDANCE[c.rule]?.recipe, avoid: GUIDANCE[c.rule]?.avoid }));
+  const items: PlanItem[] = (r.clusters ?? []).map((c) => ({ ...c, lines: lines.get(c.id) ?? [], targets: targets.get(c.id) ?? [], recipe: GUIDANCE[c.rule]?.recipe ?? hints.get(c.id), avoid: GUIDANCE[c.rule]?.avoid }));
   const mechFirst = (a: PlanItem, b: PlanItem) => (a.fixability === b.fixability ? 0 : a.fixability === 'mechanical' ? -1 : 1) || b.priority - a.priority;
   const pick = (id: Batch['id']): PlanItem[] => items.filter((c) => {
     const s = sev.get(c.id);
@@ -45,8 +49,9 @@ export function toPlanMarkdown(r: CheckResult, target: string, limit?: number): 
     for (const c of b.items) {
       const tags = [c.rootCause === 'shared component' ? `shared component, imported by ${c.importedBy} files` : '', c.critical ? 'critical path' : '', `${c.fixability} fix`].filter(Boolean);
       out.push(`\n### ${c.rule} · ×${c.count} · ${c.file} (${tags.join('; ')})`);
-      out.push(`Lines: ${c.lines.slice(0, 8).join(', ')}${c.lines.length > 8 ? ', …' : ''}`);
-      if (c.recipe && !shown.has(c.rule)) { shown.add(c.rule); out.push(`Fix: ${c.recipe}${c.avoid ? `\nAvoid: ${c.avoid}` : ''}`); }
+      out.push(c.targets.length ? `Elements: ${c.targets.slice(0, 4).join(' | ')}${c.targets.length > 4 ? ' | …' : ''}` : `Lines: ${c.lines.slice(0, 8).join(', ')}${c.lines.length > 8 ? ', …' : ''}`);
+      if (c.rule.startsWith('FR-4')) { if (c.recipe) out.push(`Fix: ${c.recipe}`); } // runtime clusters: each axe rule has its own advice
+      else if (c.recipe && !shown.has(c.rule)) { shown.add(c.rule); out.push(`Fix: ${c.recipe}${c.avoid ? `\nAvoid: ${c.avoid}` : ''}`); }
       else if (c.recipe) out.push(`Fix: as for ${c.rule} above (\`fringe explain ${c.rule}\`).`);
     }
     if (b.more) out.push(`\n…and ${b.more} more in this batch (raise --limit).`);

@@ -5,11 +5,14 @@ import type { Cluster, Finding } from './types.js';
 
 // priority = tier + wcag level + critical path + blast radius. Tiers are 600 apart and the adders sum to < 600,
 // so any error outranks any review, and any review outranks any signal, whatever else is true.
-const TIER = { error: 1000, review: 400, signal: 100 } as const;
+export const TIER = { error: 1000, review: 400, signal: 100 } as const;
 const WCAG_A = new Set(['1.1.1', '1.3.1', '2.1.1', '2.4.3', '3.3.2', '4.1.2']);
 const WCAG_AA = new Set(['1.4.3', '2.4.7', '2.5.8']);
 const CRITICAL_BONUS = 40;
 const SHARED_FROM = 3; // imported by this many files = a shared component, fix it once
+
+/** WCAG conformance level bonus: A +30, AA +15. */
+export const wcagBonus = (wcag?: string) => (wcag && WCAG_A.has(wcag) ? 30 : wcag && WCAG_AA.has(wcag) ? 15 : 0);
 
 const IMPORT = /(?:from\s+|import\s*\(\s*|require\(\s*)['"]([^'"]+)['"]/g;
 
