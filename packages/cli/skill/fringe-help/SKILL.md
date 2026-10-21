@@ -31,7 +31,7 @@ Fringe checks agent-written frontends for accessibility, state, dark-pattern and
 | `handoff` / `verify` | Work order for another agent or CI, and proof it was done (complete / partial / regressed) |
 | `rules` | Per rule: open / baselined / silenced, to spot rules that do not suit this repo |
 | `init --for <agents>` / `--git` | Rules file for Codex, Cursor, Copilot, Gemini…; commit gate for any agent |
-| `explain pattern <name>` | Build-time checklist (15: form, auth, checkout, table, search, tabs, accordion, toast, upload, datepicker, onboarding, empty-state, modal, navigation, data-view) |
+| `explain pattern <name>` | Build-time checklist (18: form, auth, checkout, table, search, tabs, accordion, toast, upload, datepicker, onboarding, empty-state, modal, navigation, data-view, pricing, settings, dashboard) |
 | `explain [FR-203]` | Why a rule matters and how to fix it well |
 | `check --record [--manifest f]` | Append the run to `.fringe/ledger.jsonl` |
 | `init` | Add the hook and install the skills |

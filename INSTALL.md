@@ -13,7 +13,7 @@ Send these as two separate prompts:
 /plugin install fringetool@fringe
 ```
 
-This adds the post-edit hook (`npx -y @fringetools/cli@0.6.2 check --claude-hook`) and the skills, namespaced: `/fringetool:fringe-setup`, `/fringetool:fringe-review`, `/fringetool:fringe-audit`, `/fringetool:fringe-debt`, `/fringetool:fringe-help`. The checker is fetched by `npx` on first use, so there is nothing else to install. `node` and `npx` must be on the PATH of the shell Claude Code uses.
+This adds the post-edit hook (`npx -y @fringetools/cli@0.6.3 check --claude-hook`) and the skills, namespaced: `/fringetool:fringe-setup`, `/fringetool:fringe-review`, `/fringetool:fringe-audit`, `/fringetool:fringe-debt`, `/fringetool:fringe-help`. The checker is fetched by `npx` on first use, so there is nothing else to install. `node` and `npx` must be on the PATH of the shell Claude Code uses.
 
 ## Claude Code, without the plugin
 

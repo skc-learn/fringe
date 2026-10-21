@@ -34,10 +34,10 @@ describe('patterns', () => {
 });
 
 describe('more playbooks', () => {
-  it('lists fifteen, and marks runtime-checked items as verified by scan', async () => {
+  it('lists eighteen, and marks runtime-checked items as verified by scan', async () => {
     const list: string[] = [];
     await runCli(['explain', 'pattern'], { log: (s) => list.push(s) });
-    expect(list.join('\n').split('\n').map((l) => l.split(/\s+/)[0]).sort()).toEqual(['accordion', 'auth', 'checkout', 'data-view', 'datepicker', 'empty-state', 'form', 'modal', 'navigation', 'onboarding', 'search', 'table', 'tabs', 'toast', 'upload']);
+    expect(list.join('\n').split('\n').map((l) => l.split(/\s+/)[0]).sort()).toEqual(['accordion', 'auth', 'checkout', 'dashboard', 'data-view', 'datepicker', 'empty-state', 'form', 'modal', 'navigation', 'onboarding', 'pricing', 'search', 'settings', 'table', 'tabs', 'toast', 'upload']);
     const table: string[] = [];
     await runCli(['explain', 'pattern', 'table'], { log: (s) => table.push(s) });
     expect(table.join('\n')).toContain('[verified by scan: FR-404]');
@@ -45,5 +45,17 @@ describe('more playbooks', () => {
     const checkout: string[] = [];
     await runCli(['explain', 'pattern', 'checkout'], { log: (s) => checkout.push(s) });
     expect(checkout.join('\n')).toMatch(/\[verified: FR-214\]/);
+  });
+});
+
+import { sourcesOf } from '../src/patterns.js';
+describe('playbook sources', () => {
+  it('cite standards pages (https, w3.org or whatwg.org) and print them', async () => {
+    for (const name of Object.keys(PATTERNS)) for (const u of sourcesOf(name)) expect(u, name).toMatch(/^https:\/\/(www\.w3\.org|html\.spec\.whatwg\.org)\//);
+    expect(sourcesOf('tabs')[0]).toContain('/patterns/tabs/');
+    const out: string[] = [];
+    await runCli(['explain', 'pattern', 'datepicker'], { log: (s) => out.push(s) });
+    expect(out.join('\n')).toMatch(/Based on: https:\/\/www\.w3\.org\/WAI\/ARIA\/apg\/patterns\/dialog-modal\/examples\/datepicker-dialog\//);
+    expect(out.join('\n')).toContain('returns focus to the button that opened it');
   });
 });

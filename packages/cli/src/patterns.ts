@@ -2,6 +2,28 @@ import { ALL_RULES } from './rules/registry.js';
 
 /** Best-practice checklists per component type. An item names the rules that verify it; no rules = judged by the agent, with evidence. */
 export interface Item { text: string; rules?: string[] }
+const APG = 'https://www.w3.org/WAI/ARIA/apg/patterns';
+const WCAG = 'https://www.w3.org/WAI/WCAG22/Understanding';
+/** Where the judged items come from, so a reader can check them. Playbooks with no entry are design guidance, not a standard. */
+const SOURCES: Record<string, string[]> = {
+  form: [`${WCAG}/labels-or-instructions.html`, `${WCAG}/error-identification.html`, 'https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofill'],
+  auth: [`${WCAG}/accessible-authentication-minimum.html`, 'https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofill'],
+  checkout: [`${WCAG}/error-prevention-legal-financial-data.html`, 'https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofill'],
+  table: [`${APG}/table/`],
+  search: [`${APG}/combobox/`, 'https://www.w3.org/WAI/ARIA/apg/practices/landmark-regions/'],
+  tabs: [`${APG}/tabs/`],
+  accordion: [`${APG}/accordion/`],
+  toast: [`${APG}/alert/`, `${WCAG}/status-messages.html`],
+  upload: [`${WCAG}/error-identification.html`, `${WCAG}/status-messages.html`],
+  datepicker: [`${APG}/dialog-modal/examples/datepicker-dialog/`],
+  onboarding: [`${WCAG}/content-on-hover-or-focus.html`],
+  modal: [`${APG}/dialog-modal/`],
+  navigation: [`${WCAG}/bypass-blocks.html`, 'https://www.w3.org/WAI/ARIA/apg/practices/landmark-regions/'],
+  'data-view': [`${WCAG}/status-messages.html`],
+  dashboard: [`${WCAG}/use-of-color.html`, `${WCAG}/non-text-content.html`, `${WCAG}/reflow.html`],
+  settings: [`${WCAG}/status-messages.html`, `${WCAG}/labels-or-instructions.html`],
+};
+export const sourcesOf = (name: string) => SOURCES[name] ?? [];
 export const PATTERNS: Record<string, { title: string; items: Item[] }> = {
   form: {
     title: 'Form',
@@ -62,6 +84,7 @@ export const PATTERNS: Record<string, { title: string; items: Item[] }> = {
       { text: 'The pay button states the action and amount ("Pay $42.00"), shows a pending state, and cannot charge twice' },
       { text: 'Order-summary changes (quantity, coupon, shipping) are announced to screen readers (aria-live)' },
       { text: 'Progress through the steps is shown, and going back never loses what was entered' },
+      { text: 'Before the final payment the user can review and correct the order (WCAG 3.3.4 for financial transactions)' },
       { text: 'Tap targets are large enough on a phone', rules: ['FR-305'] },
     ],
   },
@@ -107,7 +130,7 @@ export const PATTERNS: Record<string, { title: string; items: Item[] }> = {
   accordion: {
     title: 'Accordion and disclosure',
     items: [
-      { text: 'The header is a <button> inside a heading, not a clickable div', rules: ['FR-206'] },
+      { text: 'The header is a <button> inside a heading (and the only thing inside it), not a clickable div', rules: ['FR-206'] },
       { text: 'aria-expanded on the button and aria-controls pointing at the panel; Fringe checks the spelling of the ARIA attributes', rules: ['FR-209'] },
       { text: 'Heading levels fit the page outline', rules: ['FR-204'] },
       { text: 'Enter and Space toggle it; focus stays on the button' },
@@ -145,8 +168,9 @@ export const PATTERNS: Record<string, { title: string; items: Item[] }> = {
       { text: 'Use the native date input where it fits; otherwise typing a date is always possible beside the calendar' },
       { text: 'The field has a label', rules: ['FR-203'] },
       { text: 'The label states the expected format' },
-      { text: 'Each calendar day button is named with the full date ("Tuesday 21 October 2026"), and month navigation buttons have names', rules: ['FR-202'] },
-      { text: 'Arrow keys move by day, PageUp and PageDown by month, Escape closes and returns focus to the field' },
+      { text: 'Each calendar day has an accessible name with the weekday and month, not just the number ("Tuesday 21 October 2026"), and the month and year buttons have names', rules: ['FR-202'] },
+      { text: 'Left and Right arrows move by day and Up and Down by week, Page Up and Page Down by month (with Shift, by year); only one day is in the Tab sequence' },
+      { text: 'Escape closes the calendar and returns focus to the button that opened it' },
       { text: 'Unavailable dates are explained, not only greyed out' },
       { text: 'Day buttons are large enough to tap', rules: ['FR-305'] },
     ],
@@ -178,6 +202,45 @@ export const PATTERNS: Record<string, { title: string; items: Item[] }> = {
       { text: 'The copy is finished: no lorem ipsum or TODO', rules: ['FR-222'] },
     ],
   },
+  pricing: {
+    title: 'Pricing and plan pages',
+    items: [
+      { text: 'The full price, including the billing period, taxes and any recurring cost, sits next to each plan', rules: ['FR-214'] },
+      { text: 'No fake countdowns or invented scarcity', rules: ['FR-210'] },
+      { text: 'No pre-selected add-ons or pre-checked consent', rules: ['FR-211'] },
+      { text: 'Downgrading, skipping and cancelling use neutral wording', rules: ['FR-212'] },
+      { text: 'Each plan button says which plan ("Choose Pro"), so a list of buttons is not eight copies of "Get started"' },
+      { text: 'The comparison is a real table with headers, and the selected or recommended plan is shown by more than color' },
+      { text: 'Cancelling is as easy to find and do as signing up was' },
+      { text: 'Banner and badge text has enough contrast on its background', rules: ['FR-400'] },
+      { text: 'No placeholder copy ships', rules: ['FR-222'] },
+    ],
+  },
+  settings: {
+    title: 'Settings page',
+    items: [
+      { text: 'Every control has a visible label, and related controls are grouped under a heading or fieldset legend', rules: ['FR-203', 'FR-204'] },
+      { text: 'Toggles expose their state (role="switch" with aria-checked, or a checkbox) and the state is not shown by color alone; Fringe checks the spelling of the ARIA attributes', rules: ['FR-209'] },
+      { text: 'Either a save button with clear confirmation, or instant saving with visible feedback; the page says which' },
+      { text: 'Success and failure of a save are announced (role="status" or "alert")' },
+      { text: 'Destructive actions (delete account) are set apart, confirmed with specific wording, and undoable where possible' },
+      { text: 'Leaving with unsaved changes asks first' },
+      { text: 'The keyboard order follows the visual order (no positive tabindex)', rules: ['FR-207'] },
+    ],
+  },
+  dashboard: {
+    title: 'Dashboard',
+    items: [
+      { text: 'One h1, with sections as headings in order', rules: ['FR-204'] },
+      { text: 'Each chart or metric has a text equivalent (a table or a sentence), and values are not conveyed by color alone' },
+      { text: 'Clickable stat cards are real links or buttons', rules: ['FR-206'] },
+      { text: 'Every widget handles loading, empty and error on its own', rules: ['FR-208', 'FR-215'] },
+      { text: 'Refresh, filter and settings icon buttons have names', rules: ['FR-202'] },
+      { text: 'Auto-refresh does not steal focus or reset filters, and announces changes politely' },
+      { text: 'Cards stack to one column on a 320px screen without sideways scrolling', rules: ['FR-404'] },
+      { text: 'Text and chart labels keep their contrast in dark mode', rules: ['FR-400'] },
+    ],
+  },
   'data-view': {
     title: 'Data view (list, table, dashboard)',
     items: [
@@ -196,7 +259,8 @@ export function renderPatterns(name?: string): string | undefined {
   // FR-400..405 come from `fringe scan` (a running page), the rest from the static check.
   const mark = (i: Item) => (i.rules ? `[verified${i.rules.every((r) => /^FR-40[0-5]$/.test(r)) ? ' by scan' : ''}: ${i.rules.join(', ')}]` : '[judged]');
   return [`${p.title}: build it like this`, ...p.items.map((i) => `- ${i.text}  ${mark(i)}`),
-    '', 'verified = Fringe checks it; judged = you decide, so state your evidence in the final message.'].join('\n');
+    '', 'verified = Fringe checks it; judged = you decide, so state your evidence in the final message.',
+    ...(sourcesOf(name.toLowerCase()).length ? ['Based on: ' + sourcesOf(name.toLowerCase()).join(' · ')] : [])].join('\n');
 }
 
 export const patternRuleIds = () => [...new Set(Object.values(PATTERNS).flatMap((p) => p.items.flatMap((i) => i.rules ?? [])))];
