@@ -71,7 +71,7 @@ Requirements use stable IDs; **Status** reflects v0.1 (shipped) unless marked *p
 | F-28 | Scan states: `fringe.scan.json` (`--states`), steps click/fill/press/hover/waitFor/goto, state-labelled findings and clusters, `FR-402` for unreachable states; validated with clear errors | ✅ |
 | F-27 | `fringe plan --scan <url>`: static and runtime findings in one ordered plan (runtime clusters per axe rule, element selectors) | ✅ |
 | F-26 | `fringe scan <url>`: axe-core in headless Chrome (FR-400) + Tab walk (FR-401: keyboard traps, unreachable controls); optional peer deps `playwright-core` and `axe-core`, loaded from the scanned project; http(s)/file URLs only | ✅ first slice |
-| F-25 | `fringe explain pattern <form\|modal\|navigation\|data-view>`: build-time checklists, each item verified (rule ids) or judged | ✅ |
+| F-25 | `fringe explain pattern <form\|auth\|checkout\|table\|modal\|navigation\|data-view>`: build-time checklists (48 items, 26 verified by a rule or by `scan`, 22 judged); a test requires every named rule to exist | ✅ |
 | F-23 | Regression receipts in the hook: new vs still-failing errors since the previous run, new ones first (`.fringe/last.json`; missing/corrupt state = no comparison) | ✅ |
 
 ### 4.2 Outputs
@@ -139,7 +139,7 @@ The staged, evidence-driven version of this plan lives in [ROADMAP.md](ROADMAP.m
 
 | Release | Scope | Status |
 |---|---|---|
-| **v0.1** | Checker core: 29 rules (36 by 0.2), outputs, size-aware score, calibration, ledger, hooks, token sources, WCAG tags, baseline, suppression, `init`, minimal `open`, skill (Plans 1–2 + post-dogfood work) | ✅ published to npm as `@fringetools/cli@0.6.0` |
+| **v0.1** | Checker core: 29 rules (36 by 0.2), outputs, size-aware score, calibration, ledger, hooks, token sources, WCAG tags, baseline, suppression, `init`, minimal `open`, skill (Plans 1–2 + post-dogfood work) | ✅ published to npm as `@fringetools/cli@0.6.1` |
 | **v0.2** | ✅ `plan`, `explain`, recipes, priority/clusters, single-file check. Still planned: per-rule precision view from the ledger; full dashboard (`fringe board`, stat strip + ladder board + story drawer, handoff export) (Plan 3) | planned |
 | **v0.3** | Adapters for other agent platforms, slash commands, README site (Plan 4) — only if real use shows demand | planned |
 | **v0.4+** | Slop-tuning pass, Vue/Svelte tier-2 depth | backlog |

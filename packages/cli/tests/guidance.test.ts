@@ -32,3 +32,18 @@ describe('patterns', () => {
     expect(await runCli(['explain', 'pattern', 'nope'], { log: () => {}, err: () => {} })).toBe(2);
   });
 });
+
+describe('more playbooks', () => {
+  it('lists seven, and marks runtime-checked items as verified by scan', async () => {
+    const list: string[] = [];
+    await runCli(['explain', 'pattern'], { log: (s) => list.push(s) });
+    expect(list.join('\n').split('\n').map((l) => l.split(/\s+/)[0]).sort()).toEqual(['auth', 'checkout', 'data-view', 'form', 'modal', 'navigation', 'table']);
+    const table: string[] = [];
+    await runCli(['explain', 'pattern', 'table'], { log: (s) => table.push(s) });
+    expect(table.join('\n')).toContain('[verified by scan: FR-404]');
+    expect(table.join('\n')).toContain('[verified: FR-208, FR-215]');
+    const checkout: string[] = [];
+    await runCli(['explain', 'pattern', 'checkout'], { log: (s) => checkout.push(s) });
+    expect(checkout.join('\n')).toMatch(/\[verified: FR-214\]/);
+  });
+});
