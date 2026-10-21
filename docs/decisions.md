@@ -148,7 +148,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 
 ### D-25 — Alignment with Ponytail's distribution model
 **Context:** reviewed [Ponytail](https://github.com/dietrichgebert/ponytail): one canonical prompt, a Claude Code plugin marketplace, a compact `AGENTS.md` for rules-file agents, `INSTALL.md` per agent, six commands (`ponytail`, `-review`, `-audit`, `-debt`, `-gain`, `-help`), levels, an always-on session hook, a benchmark behind every claim.
-**Adopted:** Claude Code plugin + marketplace (one-step install, skills namespaced `/fringe:…`); root `AGENTS.md`; `INSTALL.md`; `fringe-debt` (our debt = suppressions + baseline) and `fringe-help`; skills in one folder-per-skill source shared by plugin, npm package and `init`.
+**Adopted:** Claude Code plugin + marketplace (one-step install, skills namespaced `/fringetool:…`); root `AGENTS.md`; `INSTALL.md`; `fringe-debt` (our debt = suppressions + baseline) and `fringe-help`; skills in one folder-per-skill source shared by plugin, npm package and `init`.
 **Deliberately not adopted:** intensity levels (baseline + severity tiers cover it, D-24); `-gain` (it reports benchmark savings, and Fringe has no benchmark to cite — a ledger trend view is the honest analogue, already on the roadmap); a status band; ~20 per-agent adapter files (AGENTS.md covers them until demand shows otherwise).
 **Open gap (partly closed):** Ponytail publishes a 39-task, 5-run benchmark. Fringe now has [benchmarks/](../benchmarks/README.md): 6 tasks × 2 runs × 2 arms — errors left in 4/12 plain runs vs 1/12 with Fringe, same cost. Small; a larger run is still the credibility step.
 

@@ -87,6 +87,21 @@ Most real problems live in states the first load never shows: an open menu, a mo
 
 For each state Fringe reloads the page, runs the steps, then audits the result (axe-core and the Tab walk). Steps are exactly one of `click`, `fill` (with `value`), `press`, `hover`, `waitFor`, `goto`; selectors are [Playwright selectors](https://playwright.dev/docs/other-locators) (CSS, `text=...`, `role=...`). Findings are labelled `[filters open]` and cluster separately from the same rule on the initial page. A step that fails (selector not found) is reported as `FR-402` ("state could not be reached") and nothing in that state is audited. Use throw-away test data in `fill` values and do not commit real credentials. `plan --scan` uses the same file.
 
+### Stress modes: how the page behaves under real-world conditions
+
+```sh
+npx @fringetools/cli scan http://localhost:3000 --stress                 # all three
+npx @fringetools/cli scan http://localhost:3000 --modes dark,reflow      # a subset
+```
+
+| Mode | What it does | Reports |
+|---|---|---|
+| `dark` | Re-audits with the browser asking for a dark color scheme | contrast and other axe findings that appear only in dark mode |
+| `reduced` | Asks for reduced motion, then looks for animations still looping | `FR-403` (review) |
+| `reflow` | Shrinks to 320px (a 400% zoom of a 1280px window) | `FR-404` (review, WCAG 1.4.10) if the page needs horizontal scrolling, plus new axe findings |
+
+Each mode runs on a fresh page so one mode's emulation never leaks into the next, and only findings the plain page did not already have are kept. Findings are labelled `[dark mode]`, `[reduced motion]`, `[reflow]`. Modes apply to the initial page, not to named states.
+
 Limits, plainly: states are independent (each starts from a fresh load of the URL, so there are no multi-page flows that depend on earlier state beyond `goto`); it needs the page running; findings have no source line (they carry a CSS selector); automated checks only find part of the real problems. `fringe plan --scan <url>` merges it with the static findings into one fix order. It does not feed the baseline or `fringe-ignore` yet, and is not part of the edit hook (it needs a running app and takes seconds).
 
 ## Priority, clusters and fix plans
@@ -152,7 +167,7 @@ The hook also keeps `.fringe/last.json` (the previous run's errors) and tells th
 
 This was verified end to end with real agent runs: the agent receives the findings and fixes them (see [docs/architecture.md](../../docs/architecture.md)). Why `--claude-hook` and not `--hook`: Claude Code only passes a hook's output to the agent as `decision`/`reason` JSON on exit 0 (or stderr on exit 2); the CI contract `--hook` exits 1 and is ignored.
 
-**Skills** — `fringe init` installs five into `.claude/skills/` (sources in [skill/](skill/), one folder each); the Claude Code plugin ships the same folders, namespaced `/fringe:…`: `fringe` (below), `fringe-review` ("review this page": ranked, plain-English findings with fixes), `fringe-audit` (whole-repo plan: top rules and files, a fix order, offers `--update-baseline`), `fringe-debt` (lists `fringe-ignore` suppressions and the baseline) and `fringe-help` (quick reference). Invoke as `/fringe-review` etc. Reviews run `fringe check`, so Claude Code will ask you to approve that command once (or allow `Bash(fringe:*)` / `Bash(npx:*)`).
+**Skills** — `fringe init` installs five into `.claude/skills/` (sources in [skill/](skill/), one folder each); the Claude Code plugin ships the same folders, namespaced `/fringetool:…`: `fringe` (below), `fringe-review` ("review this page": ranked, plain-English findings with fixes), `fringe-audit` (whole-repo plan: top rules and files, a fix order, offers `--update-baseline`), `fringe-debt` (lists `fringe-ignore` suppressions and the baseline) and `fringe-help` (quick reference). Invoke as `/fringe-review` etc. Reviews run `fringe check`, so Claude Code will ask you to approve that command once (or allow `Bash(fringe:*)` / `Bash(npx:*)`).
 
 **The main skill** (`.claude/skills/fringe/SKILL.md`) teaches the agent the ladder: *Flow* (cut what users don't need, with evidence in `.fringe/manifest.json`) → *Edges* (fix every hook finding, never silence a rule to get green) → *Polish* (tokens, scales, no AI look), then record the run. It is plain Markdown, so any agent platform that reads `AGENTS.md`/skill files can use it as-is.
 

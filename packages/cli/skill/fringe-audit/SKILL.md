@@ -5,7 +5,7 @@ description: Use when the user wants a whole-repo UX/accessibility audit, a plan
 
 # Fringe audit
 
-Command: use `fringe` if it is on the PATH, otherwise `npx -y @fringetools/cli` in its place (e.g. `npx -y @fringetools/cli check --json .`).
+Command: use `fringe` if it is on the PATH, otherwise `npx -y @fringetools/cli@0.4.0` in its place (e.g. `npx -y @fringetools/cli@0.4.0 check --json .`).
 
 1. Run `fringe plan --json --limit 5` (or `fringe plan` for Markdown). It already orders the work: P0 errors in shared components or critical paths, P1 other errors with mechanical fixes first, P2 review, P3 polish, each cluster with its recipe. Use that order; do not re-derive it. Add `"critical": ["src/checkout/**"]` to `fringe.config.json` if the user names the pages that matter most. Do not print every finding.
 2. Summarize as a plan:

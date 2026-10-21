@@ -17,7 +17,7 @@ Fringe checks agent-written frontends for accessibility, state, dark-pattern and
 | `/fringe-debt` | List silenced findings (`fringe-ignore`, baseline) |
 | `/fringe-help` | This reference |
 
-**Commands** (`fringe`, or `npx -y @fringetools/cli`)
+**Commands** (`fringe`, or `npx -y @fringetools/cli@0.4.0`)
 
 | Command | What it does |
 |---|---|

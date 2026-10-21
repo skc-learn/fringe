@@ -22,8 +22,10 @@ describe('Claude Code plugin manifests', () => {
     expect(names.length).toBeGreaterThanOrEqual(5);
     for (const n of names) expect(readFileSync(join(dir, n, 'SKILL.md'), 'utf8')).toMatch(new RegExp(`^---\\nname: ${n}\\n`));
   });
-  it('the plugin hook runs the same command `fringe init` writes', () => {
-    const cmd = json('hooks/hooks.json').hooks.PostToolUse[0].hooks[0].command;
+  it('the plugin hook runs the same command `fringe init` writes, pinned to this version', () => {
+    const pinned = json('hooks/hooks.json').hooks.PostToolUse[0].hooks[0].command;
+    expect(pinned).toContain(`@fringetools/cli@${json('.claude-plugin/plugin.json').version} `);
+    const cmd = pinned.replace(/cli@[\d.]+ /, 'cli ');
     expect(readFileSync(join(__dirname, '..', 'src', 'init.ts'), 'utf8')).toContain(`'${cmd}'`);
   });
 });

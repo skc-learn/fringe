@@ -2,3 +2,5 @@ node_modules/
 .superpowers/
 .fringe/
 dist/
+.video_agent/
+.DS_Store

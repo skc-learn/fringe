@@ -5,7 +5,7 @@ description: Use when writing or changing frontend code (JSX/TSX, HTML, CSS, Vue
 
 # Fringe
 
-Command: use `fringe` if it is on the PATH, otherwise `npx -y @fringetools/cli` in its place (e.g. `npx -y @fringetools/cli check --json .`).
+Command: use `fringe` if it is on the PATH, otherwise `npx -y @fringetools/cli@0.4.0` in its place (e.g. `npx -y @fringetools/cli@0.4.0 check --json .`).
 
 Ponytail trims your code. Fringe handles your edges. Work the ladder in order.
 

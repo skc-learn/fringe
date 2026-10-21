@@ -10,10 +10,10 @@ Send these as two separate prompts:
 /plugin marketplace add skc-learn/fringe
 ```
 ```
-/plugin install fringe@fringe
+/plugin install fringetool@fringe
 ```
 
-This adds the post-edit hook (`npx -y @fringetools/cli check --claude-hook`) and the skills, namespaced: `/fringe:fringe-review`, `/fringe:fringe-audit`, `/fringe:fringe-debt`, `/fringe:fringe-help`. The checker is fetched by `npx` on first use, so there is nothing else to install. `node` and `npx` must be on the PATH of the shell Claude Code uses.
+This adds the post-edit hook (`npx -y @fringetools/cli@0.4.0 check --claude-hook`) and the skills, namespaced: `/fringetool:fringe-review`, `/fringetool:fringe-audit`, `/fringetool:fringe-debt`, `/fringetool:fringe-help`. The checker is fetched by `npx` on first use, so there is nothing else to install. `node` and `npx` must be on the PATH of the shell Claude Code uses.
 
 ## Claude Code, without the plugin
 

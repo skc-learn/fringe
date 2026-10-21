@@ -26,7 +26,7 @@ Pick **one**:
 /plugin marketplace add skc-learn/fringe
 ```
 ```
-/plugin install fringe@fringe
+/plugin install fringetool@fringe
 ```
 
 **B. One command in your project** (any Claude Code project, nothing to install first):
@@ -80,7 +80,7 @@ Errors make the command exit `1` (so CI fails too). Everything else is advice an
 | `/fringe-debt` | List everything silenced or deferred (suppressions and baseline) |
 | `/fringe-help` | Quick reference |
 
-> Installed as a plugin, the names are namespaced: `/fringe:fringe-review`. The review and audit skills run the checker, so Claude Code asks you to approve that command once.
+> Installed as a plugin, the names are namespaced: `/fringetool:fringe-review`. The review and audit skills run the checker, so Claude Code asks you to approve that command once.
 
 **36 rules in three tiers**, each with a fix hint and (for accessibility) its WCAG criterion:
 
