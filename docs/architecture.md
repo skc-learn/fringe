@@ -39,6 +39,7 @@ One package does everything today: `packages/cli`. The dashboard (Plan 3) and sk
 | `src/color.ts` | Pure WCAG math: `parseColor` (hex/rgb()/rgba()/hsl()/hsla(); null when unparseable), `relativeLuminance`, `contrastRatio` | — |
 | `src/tokens.ts` | Gather project token colors per `tokenSource` kind (custom-property values / W3C `$value` walk) | `gatherTokenColors(root, cfg, cssSources)` |
 | `src/scan.ts` | Runtime scan: dynamic-loads `playwright-core` + `axe-core` from the project, drives headless Chrome, maps axe violations and a Tab walk to `Finding`s (`FR-400`, `FR-401`) | `scan`, `parseStates`, `parseModes`, `axeToFindings`, `tabWalkFindings` |
+| `src/rulereport.ts` | Per-rule open / baselined / silenced counts and ledger trend (`fringe rules`) | `ruleReport`, `rulesToText` |
 | `src/handoff.ts` | Builds the agent work order (prompt + plan + fingerprints) and verifies a later state against it | `buildHandoff`, `verifyHandoff` |
 | `src/receipts.ts` | Previous-run error set in `.fringe/last.json`; what a hook run introduced or fixed | `receipts` |
 | `src/patterns.ts` | Component checklists for `fringe explain pattern`; items name the rules that verify them | `PATTERNS`, `renderPatterns` |

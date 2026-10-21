@@ -4,7 +4,7 @@
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": "npx -y @fringetools/cli@0.4.1 check --claude-hook", "timeout": 60 }
+          { "type": "command", "command": "npx -y @fringetools/cli@0.5.0 check --claude-hook", "timeout": 60 }
         ]
       }
     ]

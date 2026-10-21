@@ -13,7 +13,7 @@ export interface Handoff {
   target: string;
   /** Absolute path when the hand-off covers a single file. */
   only?: string;
-  scan?: { url: string; statesFile?: string; modes: string[] };
+  scan?: { url: string; statesFile?: string; modes: string[]; storageState?: string };
   score: number;
   counts: Counts;
   /** Findings silenced by `fringe-ignore` when the handoff was made; verify reports any increase. */

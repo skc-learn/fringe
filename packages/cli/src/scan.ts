@@ -1,4 +1,5 @@
 import { createRequire } from 'node:module';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { score } from './score.js';
 import { TIER, wcagBonus } from './prioritize.js';
@@ -120,30 +121,63 @@ export function onlyNew(base: Finding[], extra: Finding[]): Finding[] {
 const countRunningLoops = `[...document.getAnimations()].filter((a) => a.playState === 'running' && a.effect && a.effect.getComputedTiming().iterations === Infinity).map((a) => { const t = a.effect.target; return t ? t.tagName.toLowerCase() + (t.id ? '#' + t.id : '') + (typeof t.className === 'string' && t.className ? '.' + t.className.trim().split(/\\s+/)[0] : '') : 'unknown'; })`;
 
 /** Re-checks the plain page under conditions many users really have. Findings are labelled with the mode. */
-async function stress(browser: any, axePath: string, url: string, mode: Mode, base: Finding[]): Promise<Finding[]> {
-  const page = await browser.newPage(); // a fresh page per mode: media emulation never leaks from one mode into the next
-  try { return await stressOn(page, axePath, url, mode, base); } finally { await page.close(); }
+async function stress(context: any, axePath: string, url: string, mode: Mode, base: Finding[], shot: (page: any, name: string) => Promise<void>): Promise<Finding[]> {
+  const page = await context.newPage(); // a fresh page per mode: media emulation never leaks from one mode into the next
+  try { return await stressOn(page, axePath, url, mode, base, shot); } finally { await page.close(); }
 }
 
-async function stressOn(page: any, axePath: string, url: string, mode: Mode, base: Finding[]): Promise<Finding[]> {
+async function stressOn(page: any, axePath: string, url: string, mode: Mode, base: Finding[], shot: (page: any, name: string) => Promise<void>): Promise<Finding[]> {
   const at0 = { file: `${url} [${mode}]`, line: 1, col: 0 };
   await page.goto(url, { waitUntil: 'load', timeout: 30000 });
   if (mode === 'dark') {
-    await page.emulateMedia({ colorScheme: 'dark' }); await page.waitForTimeout(150);
+    await page.emulateMedia({ colorScheme: 'dark' }); await page.waitForTimeout(150); await shot(page, 'mode-dark');
     return onlyNew(base, await audit(page, axePath, url)).map((f) => inState('dark mode', url, f));
   }
   if (mode === 'reduced') {
-    await page.emulateMedia({ reducedMotion: 'reduce' }); await page.waitForTimeout(300);
+    await page.emulateMedia({ reducedMotion: 'reduce' }); await page.waitForTimeout(300); await shot(page, 'mode-reduced');
     const loops: string[] = await page.evaluate(countRunningLoops);
     return loops.length === 0 ? [] : [{ rule: 'FR-403', severity: 'review', message: `[reduced motion] ${loops.length} animation(s) keep looping when the user asks for reduced motion: ${loops.slice(0, 3).join(', ')}`, hint: 'honour prefers-reduced-motion: stop or replace infinite animations under @media (prefers-reduced-motion: reduce)', loc: at0 }];
   }
-  await page.setViewportSize({ width: 320, height: 256 }); await page.waitForTimeout(250); // 400% zoom of a 1280px window
+  await page.setViewportSize({ width: 320, height: 256 }); await page.waitForTimeout(250); await shot(page, 'mode-reflow'); // 400% zoom of a 1280px window
   const wide: number = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   const out: Finding[] = wide > 1 ? [{ rule: 'FR-404', severity: 'review', message: `[reflow] content is ${wide}px wider than a 320px screen, so it needs horizontal scrolling`, hint: 'let content reflow to one column at 320px (WCAG 1.4.10); wide tables and code blocks may scroll inside their own container', loc: at0, wcag: '1.4.10' }] : [];
   return [...out, ...onlyNew(base, await audit(page, axePath, url)).map((f) => inState('reflow', url, f))];
 }
 
-export async function scan(url: string, cwd = process.cwd(), states: ScanState[] = [], modes: Mode[] = []): Promise<CheckResult> {
+export interface ScanOptions {
+  states?: ScanState[];
+  modes?: Mode[];
+  /** Playwright storage-state file (cookies + localStorage) so pages behind a login can be scanned. */
+  storageState?: string;
+  /** Directory to save a full-page PNG of every state and mode into. */
+  screenshots?: string;
+  /** Write today's findings to fringe.scan.baseline.json instead of reporting them. */
+  updateBaseline?: boolean;
+}
+
+const baselinePath = (cwd: string) => join(cwd, 'fringe.scan.baseline.json');
+// Matches on rule + page/state + element, not on axe's wording or numbers, so a contrast ratio that shifts by 0.1 stays "known".
+const scanKey = (f: Finding) => `${f.rule}|${f.loc.file}|${f.message.split(': ')[0]}`;
+
+function applyScanBaseline(cwd: string, findings: Finding[]): { fresh: Finding[]; known: number } {
+  if (!existsSync(baselinePath(cwd))) return { fresh: findings, known: 0 };
+  let keys: string[];
+  try { keys = JSON.parse(readFileSync(baselinePath(cwd), 'utf8')); if (!Array.isArray(keys)) throw 0; } catch { throw new Error('fringe.scan.baseline.json is not a JSON array: rerun with --update-baseline'); }
+  const left = new Map<string, number>();
+  for (const k of keys) left.set(k, (left.get(k) ?? 0) + 1);
+  const fresh = findings.filter((f) => { const k = scanKey(f), n = left.get(k) ?? 0; if (n > 0) { left.set(k, n - 1); return false; } return true; });
+  return { fresh, known: findings.length - fresh.length };
+}
+
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'page';
+
+export async function scan(url: string, cwd = process.cwd(), opts: ScanOptions = {}): Promise<CheckResult> {
+  const { states = [], modes = [] } = opts;
+  const shot = async (page: any, name: string) => {
+    if (!opts.screenshots) return;
+    mkdirSync(opts.screenshots, { recursive: true });
+    await page.screenshot({ path: join(opts.screenshots, `${slug(name)}.png`), fullPage: true });
+  };
   if (!/^(https?|file):\/\//i.test(url)) throw new Error(`fringe scan takes an http(s):// or file:// URL, got '${url}'`);
   const req = createRequire(join(cwd, 'noop.js'));
   let playwright: any, axePath: string;
@@ -152,8 +186,11 @@ export async function scan(url: string, cwd = process.cwd(), states: ScanState[]
   try { browser = await playwright.chromium.launch({ channel: 'chrome' }); }
   catch { try { browser = await playwright.chromium.launch(); } catch { throw new Error(SCAN_HELP); } }
   try {
-    const page = await browser.newPage();
+    if (opts.storageState && !existsSync(opts.storageState)) throw new Error(`storage state file not found: ${opts.storageState} (create one with: npx playwright-core codegen --save-storage=auth.json ${url})`);
+    const context = await browser.newContext(opts.storageState ? { storageState: opts.storageState } : {});
+    const page = await context.newPage();
     await page.goto(url, { waitUntil: 'load', timeout: 30000 });
+    await shot(page, 'initial');
     const all: Finding[] = await audit(page, axePath, url);
     const plain = [...all];
     for (const st of states) {
@@ -164,13 +201,19 @@ export async function scan(url: string, cwd = process.cwd(), states: ScanState[]
         all.push({ rule: 'FR-402', severity: 'review', message: `[${st.name}] state could not be reached: step ${step + 1} ${JSON.stringify(st.steps[step])} failed (${String((e as Error).message).split('\n')[0].slice(0, 120)})`, hint: 'fix the step in fringe.scan.json or the page; nothing in this state was audited', loc: { file: `${url} [${st.name}]`, line: 1, col: 0 } });
         continue;
       }
+      await shot(page, `state-${st.name}`);
       all.push(...(await audit(page, axePath, url)).map((f) => inState(st.name, url, f)));
     }
-    for (const m of modes) all.push(...(await stress(browser, axePath, url, m, plain)));
-    const { findings, clusters } = rankScan(url, all);
+    for (const m of modes) all.push(...(await stress(context, axePath, url, m, plain, shot)));
+    if (opts.updateBaseline) {
+      writeFileSync(baselinePath(cwd), JSON.stringify(all.map(scanKey).sort(), null, 2) + '\n');
+      return { stack: { jsx: false, tailwind: false, vue: false, svelte: false, html: true }, files: 1 + states.length + modes.length, skipped: [], findings: [], clusters: [], counts: { error: 0, review: 0, signal: 0 }, score: 100, baselined: all.length };
+    }
+    const { fresh, known } = applyScanBaseline(cwd, all);
+    const { findings, clusters } = rankScan(url, fresh);
     const counts = { error: 0, review: 0, signal: 0 };
     for (const f of findings) counts[f.severity]++;
-    return { stack: { jsx: false, tailwind: false, vue: false, svelte: false, html: true }, files: 1 + states.length + modes.length, skipped: [], findings, clusters, counts, score: score(counts, { error: 10, review: 3, signal: 1 }, 1) };
+    return { stack: { jsx: false, tailwind: false, vue: false, svelte: false, html: true }, files: 1 + states.length + modes.length, skipped: [], findings, clusters, counts, score: score(counts, { error: 10, review: 3, signal: 1 }, 1), ...(known ? { baselined: known } : {}) };
   } finally { await browser.close(); }
 }
 
@@ -192,5 +235,5 @@ export function rankScan(url: string, findings: Finding[]): { findings: Finding[
 /** One CheckResult from a static run plus a runtime scan: the input `fringe plan --scan` orders. */
 export function mergeScan(base: CheckResult, scanned: CheckResult, weights: { error: number; review: number; signal: number }): CheckResult {
   const counts = { error: base.counts.error + scanned.counts.error, review: base.counts.review + scanned.counts.review, signal: base.counts.signal + scanned.counts.signal };
-  return { ...base, findings: [...base.findings, ...scanned.findings], clusters: [...(base.clusters ?? []), ...(scanned.clusters ?? [])].sort((a, b) => b.priority - a.priority), counts, score: score(counts, weights, base.files) };
+  return { ...base, findings: [...base.findings, ...scanned.findings], clusters: [...(base.clusters ?? []), ...(scanned.clusters ?? [])].sort((a, b) => b.priority - a.priority), counts, score: score(counts, weights, base.files), ...((base.baselined ?? 0) + (scanned.baselined ?? 0) ? { baselined: (base.baselined ?? 0) + (scanned.baselined ?? 0) } : {}) };
 }

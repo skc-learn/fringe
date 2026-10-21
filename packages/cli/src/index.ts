@@ -13,12 +13,13 @@ import { startBoard } from './board.js';
 import { writeBaseline } from './baseline.js';
 import { receipts } from './receipts.js';
 import { scan, mergeScan, parseStates, parseModes, MODES } from './scan.js';
-import type { ScanState } from './scan.js';
+import type { ScanState, ScanOptions } from './scan.js';
 import { initProject, initFor, initGit, isWired, AGENTS } from './init.js';
 import { homedir } from 'node:os';
 import { renderExplain } from './guidance.js';
 import { renderPatterns } from './patterns.js';
 import { toPlanJson, toPlanMarkdown } from './report/plan.js';
+import { ruleReport, rulesToText } from './rulereport.js';
 import { buildHandoff, verifyHandoff, verifyToMarkdown } from './handoff.js';
 import type { Handoff } from './handoff.js';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -55,14 +56,21 @@ function resolveTarget(arg: string): { root: string; only?: Set<string> } {
   return { root: dir, only: new Set([arg]) };
 }
 
-/** `--states <file>`, else `fringe.scan.json` in the working directory when present. */
-function loadStates(cwd: string, rest: string[]): ScanState[] {
-  const i = rest.indexOf('--states');
-  const file = i !== -1 ? resolve(cwd, rest[i + 1] ?? '') : join(cwd, 'fringe.scan.json');
-  if (i === -1 && !existsSync(file)) return [];
-  let raw: unknown;
-  try { raw = JSON.parse(readFileSync(file, 'utf8')); } catch (e) { throw new Error(`${file}: ${(e as Error).message}`); }
-  return parseStates(raw);
+/** Everything `scan` needs from the command line and `fringe.scan.json`: states, stress modes, login session, screenshots. */
+function loadScanOptions(cwd: string, rest: string[]): ScanOptions {
+  const flag = (n: string) => { const i = rest.indexOf(n); return i === -1 ? undefined : rest[i + 1]; };
+  const si = rest.indexOf('--states');
+  const file = si !== -1 ? resolve(cwd, rest[si + 1] ?? '') : join(cwd, 'fringe.scan.json');
+  let states: ScanState[] = [];
+  let storageState = flag('--storage-state') ? resolve(cwd, flag('--storage-state')!) : undefined;
+  if (si !== -1 || existsSync(file)) {
+    let raw: any;
+    try { raw = JSON.parse(readFileSync(file, 'utf8')); } catch (e) { throw new Error(`${file}: ${(e as Error).message}`); }
+    states = parseStates(raw);
+    if (!storageState && typeof raw.storageState === 'string') storageState = resolve(dirname(file), raw.storageState); // relative to the file that names it
+  }
+  const shots = flag('--screenshots');
+  return { states, modes: loadModes(rest), ...(storageState ? { storageState } : {}), ...(shots ? { screenshots: resolve(cwd, shots) } : {}), ...(rest.includes('--update-baseline') ? { updateBaseline: true } : {}) };
 }
 
 /** `--stress` = all stress modes; `--modes dark,reflow` = a subset. */
@@ -77,7 +85,8 @@ const weakEvidence = (e: unknown) => typeof e !== 'string' || e.trim().length < 
 const HELP = `fringe check [--json] [--hook] [--record] [--manifest <path>] [path]
 fringe check --claude-hook [path]       for Claude Code hooks (feeds errors back to the agent)
 fringe check --update-baseline [path]   accept today's findings; only new ones gate
-fringe scan <url> [--states f] [--stress | --modes dark,reduced,reflow] [--json]               runtime check in a real browser (axe-core + keyboard walk); needs playwright-core and axe-core
+fringe scan <url> [--states f] [--stress | --modes ...] [--storage-state auth.json] [--screenshots dir] [--update-baseline] [--json]               runtime check in a real browser (axe-core + keyboard walk); needs playwright-core and axe-core
+fringe rules [dir] [--json]               per rule: open / baselined / silenced, to spot rules that don't suit this repo
 fringe handoff [dir|file] [--scan url]    a work order for another agent or CI (saved to .fringe/handoff.json)
 fringe verify [--handoff file]             did the receiving agent finish? exit 0 only when complete
 fringe plan [dir|file] [--scan url] [--json] [--limit n]   ordered fix batches with recipes; --scan adds the live page
@@ -113,19 +122,19 @@ async function gather(opts: CliOpts, rest: string[]) {
   if (si !== -1 && (!scanUrl || scanUrl.startsWith('--'))) throw new Error('--scan needs a URL, e.g. fringe plan --scan http://localhost:3000');
   const li = rest.indexOf('--limit');
   const limit = li !== -1 ? Number(rest[li + 1]) || undefined : undefined;
-  const valued = new Set(['--limit', '--scan', '--states', '--modes', '--out']);
+  const valued = new Set(['--limit', '--scan', '--states', '--modes', '--out', '--storage-state', '--screenshots']);
   const flags = new Set(['--json', '--stress']);
   const paths = parseArgs(rest.filter((a, i) => !valued.has(a) && !valued.has(rest[i - 1]) && !flags.has(a)), (s) => process.stderr.write(s));
   const cwd = opts.cwd ?? process.cwd();
   const { root, only } = resolveTarget(resolve(cwd, paths[0] ?? '.'));
   const cfg = loadConfig(root);
   let result = await runCheck(root, cfg, true, only);
-  const modes = loadModes(rest);
-  let scanMeta: { url: string; statesFile?: string; modes: string[] } | undefined;
+  let scanMeta: { url: string; statesFile?: string; modes: string[]; storageState?: string } | undefined;
   if (scanUrl) {
-    result = mergeScan(result, await scan(scanUrl, cwd, loadStates(cwd, rest), modes), cfg.weights);
+    result = mergeScan(result, await scan(scanUrl, cwd, loadScanOptions(cwd, rest)), cfg.weights);
     const sf = rest.indexOf('--states');
-    scanMeta = { url: scanUrl, ...(sf !== -1 ? { statesFile: resolve(cwd, rest[sf + 1]) } : {}), modes };
+    const so = loadScanOptions(cwd, rest);
+    scanMeta = { url: scanUrl, ...(sf !== -1 ? { statesFile: resolve(cwd, rest[sf + 1]) } : {}), modes: so.modes ?? [], ...(so.storageState ? { storageState: so.storageState } : {}) };
   }
   return { result, root, target: paths[0] ?? '.', only: only ? [...only][0] : undefined, limit, scan: scanMeta };
 }
@@ -186,12 +195,23 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
   }
   if (cmd === 'scan') {
     try {
-      const url = rest.find((a, i) => !a.startsWith('--') && rest[i - 1] !== '--states' && rest[i - 1] !== '--modes');
+      const url = rest.find((a, i) => !a.startsWith('--') && !['--states', '--modes', '--storage-state', '--screenshots'].includes(rest[i - 1]));
       if (!url) { err(opts)('fringe: scan needs a URL, e.g. fringe scan http://localhost:3000\n'); return 2; }
       const cwd = opts.cwd ?? process.cwd();
-      const result = await scan(url, cwd, loadStates(cwd, rest), loadModes(rest));
+      const so = loadScanOptions(cwd, rest);
+      const result = await scan(url, cwd, so);
+      if (so.updateBaseline) { log(opts)(`fringe: scan baseline written: ${result.baselined ?? 0} known findings in fringe.scan.baseline.json (commit it); only new ones show from now on`); return 0; }
+      if (so.screenshots) err(opts)(`fringe: screenshots saved in ${so.screenshots}\n`);
       log(opts)(rest.includes('--json') ? toJson(result) : toPretty(result));
       return result.counts.error > 0 ? 1 : 0;
+    } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }
+  }
+  if (cmd === 'rules') {
+    try {
+      const root = resolve(opts.cwd ?? process.cwd(), rest.find((a) => !a.startsWith('--')) ?? '.');
+      const rows = await ruleReport(root);
+      log(opts)(rest.includes('--json') ? JSON.stringify({ schema: 'fringe/rules.v1', rules: rows }, null, 2) : rulesToText(rows));
+      return 0;
     } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }
   }
   if (cmd === 'plan' || cmd === 'handoff') {
@@ -220,7 +240,7 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
       if (h.schema !== 'fringe/handoff.v1') throw new Error(`${file} is not a fringe/handoff.v1 file`);
       const cfg = loadConfig(h.root);
       let result = await runCheck(h.root, cfg, true, h.only ? new Set([h.only]) : undefined);
-      if (h.scan) result = mergeScan(result, await scan(h.scan.url, h.root, h.scan.statesFile ? parseStates(JSON.parse(readFileSync(resolve(h.root, h.scan.statesFile), 'utf8'))) : loadStates(h.root, []), h.scan.modes as never), cfg.weights);
+      if (h.scan) result = mergeScan(result, await scan(h.scan.url, h.root, { ...loadScanOptions(h.root, h.scan.statesFile ? ['--states', h.scan.statesFile] : []), modes: h.scan.modes as never, ...(h.scan.storageState ? { storageState: h.scan.storageState } : {}) }), cfg.weights);
       const v = verifyHandoff(h, result);
       log(opts)(rest.includes('--json') ? JSON.stringify(v, null, 2) : verifyToMarkdown(v));
       return v.status === 'complete' ? 0 : 1;

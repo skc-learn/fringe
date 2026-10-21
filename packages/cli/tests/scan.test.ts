@@ -111,7 +111,7 @@ describe('scan states', () => {
     writeFileSync(page, '<!doctype html><html lang="en"><head><title>t</title></head><body><main><h1>x</h1><button id="open" onclick="document.getElementById(\'d\').hidden=false">Open</button><div id="d" hidden><p style="color:#bbb;background:#fff">faint dialog text</p></div></main></body></html>');
     const url = pathToFileURL(page).href;
     const none = await scan(url, join(__dirname, '..'));
-    const r = await scan(url, join(__dirname, '..'), [{ name: 'dialog open', steps: [{ click: '#open' }] }, { name: 'broken', steps: [{ click: '#nope' }] }]);
+    const r = await scan(url, join(__dirname, '..'), { states: [{ name: 'dialog open', steps: [{ click: '#open' }] }, { name: 'broken', steps: [{ click: '#nope' }] }] });
     rmSync(dir, { recursive: true, force: true });
     expect(none.findings.some((f) => f.message.includes('color-contrast'))).toBe(false);
     const hit = r.findings.find((f) => f.message.startsWith('[dialog open] color-contrast'));
@@ -141,11 +141,50 @@ describe('stress modes', () => {
       .wide { width: 600px; background:#eee }
     </style></head><body><main><h1>x</h1><p>readable on light</p><div class="pulse">live</div><div class="wide">wide block</div></main></body></html>`);
     const url = pathToFileURL(page).href;
-    const r = await scan(url, join(__dirname, '..'), [], ['dark', 'reduced', 'reflow']);
+    const r = await scan(url, join(__dirname, '..'), { modes: ['dark', 'reduced', 'reflow'] });
     rmSync(dir, { recursive: true, force: true });
     expect(r.findings.some((f) => f.message.startsWith('[dark mode] color-contrast'))).toBe(true);
     expect(r.findings.some((f) => f.rule === 'FR-403')).toBe(true);
     expect(r.findings.some((f) => f.rule === 'FR-404' && f.wcag === '1.4.10')).toBe(true);
     expect(r.findings.some((f) => f.message.startsWith('[reflow] color-contrast'))).toBe(false); // dark emulation must not leak into the next mode
+  }, 90000);
+});
+
+import { createServer } from 'node:http';
+import { readdirSync } from 'node:fs';
+const HAS_CHROME = existsSync('/Applications/Google Chrome.app') || existsSync('/usr/bin/google-chrome');
+const FAINT = '<!doctype html><html lang="en"><head><title>t</title></head><body><main><h1>x</h1><p style="color:#bbb;background:#fff">faint</p></main></body></html>';
+
+describe('scan: login session, screenshots, baseline', () => {
+  it('reports a missing storage-state file with how to create one', async () => {
+    await expect(scan('http://127.0.0.1:1', join(__dirname, '..'), { storageState: '/nope/auth.json' })).rejects.toThrow(/storage state file not found[\s\S]*codegen --save-storage/);
+  }, 30000);
+
+  it.skipIf(!HAS_CHROME)('scans a page behind a login using a saved session, saves screenshots, and baselines the findings', async () => {
+    const server = createServer((req, res) => { // the secret page only exists with the cookie
+      res.setHeader('content-type', 'text/html');
+      res.end(/session=ok/.test(req.headers.cookie ?? '') ? FAINT : '<!doctype html><html lang="en"><head><title>login</title></head><body><main><h1>Please sign in</h1></main></body></html>');
+    });
+    await new Promise<void>((ok) => server.listen(0, '127.0.0.1', ok));
+    const url = `http://127.0.0.1:${(server.address() as { port: number }).port}/`;
+    const dir = mkdtempSync(join(tmpdir(), 'fringe-session-'));
+    const auth = join(dir, 'auth.json');
+    writeFileSync(auth, JSON.stringify({ cookies: [{ name: 'session', value: 'ok', domain: '127.0.0.1', path: '/', expires: -1, httpOnly: false, secure: false, sameSite: 'Lax' }], origins: [] }));
+    const cwd = join(__dirname, '..');
+    try {
+      const anon = await scan(url, cwd);
+      expect(anon.findings).toEqual([]);                                               // without the session: only the login page
+      const shots = join(dir, 'shots');
+      const r = await scan(url, cwd, { storageState: auth, screenshots: shots });
+      expect(r.findings.some((f) => f.message.startsWith('color-contrast'))).toBe(true); // with it: the real page
+      expect(readdirSync(shots)).toContain('initial.png');
+      const bl = join(cwd, 'fringe.scan.baseline.json');
+      try {
+        await scan(url, cwd, { storageState: auth, updateBaseline: true });
+        const again = await scan(url, cwd, { storageState: auth });
+        expect(again.findings).toEqual([]);                                            // known problems are quiet
+        expect(again.baselined).toBeGreaterThan(0);
+      } finally { rmSync(bl, { force: true }); }
+    } finally { server.close(); rmSync(dir, { recursive: true, force: true }); }
   }, 90000);
 });

@@ -27,6 +27,9 @@ Fringe checks agent-written frontends for accessibility, state, dark-pattern and
 | `check --update-baseline` | Accept today's findings; only new ones gate |
 | `scan <url>` | Runtime check of a live page: real contrast, keyboard walk, and named states from `fringe.scan.json` (needs `playwright-core` + `axe-core`) |
 | `plan [dir\|file] [--scan url]` | Ordered fix batches (shared components first) with recipes; `--scan` adds the live page |
+| `handoff` / `verify` | Work order for another agent or CI, and proof it was done (complete / partial / regressed) |
+| `rules` | Per rule: open / baselined / silenced, to spot rules that do not suit this repo |
+| `init --for <agents>` / `--git` | Rules file for Codex, Cursor, Copilot, Gemini…; commit gate for any agent |
 | `explain [FR-203]` | Why a rule matters and how to fix it well |
 | `check --record [--manifest f]` | Append the run to `.fringe/ledger.jsonl` |
 | `init` | Add the hook and install the skills |
