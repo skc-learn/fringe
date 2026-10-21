@@ -23,6 +23,7 @@ Prefer a permanent command? `npm install -D @fringetools/cli`, then `npx fringe 
 |---|---|
 | `fringe check [dir\|file]` | Scan a directory (default `.`) or judge one file (the project root is found by climbing to the nearest `package.json`). Prints findings and the health score. Exit `1` on any `error`. |
 | `fringe scan <url> [--states file] [--stress] [--storage-state auth.json] [--screenshots dir] [--update-baseline] [--json]` | **Runtime check of a live page** (needs `npm i -D playwright-core axe-core`; uses your installed Chrome). Runs axe-core for real contrast, computed names and ARIA relations (`FR-400`; critical/serious = `error`, the rest `review`), then walks the page with Tab and reports keyboard traps (`FR-401`, error) and controls Tab never reaches (review). Accepts `http(s)://` and `file://` URLs. Exit `1` on errors. |
+| `fringe login <url> [--out file]` | **Log in once, by hand, in a real browser window** and save the session (default `.fringe/auth.json`) for `scan --storage-state`. Works with MFA and SSO. The file holds live cookies: keep it out of git. |
 | `fringe rules [dir] [--json]` | **Per-rule health for this repo**: findings still open, accepted into the baseline, and silenced with `fringe-ignore`, plus the ledger trend when `--record` has been used. A rule that is mostly overridden here is flagged: it may not suit the repo, so retune, disable or report it. `fringe/rules.v1`. |
 | `fringe handoff [dir\|file] [--scan url]` | **Work order for another agent or CI.** Prints a self-contained prompt (rules, definition of done, the ordered plan) and saves `.fringe/handoff.json` (`fringe/handoff.v1`). `--json` prints the file; `--out` chooses where. |
 | `fringe verify [--handoff file] [--json]` | **Proof it was done.** Re-checks everything the hand-off covered and reports `complete` / `partial` / `regressed`: errors fixed, remaining, introduced, and how many findings were silenced with `fringe-ignore` since. Exit `0` only when `complete` (`fringe/verify.v1`). |
@@ -108,9 +109,54 @@ npx @fringetools/cli scan http://localhost:3000 --modes dark,reflow      # a sub
 
 Each mode runs on a fresh page so one mode's emulation never leaks into the next, and only findings the plain page did not already have are kept. Findings are labelled `[dark mode]`, `[reduced motion]`, `[reflow]`. Modes apply to the initial page, not to named states.
 
-### Pages behind a login, screenshots, and a baseline for scan findings
+### Pages behind a login
 
-- **Login:** save a browser session once, then point the scan at it: `npx playwright-core codegen --save-storage=auth.json http://localhost:3000` (log in by hand in the window that opens, then close it). Use it with `--storage-state auth.json`, or put `"storageState": "auth.json"` at the top of `fringe.scan.json` (relative to that file). Keep the file out of git: it contains session cookies.
+Most apps hide the interesting pages behind a sign-in, and a scan that gets bounced to the login screen audits the wrong page. Three ways to be logged in; pick the one that fits.
+
+**1. Log in once by hand (works with MFA, SSO, captchas).**
+
+```sh
+npx @fringetools/cli login http://localhost:3000/login      # a Chrome window opens
+# sign in as you normally would, then press Enter in the terminal (close the window afterwards)
+npx @fringetools/cli scan http://localhost:3000/dashboard --storage-state .fringe/auth.json
+```
+
+The session (cookies and local storage) is saved to `.fringe/auth.json`. It is a live login: **keep it out of git** (the command warns if `.gitignore` does not list `.fringe/`) and expect it to expire.
+
+**2. A scripted login (for CI and agents).** Describe the steps in `fringe.scan.json`; credentials come from environment variables, so none are stored in the file:
+
+```json
+{
+  "login": {
+    "url": "/login",
+    "steps": [
+      { "fill": "#email", "value": "${env:FRINGE_EMAIL}" },
+      { "fill": "#password", "value": "${env:FRINGE_PASSWORD}" },
+      { "click": "button:has-text(\"Sign in\")" },
+      { "waitFor": "[data-test=dashboard]" }
+    ]
+  },
+  "states": [ { "name": "settings", "steps": [ { "goto": "/settings" } ] } ]
+}
+```
+
+Use a **test account**, not a real user. A missing variable stops the scan before any browser opens, naming the variable and never its value; messages show the step with the `${env:...}` placeholder, not the secret. Prefer specific selectors: `text=Sign in` can match the page heading instead of the button.
+
+**3. Several roles in one scan.** List sessions; each runs the whole scan (initial page, states, stress modes) and findings are labelled `[as admin]`, `[as member]`:
+
+```json
+{ "sessions": [
+  { "name": "member", "login": { "url": "/login", "steps": [ ... ] } },
+  { "name": "admin",  "storageState": "admin-auth.json" }
+] }
+```
+
+**What you will see when something is off**
+- `FR-405` "the scan was sent to /login, which looks like a login page": the session is missing or expired. Everything else in that run describes the login screen, not your app, so refresh the session first.
+- `FR-402` "login failed at step N": a selector did not match or the page did not reach the expected state. The step is shown; fix it in `fringe.scan.json`.
+
+### Screenshots and a baseline for scan findings
+
 - **Screenshots:** `--screenshots shots/` saves a full-page PNG of the initial page, each named state and each stress mode, so a reviewer can see what was audited.
 - **Baseline:** `scan --update-baseline` writes `fringe.scan.baseline.json` (commit it); later scans hide those known findings and report `N baselined`. Matching is by rule, page/state and element, not axe's wording, so a contrast ratio that shifts slightly stays known.
 

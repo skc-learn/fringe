@@ -104,6 +104,7 @@ Full rule table: **[CLI reference](packages/cli/README.md#rules)**.
 |---|---|
 | Check my project | `npx @fringetools/cli check` (a folder, default `.`, or one file) |
 | Know what to fix first | `npx @fringetools/cli plan` (add `--scan http://localhost:3000` to include the live page): batches ordered by impact, shared components first, with the fix for each rule |
+| Scan pages behind a login | `npx @fringetools/cli login http://localhost:3000/login` (log in once in the window), then `scan <url> --storage-state .fringe/auth.json`. For CI, script the login with test credentials from env vars ([how](packages/cli/README.md#pages-behind-a-login)) |
 | See the running page (real contrast, keyboard, menus and modals) | `npm i -D playwright-core axe-core`, then `npx @fringetools/cli scan http://localhost:3000`. Add a `fringe.scan.json` to also audit states like "menu open" ([how](packages/cli/README.md#states-audit-what-only-exists-after-a-click)) |
 | Use another agent (Codex, Cursor, Copilot, Gemini…) | `npx @fringetools/cli init --for cursor,codex` writes the rules file each reads; add `--git` for a commit gate that works with any agent |
 | Hand the fixing to another agent or CI | `npx @fringetools/cli handoff > prompt.md`, give it to the agent, then `npx @fringetools/cli verify` (exit 0 only when done; reports anything it silenced) |

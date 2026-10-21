@@ -10,7 +10,7 @@ How Fringe grows from "a checker one person trusts" to "a tool a stranger instal
 4. **Small surface.** New rules, flags and skills must earn their place with a failing test and a real case (the benchmark and the dogfooding each found a false positive; that is the bar).
 5. **Honest claims.** Every number in the README has a method behind it, with its limits stated.
 
-## Where we are (v0.5.0)
+## Where we are (v0.6.0)
 
 Shipped in 0.2: `fringe plan` (priority order, clusters, shared components first), `fringe explain` and fix recipes (also inside the agent hook), single-file `check`, `critical` paths, nested build output ignored by default. Shipped before: 29 rules, size-aware health score, baseline, inline suppression, `init`, Claude Code plugin, five skills, `AGENTS.md`, minimal ledger page, automated releases, a 24-run benchmark. Known gaps: no per-rule feedback loop; only Claude Code gets the live hook; the benchmark is small.
 
@@ -81,7 +81,7 @@ Shipped in 0.2: `fringe plan` (priority order, clusters, shared components first
 
 ## Stage 5: Beyond static (v1.0; first slice shipped in 0.3.0)
 
-Shipped: `fringe scan <url>`: axe-core + keyboard walk on one URL. Merged into `plan` via `--scan` in 0.3.1; declarative multi-state scans (`fringe.scan.json`) in 0.4.0. Stress modes (dark, reduced motion, 320px reflow) in 0.4.1. Login sessions, screenshots and a baseline for scan findings in 0.5.0. Still ahead: text-spacing and forced-colors passes, richer scan scripting.
+Shipped: `fringe scan <url>`: axe-core + keyboard walk on one URL. Merged into `plan` via `--scan` in 0.3.1; declarative multi-state scans (`fringe.scan.json`) in 0.4.0. Stress modes (dark, reduced motion, 320px reflow) in 0.4.1. Login sessions, screenshots and a baseline for scan findings in 0.5.0; `fringe login`, scripted env-var logins and multi-role sessions in 0.6.0. Still ahead: text-spacing and forced-colors passes, richer scan scripting.
 
 *For a user who needs more than source analysis can say.*
 

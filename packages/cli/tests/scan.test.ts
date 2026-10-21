@@ -157,7 +157,7 @@ const FAINT = '<!doctype html><html lang="en"><head><title>t</title></head><body
 
 describe('scan: login session, screenshots, baseline', () => {
   it('reports a missing storage-state file with how to create one', async () => {
-    await expect(scan('http://127.0.0.1:1', join(__dirname, '..'), { storageState: '/nope/auth.json' })).rejects.toThrow(/storage state file not found[\s\S]*codegen --save-storage/);
+    await expect(scan('http://127.0.0.1:1', join(__dirname, '..'), { storageState: '/nope/auth.json' })).rejects.toThrow(/storage state file not found[\s\S]*fringe login/);
   }, 30000);
 
   it.skipIf(!HAS_CHROME)('scans a page behind a login using a saved session, saves screenshots, and baselines the findings', async () => {
@@ -187,4 +187,85 @@ describe('scan: login session, screenshots, baseline', () => {
       } finally { rmSync(bl, { force: true }); }
     } finally { server.close(); rmSync(dir, { recursive: true, force: true }); }
   }, 90000);
+});
+
+import { parseSessions } from '../src/scan.js';
+import type { Server } from 'node:http';
+
+describe('scan: sessions, scripted login, expiry', () => {
+  it('parses login and sessions, with paths relative to the file', () => {
+    const s = parseSessions({ sessions: [{ name: 'admin', storageState: 'a.json' }, { name: 'member', login: { url: '/login', steps: [{ fill: '#e', value: '${env:X}' }, { click: 'text=Go' }] } }] }, '/cfg');
+    expect(s).toMatchObject([{ name: 'admin', storageState: '/cfg/a.json' }, { name: 'member', login: { url: '/login' } }]);
+    expect(parseSessions({ login: { steps: [{ click: 'b' }] } }, '/cfg')).toHaveLength(1);
+    expect(parseSessions({}, '/cfg')).toEqual([]);
+    expect(() => parseSessions({ sessions: [{ name: 'x' }] }, '/cfg')).toThrow(/needs a "storageState" or a "login"/);
+    expect(() => parseSessions({ sessions: [{ storageState: 'a' }] }, '/cfg')).toThrow(/needs a "name"/);
+    expect(() => parseSessions({ login: { steps: [] } }, '/cfg')).toThrow(/non-empty/);
+  });
+  it('a file that only describes a login needs no states', () => { expect(parseStates({ login: { steps: [{ click: 'b' }] } })).toEqual([]); });
+
+  const roles = (c: string | undefined) => /session=(admin|member)/.exec(c ?? '')?.[1];
+  async function app(): Promise<{ server: Server; url: string }> {
+    const server = createServer((req, res) => {
+      const role = roles(req.headers.cookie);
+      const html = (b: string) => { res.setHeader('content-type', 'text/html'); res.end(`<!doctype html><html lang="en"><head><title>t</title></head><body><main>${b}</main></body></html>`); };
+      if (req.url === '/autologin') { res.setHeader('set-cookie', 'session=member; Path=/'); res.statusCode = 302; res.setHeader('location', '/app'); return res.end(); }
+      if (req.url === '/login' && req.method === 'GET') return html('<h1>Sign in</h1><form method="post" action="/login"><label for="e">Email</label><input id="e" name="email"><label for="p">Password</label><input id="p" name="password" type="password"><button type="submit">Sign in</button></form>');
+      if (req.url === '/login' && req.method === 'POST') {
+        let body = ''; req.on('data', (d) => (body += d)); req.on('end', () => {
+          const q = new URLSearchParams(body);
+          if (q.get('password') === 'pw') { res.setHeader('set-cookie', `session=${q.get('email')!.startsWith('admin') ? 'admin' : 'member'}; Path=/`); res.statusCode = 302; res.setHeader('location', '/app'); return res.end(); }
+          html('<h1>Sign in</h1><p role="alert">Wrong password</p><input type="password" aria-label="Password">');
+        }); return;
+      }
+      if (req.url === '/app') {
+        if (!role) { res.statusCode = 302; res.setHeader('location', '/login'); return res.end(); }
+        return html(role === 'admin' ? '<h1>Admin</h1><p style="color:#bbb;background:#fff">faint admin text</p>' : '<h1>Member</h1><p>all good</p>');
+      }
+      res.statusCode = 404; res.end();
+    });
+    await new Promise<void>((ok) => server.listen(0, '127.0.0.1', ok));
+    return { server, url: `http://127.0.0.1:${(server.address() as { port: number }).port}` };
+  }
+  const cwd = join(__dirname, '..');
+  const loginSteps = (who: string) => [{ fill: '#e', value: `\${env:FRINGE_T_${who}_EMAIL}` }, { fill: '#p', value: '${env:FRINGE_T_PW}' }, { click: 'button:has-text("Sign in")' }, { waitFor: 'h1:has-text("' + (who === 'ADMIN' ? 'Admin' : 'Member') + '")' }];
+
+  it('rejects a missing environment variable before opening a browser, naming it but never a value', async () => {
+    delete process.env.FRINGE_T_PW;
+    await expect(scan('http://127.0.0.1:1/app', cwd, { sessions: [{ login: { steps: [{ fill: '#p', value: '${env:FRINGE_T_PW}' }] } }] })).rejects.toThrow(/environment variable FRINGE_T_PW is not set/);
+  });
+
+  it.skipIf(!HAS_CHROME)('logs in with scripted steps per role, labels findings by role, and warns when the session is rejected', async () => {
+    const { server, url } = await app();
+    process.env.FRINGE_T_ADMIN_EMAIL = 'admin@x'; process.env.FRINGE_T_MEMBER_EMAIL = 'member@x'; process.env.FRINGE_T_PW = 'pw';
+    try {
+      const r = await scan(`${url}/app`, cwd, { sessions: [
+        { name: 'admin', login: { url: '/login', steps: loginSteps('ADMIN') as never } },
+        { name: 'member', login: { url: '/login', steps: loginSteps('MEMBER') as never } },
+      ] });
+      const faint = r.findings.filter((f) => f.message.includes('color-contrast'));
+      expect(faint).toHaveLength(1);
+      expect(faint[0].message).toMatch(/^\[as admin\] color-contrast/);                  // only the admin role has the problem
+      expect(JSON.stringify(r)).not.toContain('"pw"');                                    // the secret never lands in a result
+      const stale = await scan(`${url}/app`, cwd, { sessions: [{ name: 'ghost', login: undefined, storageState: undefined }] });
+      expect(stale.findings.find((f) => f.rule === 'FR-405')?.message).toMatch(/\/login[\s\S]*looks like a login page/);
+    } finally { server.close(); }
+  }, 120000);
+
+  it.skipIf(!HAS_CHROME)('fringe login saves a session that scan can then use', async () => {
+    const { server, url } = await app();
+    const dir = mkdtempSync(join(tmpdir(), 'fringe-login-'));
+    const out = join(dir, 'auth.json');
+    try {
+      const code = await runCli(['login', `${url}/autologin`, '--headless', '--out', out], { log: () => {}, err: () => {}, cwd, waitForUser: async () => {} });
+      expect(code).toBe(0);
+      expect(existsSync(out)).toBe(true);
+      const r = await scan(`${url}/app`, cwd, { storageState: out });
+      expect(r.findings.find((f) => f.rule === 'FR-405')).toBeUndefined();               // we are in, not bounced to /login
+    } finally { server.close(); rmSync(dir, { recursive: true, force: true }); }
+  }, 90000);
+
+  it('login without a URL exits 2', async () => {
+    expect(await runCli(['login'], { log: () => {}, err: () => {} })).toBe(2);
+  });
 });

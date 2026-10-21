@@ -28,6 +28,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | D-22 | Size-aware health score with soft decay | 2026-10-20 | 🔒 |
 | D-23 | Dashboard scope cut: minimal `fringe open` now, full dashboard later | 2026-10-20 | 🔒 / deferred |
 | D-24 | Flow evidence check; review/audit skills instead of levels | 2026-10-20 | 🔒 |
+| D-34 | Authenticated scans: session files, env-var logins, roles; secrets never printed | 2026-10-21 | 🔒 |
 | D-33 | Multi-agent support in tiers, claimed only where verified | 2026-10-21 | 🔒 |
 | D-32 | Agent hand-off protocol: work order + verify | 2026-10-21 | 🔒 |
 | D-31 | Setup as close to zero steps as the host allows | 2026-10-21 | 🔒 |
@@ -198,6 +199,12 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 **Decision:** three tiers. (1) Instruction tier: `init --for` writes the same rules text to each tool's own file (AGENTS.md, GEMINI.md, .cursor/rules, copilot-instructions, windsurf, cline, kiro), appending behind a marker, never overwriting. (2) `init --git`: a pre-commit gate for any agent that commits, which **fails open** (only an error-level finding blocks; a checker that cannot run never blocks a commit). (3) Live hooks only per host and only after testing against the real tool, since Claude Code's hook silently ignored our first output format.
 **Verified:** Claude Code; Codex CLI read AGENTS.md and attempted the check (its sandbox crashed npx, which led to the "install locally" advice in the rules). Gemini CLI could not be verified here (no headless output). Codex has PostToolUse hooks, a candidate for a verified adapter next.
 **Not done:** MCP (parked by choice), Cursor/Copilot/Codex hook adapters.
+
+### D-34 — Scanning behind a login
+**Context:** most real UI is behind a sign-in, and a scan bounced to the login page silently audits the wrong page.
+**Decision:** three ways in, one per situation: `fringe login` (a person signs in once in a real window, so MFA/SSO/captcha just work; the Playwright storage state is saved, default `.fringe/auth.json`); scripted `login` steps in `fringe.scan.json` for CI and agents; `sessions` for several roles, each running the whole scan and labelling findings `[as name]`. Credentials only ever come from `${env:NAME}` references, expanded at run time: a missing variable fails before a browser opens, step descriptions in messages keep the placeholder, and a test asserts the secret never lands in a result. When the page we land on is a different path that looks like a login (or has a password field), `FR-405` says the findings describe the login screen. A failed login step is `FR-402`, not a crash.
+**Alternatives:** storing credentials in the config (rejected: they get committed); cookies pasted by hand (fragile); crawling to find the login (guessing).
+**Limits:** sessions expire and are the user's to refresh; `fringe login` needs a display; sessions are independent (no multi-factor in scripted logins; use `fringe login` for those); a login that succeeds but lands elsewhere is not detected beyond the redirect heuristic.
 
 ---
 

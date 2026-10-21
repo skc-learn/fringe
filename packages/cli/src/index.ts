@@ -12,7 +12,8 @@ import { loadConfig } from './config.js';
 import { startBoard } from './board.js';
 import { writeBaseline } from './baseline.js';
 import { receipts } from './receipts.js';
-import { scan, mergeScan, parseStates, parseModes, MODES } from './scan.js';
+import { scan, mergeScan, parseStates, parseSessions, parseModes, MODES } from './scan.js';
+import { saveSession } from './login.js';
 import type { ScanState, ScanOptions } from './scan.js';
 import { initProject, initFor, initGit, isWired, AGENTS } from './init.js';
 import { homedir } from 'node:os';
@@ -24,7 +25,7 @@ import { buildHandoff, verifyHandoff, verifyToMarkdown } from './handoff.js';
 import type { Handoff } from './handoff.js';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
-export interface CliOpts { log?: (s: string) => void; cwd?: string; err?: (s: string) => void; /** Home directory for `init --global` (tests override it). */ home?: string }
+export interface CliOpts { log?: (s: string) => void; cwd?: string; err?: (s: string) => void; /** Home directory for `init --global` (tests override it). */ home?: string; /** `fringe login` waits for this instead of Enter on the terminal (tests). */ waitForUser?: () => Promise<void> }
 const log = (o: CliOpts) => o.log ?? ((s: string) => console.log(s));
 const err = (o: CliOpts) => o.err ?? ((s: string) => process.stderr.write(s));
 
@@ -62,15 +63,17 @@ function loadScanOptions(cwd: string, rest: string[]): ScanOptions {
   const si = rest.indexOf('--states');
   const file = si !== -1 ? resolve(cwd, rest[si + 1] ?? '') : join(cwd, 'fringe.scan.json');
   let states: ScanState[] = [];
-  let storageState = flag('--storage-state') ? resolve(cwd, flag('--storage-state')!) : undefined;
+  let sessions: ScanOptions['sessions'];
+  const storageFlag = flag('--storage-state') ? resolve(cwd, flag('--storage-state')!) : undefined;
   if (si !== -1 || existsSync(file)) {
     let raw: any;
     try { raw = JSON.parse(readFileSync(file, 'utf8')); } catch (e) { throw new Error(`${file}: ${(e as Error).message}`); }
     states = parseStates(raw);
-    if (!storageState && typeof raw.storageState === 'string') storageState = resolve(dirname(file), raw.storageState); // relative to the file that names it
+    const parsed = parseSessions(raw, dirname(file)); // paths inside are relative to the file that names them
+    if (parsed.length) sessions = parsed;
   }
   const shots = flag('--screenshots');
-  return { states, modes: loadModes(rest), ...(storageState ? { storageState } : {}), ...(shots ? { screenshots: resolve(cwd, shots) } : {}), ...(rest.includes('--update-baseline') ? { updateBaseline: true } : {}) };
+  return { states, modes: loadModes(rest), ...(storageFlag ? { storageState: storageFlag } : sessions ? { sessions } : {}), ...(shots ? { screenshots: resolve(cwd, shots) } : {}), ...(rest.includes('--update-baseline') ? { updateBaseline: true } : {}) };
 }
 
 /** `--stress` = all stress modes; `--modes dark,reflow` = a subset. */
@@ -85,6 +88,7 @@ const weakEvidence = (e: unknown) => typeof e !== 'string' || e.trim().length < 
 const HELP = `fringe check [--json] [--hook] [--record] [--manifest <path>] [path]
 fringe check --claude-hook [path]       for Claude Code hooks (feeds errors back to the agent)
 fringe check --update-baseline [path]   accept today's findings; only new ones gate
+fringe login <url> [--out auth.json]     log in once in a browser window and save the session for scans
 fringe scan <url> [--states f] [--stress | --modes ...] [--storage-state auth.json] [--screenshots dir] [--update-baseline] [--json]               runtime check in a real browser (axe-core + keyboard walk); needs playwright-core and axe-core
 fringe rules [dir] [--json]               per rule: open / baselined / silenced, to spot rules that don't suit this repo
 fringe handoff [dir|file] [--scan url]    a work order for another agent or CI (saved to .fringe/handoff.json)
@@ -204,6 +208,19 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
       if (so.screenshots) err(opts)(`fringe: screenshots saved in ${so.screenshots}\n`);
       log(opts)(rest.includes('--json') ? toJson(result) : toPretty(result));
       return result.counts.error > 0 ? 1 : 0;
+    } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }
+  }
+  if (cmd === 'login') {
+    try {
+      const url = rest.find((a, i) => !a.startsWith('--') && rest[i - 1] !== '--out');
+      if (!url) { err(opts)('fringe: login needs a URL, e.g. fringe login http://localhost:3000/login\n'); return 2; }
+      const cwd = opts.cwd ?? process.cwd();
+      const oi = rest.indexOf('--out');
+      const out = resolve(cwd, oi !== -1 ? rest[oi + 1] ?? '' : '.fringe/auth.json');
+      await saveSession(url, cwd, out, { headless: rest.includes('--headless'), wait: opts.waitForUser });
+      log(opts)(`fringe: session saved to ${out}\nIt holds your logged-in cookies: keep it out of git. Use it with: fringe scan <url> --storage-state ${oi !== -1 ? rest[oi + 1] : '.fringe/auth.json'}`);
+      if (oi === -1 && existsSync(join(cwd, '.gitignore')) && !/\.fringe/.test(readFileSync(join(cwd, '.gitignore'), 'utf8'))) log(opts)('fringe: your .gitignore does not list .fringe/: add it, or the session file could be committed.');
+      return 0;
     } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }
   }
   if (cmd === 'rules') {

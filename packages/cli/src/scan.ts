@@ -52,31 +52,66 @@ export interface ScanState { name: string; steps: Step[] }
 
 const STEP_KEYS = ['click', 'fill', 'press', 'hover', 'waitFor', 'goto'] as const;
 
-/** Validates the contents of fringe.scan.json: `{ "states": [{ "name": "menu open", "steps": [{ "click": "#menu" }] }] }`. */
+const bad = (m: string): never => { throw new Error(`fringe.scan.json: ${m}`); };
+
+function checkSteps(steps: any, where: string): Step[] {
+  if (!Array.isArray(steps) || steps.length === 0) return bad(`${where} needs a non-empty "steps" list`);
+  for (const [k, step] of steps.entries()) {
+    const keys = STEP_KEYS.filter((x) => step && typeof step === 'object' && x in step);
+    if (keys.length !== 1 || typeof step[keys[0]] !== 'string') bad(`${where} step ${k + 1} must be exactly one of ${STEP_KEYS.join(', ')} with a string value`);
+    if (keys[0] === 'fill' && typeof step.value !== 'string') bad(`${where} step ${k + 1}: fill needs a "value"`);
+  }
+  return steps;
+}
+
+/** Validates the contents of fringe.scan.json: `{ "states": [{ "name": "menu open", "steps": [{ "click": "#menu" }] }] }`. `states` may be omitted when the file only describes a login. */
 export function parseStates(json: unknown): ScanState[] {
-  const bad = (m: string): never => { throw new Error(`fringe.scan.json: ${m}`); };
-  const states = (json as { states?: unknown })?.states;
-  if (!Array.isArray(states)) return bad('expected { "states": [ ... ] }');
-  return states.map((s: any, i) => {
+  const o = json as { states?: unknown; login?: unknown; sessions?: unknown; storageState?: unknown };
+  if (o?.states === undefined && (o?.login !== undefined || o?.sessions !== undefined || o?.storageState !== undefined)) return [];
+  if (!Array.isArray(o?.states)) return bad('expected { "states": [ ... ] }');
+  return o.states.map((s: any, i: number) => {
     if (typeof s?.name !== 'string' || !s.name.trim()) bad(`states[${i}] needs a "name"`);
-    if (!Array.isArray(s.steps) || s.steps.length === 0) bad(`state "${s.name}" needs a non-empty "steps" list`);
-    for (const [k, step] of s.steps.entries()) {
-      const keys = STEP_KEYS.filter((x) => step && typeof step === 'object' && x in step);
-      if (keys.length !== 1 || typeof step[keys[0]] !== 'string') bad(`state "${s.name}" step ${k + 1} must be exactly one of ${STEP_KEYS.join(', ')} with a string value`);
-      if (keys[0] === 'fill' && typeof step.value !== 'string') bad(`state "${s.name}" step ${k + 1}: fill needs a "value"`);
-    }
-    return { name: s.name.trim(), steps: s.steps };
+    return { name: s.name.trim(), steps: checkSteps(s.steps, `state "${s.name}"`) };
   });
 }
+
+/** A way to be logged in: a saved browser session, or steps that sign in (credentials come from ${env:NAME} so none are stored in the file). */
+export interface Session { name?: string; storageState?: string; login?: { url?: string; steps: Step[] } }
+
+/** Reads `login`, `storageState` and `sessions` from fringe.scan.json. Paths are relative to the file (`baseDir`). */
+export function parseSessions(json: unknown, baseDir: string): Session[] {
+  const o = (json ?? {}) as { login?: any; storageState?: unknown; sessions?: unknown };
+  const one = (x: any, where: string, name?: string): Session => {
+    if (x?.storageState !== undefined && typeof x.storageState !== 'string') bad(`${where}: storageState must be a file path`);
+    if (x?.login !== undefined && typeof x.login?.url !== 'undefined' && typeof x.login.url !== 'string') bad(`${where}: login.url must be a string`);
+    return { ...(name ? { name } : {}), ...(x?.storageState ? { storageState: join(baseDir, x.storageState) } : {}), ...(x?.login ? { login: { ...(x.login.url ? { url: x.login.url } : {}), steps: checkSteps(x.login.steps, `${where} login`) } } : {}) };
+  };
+  const out: Session[] = [];
+  if (o.login !== undefined || o.storageState !== undefined) out.push(one(o, 'top level'));
+  if (o.sessions !== undefined) {
+    if (!Array.isArray(o.sessions) || o.sessions.length === 0) bad('"sessions" must be a non-empty list');
+    for (const [i, s] of (o.sessions as any[]).entries()) {
+      if (typeof s?.name !== 'string' || !s.name.trim()) bad(`sessions[${i}] needs a "name"`);
+      if (!s.storageState && !s.login) bad(`session "${s.name}" needs a "storageState" or a "login"`);
+      out.push(one(s, `session "${s.name}"`, s.name.trim()));
+    }
+  }
+  return out;
+}
+
+const ENV_REF = /\$\{env:([A-Za-z_][A-Za-z0-9_]*)\}/g;
+/** Replaces ${env:NAME} with the variable's value. Used at run time only, so secrets never appear in messages or saved files. */
+const expandEnv = (s: string) => s.replace(ENV_REF, (_m, n: string) => { const v = process.env[n]; if (v === undefined) throw new Error(`environment variable ${n} is not set (named in fringe.scan.json)`); return v; });
+const envNames = (steps: Step[]) => steps.flatMap((st) => ('fill' in st ? [st.value] : 'goto' in st ? [st.goto] : []).flatMap((v) => [...v.matchAll(ENV_REF)].map((m) => m[1])));
 
 async function runStep(page: any, step: Step, base: string): Promise<void> {
   const t = { timeout: 10000 };
   if ('click' in step) await page.click(step.click, t);
-  else if ('fill' in step) await page.fill(step.fill, step.value, t);
+  else if ('fill' in step) await page.fill(step.fill, expandEnv(step.value), t);
   else if ('press' in step) await page.keyboard.press(step.press);
   else if ('hover' in step) await page.hover(step.hover, t);
   else if ('waitFor' in step) await page.waitForSelector(step.waitFor, t);
-  else await page.goto(new URL(step.goto, base).href, { waitUntil: 'load', timeout: 30000 });
+  else await page.goto(new URL(expandEnv(step.goto), base).href, { waitUntil: 'load', timeout: 30000 });
   await page.waitForTimeout(150); // let transitions settle before the next step or the audit
 }
 
@@ -99,7 +134,7 @@ async function audit(page: any, axePath: string, url: string): Promise<Finding[]
 
 /** Findings from a named state say so, and cluster separately from the same rule on the initial page. */
 const inState = (name: string, url: string, f: Finding): Finding =>
-  ({ ...f, message: `[${name}] ${f.message}`, loc: { ...f.loc, file: `${url} [${name}]` }, ...(f.cluster ? { cluster: `${f.cluster} [${name}]` } : {}) });
+  ({ ...f, message: `[${name}] ${f.message}`, loc: { ...f.loc, file: `${f.loc.file === url ? url : f.loc.file} [${name}]` }, ...(f.cluster ? { cluster: `${f.cluster} [${name}]` } : {}) });
 
 export const MODES = ['dark', 'reduced', 'reflow'] as const;
 export type Mode = (typeof MODES)[number];
@@ -147,8 +182,10 @@ async function stressOn(page: any, axePath: string, url: string, mode: Mode, bas
 export interface ScanOptions {
   states?: ScanState[];
   modes?: Mode[];
-  /** Playwright storage-state file (cookies + localStorage) so pages behind a login can be scanned. */
+  /** Shorthand for one unnamed session loaded from a Playwright storage-state file (cookies + localStorage). */
   storageState?: string;
+  /** Who to be logged in as. Default: nobody. With several, the whole scan runs once per session and findings are labelled `[as name]`. */
+  sessions?: Session[];
   /** Directory to save a full-page PNG of every state and mode into. */
   screenshots?: string;
   /** Write today's findings to fringe.scan.baseline.json instead of reporting them. */
@@ -170,15 +207,52 @@ function applyScanBaseline(cwd: string, findings: Finding[]): { fresh: Finding[]
 }
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'page';
+const LOGINISH = /log-?in|sign-?in|sso|auth/i;
+const firstLine = (e: unknown) => String((e as Error).message).split('\n')[0].slice(0, 120);
+
+/** If the scan was bounced to a login screen, everything it finds describes the login page, not the app: say so. */
+async function loginRedirect(page: any, requested: string, who: string | undefined): Promise<Finding[]> {
+  let now: URL, want: URL;
+  try { now = new URL(page.url()); want = new URL(requested); } catch { return []; }
+  if (now.pathname === want.pathname) return [];
+  const hasPassword: boolean = await page.evaluate(() => !!document.querySelector('input[type=password]'));
+  if (!LOGINISH.test(now.pathname) && !hasPassword) return [];
+  return [{ rule: 'FR-405', severity: 'review', message: `the scan was sent to ${now.pathname}, which looks like a login page: ${who ? `the "${who}" session may have expired or the login failed` : 'this page needs a login'}`, hint: 'save a session with `fringe login <url>` or add a "login" block to fringe.scan.json; findings for this page describe the login screen, not your app', loc: { file: requested, line: 1, col: 0 } }];
+}
+
+/** Everything audited for one browser context (one login): the plain page, each named state, each stress mode. */
+async function auditContext(context: any, axePath: string, url: string, opts: ScanOptions, who: string | undefined, shot: (page: any, name: string) => Promise<void>): Promise<Finding[]> {
+  const { states = [], modes = [] } = opts;
+  const page = await context.newPage();
+  await page.goto(url, { waitUntil: 'load', timeout: 30000 });
+  await shot(page, 'initial');
+  const all: Finding[] = [...(await loginRedirect(page, url, who)), ...(await audit(page, axePath, url))];
+  const plain = [...all];
+  for (const st of states) {
+    await page.goto(url, { waitUntil: 'load', timeout: 30000 });
+    let step = 0;
+    try { for (; step < st.steps.length; step++) await runStep(page, st.steps[step], url); }
+    catch (e) {
+      // The raw step is shown (with ${env:...} placeholders), never the expanded secret.
+      all.push({ rule: 'FR-402', severity: 'review', message: `[${st.name}] state could not be reached: step ${step + 1} ${JSON.stringify(st.steps[step])} failed (${firstLine(e)})`, hint: 'fix the step in fringe.scan.json or the page; nothing in this state was audited', loc: { file: `${url} [${st.name}]`, line: 1, col: 0 } });
+      continue;
+    }
+    await shot(page, `state-${st.name}`);
+    all.push(...(await audit(page, axePath, url)).map((f) => inState(st.name, url, f)));
+  }
+  for (const m of modes) all.push(...(await stress(context, axePath, url, m, plain, shot)));
+  return all;
+}
 
 export async function scan(url: string, cwd = process.cwd(), opts: ScanOptions = {}): Promise<CheckResult> {
   const { states = [], modes = [] } = opts;
-  const shot = async (page: any, name: string) => {
-    if (!opts.screenshots) return;
-    mkdirSync(opts.screenshots, { recursive: true });
-    await page.screenshot({ path: join(opts.screenshots, `${slug(name)}.png`), fullPage: true });
-  };
   if (!/^(https?|file):\/\//i.test(url)) throw new Error(`fringe scan takes an http(s):// or file:// URL, got '${url}'`);
+  const sessions: Session[] = opts.sessions?.length ? opts.sessions : [opts.storageState ? { storageState: opts.storageState } : {}];
+  // Fail before opening a browser: a missing secret or session file is a setup problem, not a finding.
+  for (const n of new Set([...sessions.flatMap((s) => envNames(s.login?.steps ?? [])), ...states.flatMap((s) => envNames(s.steps))])) {
+    if (process.env[n] === undefined) throw new Error(`environment variable ${n} is not set (named in fringe.scan.json)`);
+  }
+  for (const s of sessions) if (s.storageState && !existsSync(s.storageState)) throw new Error(`storage state file not found: ${s.storageState} (create one with: fringe login ${url})`);
   const req = createRequire(join(cwd, 'noop.js'));
   let playwright: any, axePath: string;
   try { playwright = req('playwright-core'); axePath = req.resolve('axe-core/axe.min.js'); } catch { throw new Error(SCAN_HELP); }
@@ -186,34 +260,41 @@ export async function scan(url: string, cwd = process.cwd(), opts: ScanOptions =
   try { browser = await playwright.chromium.launch({ channel: 'chrome' }); }
   catch { try { browser = await playwright.chromium.launch(); } catch { throw new Error(SCAN_HELP); } }
   try {
-    if (opts.storageState && !existsSync(opts.storageState)) throw new Error(`storage state file not found: ${opts.storageState} (create one with: npx playwright-core codegen --save-storage=auth.json ${url})`);
-    const context = await browser.newContext(opts.storageState ? { storageState: opts.storageState } : {});
-    const page = await context.newPage();
-    await page.goto(url, { waitUntil: 'load', timeout: 30000 });
-    await shot(page, 'initial');
-    const all: Finding[] = await audit(page, axePath, url);
-    const plain = [...all];
-    for (const st of states) {
-      await page.goto(url, { waitUntil: 'load', timeout: 30000 });
-      let step = 0;
-      try { for (; step < st.steps.length; step++) await runStep(page, st.steps[step], url); }
-      catch (e) {
-        all.push({ rule: 'FR-402', severity: 'review', message: `[${st.name}] state could not be reached: step ${step + 1} ${JSON.stringify(st.steps[step])} failed (${String((e as Error).message).split('\n')[0].slice(0, 120)})`, hint: 'fix the step in fringe.scan.json or the page; nothing in this state was audited', loc: { file: `${url} [${st.name}]`, line: 1, col: 0 } });
-        continue;
-      }
-      await shot(page, `state-${st.name}`);
-      all.push(...(await audit(page, axePath, url)).map((f) => inState(st.name, url, f)));
+    const all: Finding[] = [];
+    for (const s of sessions) {
+      const who = s.name, label = who ? `as ${who}` : undefined;
+      const shot = async (page: any, name: string) => {
+        if (!opts.screenshots) return;
+        mkdirSync(opts.screenshots, { recursive: true });
+        await page.screenshot({ path: join(opts.screenshots, `${slug(who ? `${who}-${name}` : name)}.png`), fullPage: true });
+      };
+      const context = await browser.newContext(s.storageState ? { storageState: s.storageState } : {});
+      try {
+        let found: Finding[];
+        if (s.login) {
+          const lp = await context.newPage();
+          let step = 0;
+          try {
+            await lp.goto(new URL(s.login.url ?? url, url).href, { waitUntil: 'load', timeout: 30000 });
+            for (; step < s.login.steps.length; step++) await runStep(lp, s.login.steps[step], url);
+            found = await auditContext(context, axePath, url, opts, who, shot);
+          } catch (e) {
+            found = [{ rule: 'FR-402', severity: 'review', message: `login${who ? ` as ${who}` : ''} failed at step ${step + 1} ${JSON.stringify(s.login.steps[step] ?? {})} (${firstLine(e)})`, hint: 'check the login steps and selectors in fringe.scan.json; nothing was scanned for this session', loc: { file: url, line: 1, col: 0 } }];
+          } finally { await lp.close().catch(() => {}); }
+        } else found = await auditContext(context, axePath, url, opts, who, shot);
+        all.push(...(label ? found.map((f) => inState(label, url, f)) : found));
+      } finally { await context.close(); }
     }
-    for (const m of modes) all.push(...(await stress(context, axePath, url, m, plain, shot)));
+    const files = sessions.length * (1 + states.length + modes.length);
     if (opts.updateBaseline) {
       writeFileSync(baselinePath(cwd), JSON.stringify(all.map(scanKey).sort(), null, 2) + '\n');
-      return { stack: { jsx: false, tailwind: false, vue: false, svelte: false, html: true }, files: 1 + states.length + modes.length, skipped: [], findings: [], clusters: [], counts: { error: 0, review: 0, signal: 0 }, score: 100, baselined: all.length };
+      return { stack: { jsx: false, tailwind: false, vue: false, svelte: false, html: true }, files, skipped: [], findings: [], clusters: [], counts: { error: 0, review: 0, signal: 0 }, score: 100, baselined: all.length };
     }
     const { fresh, known } = applyScanBaseline(cwd, all);
     const { findings, clusters } = rankScan(url, fresh);
     const counts = { error: 0, review: 0, signal: 0 };
     for (const f of findings) counts[f.severity]++;
-    return { stack: { jsx: false, tailwind: false, vue: false, svelte: false, html: true }, files: 1 + states.length + modes.length, skipped: [], findings, clusters, counts, score: score(counts, { error: 10, review: 3, signal: 1 }, 1), ...(known ? { baselined: known } : {}) };
+    return { stack: { jsx: false, tailwind: false, vue: false, svelte: false, html: true }, files, skipped: [], findings, clusters, counts, score: score(counts, { error: 10, review: 3, signal: 1 }, 1), ...(known ? { baselined: known } : {}) };
   } finally { await browser.close(); }
 }
 
