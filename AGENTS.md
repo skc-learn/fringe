@@ -15,7 +15,7 @@ Run it from the project root: `npx -y @fringetools/cli check` (or `fringe check`
 
 - Never silence a rule to get green. A `// fringe-ignore FR-123` comment is for a real false positive only; say so in your final message with the rule and the reason. Every run prints `N suppressed`.
 - On a repo that already has problems, do not fix everything first: `fringe check --update-baseline` records today's findings so only new ones gate (commit `fringe.baseline.json`).
-- If Fringe is not available, say so. Do not skip the check silently.
+- If `npx` cannot run here (a sandbox with no network), ask the user to run `npm i -D @fringetools/cli` once, then use `npx --no-install fringe check`. If Fringe still cannot run, say so. Do not skip the check silently.
 - Report the health score as measured; never estimate it.
 
 Works alongside Ponytail: Ponytail keeps the code small and promises never to cut accessibility; Fringe is the check that verifies that promise.

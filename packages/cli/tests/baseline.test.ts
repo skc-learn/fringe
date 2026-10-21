@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runCli } from '../src/index.js';
@@ -140,5 +140,42 @@ describe('simpler setup', () => {
     const again: string[] = [];
     await runCli([], { log: (s) => again.push(s), err: () => {}, cwd: d, home });
     expect(again.join('\n')).not.toContain('not checking after');
+  });
+});
+
+describe('other agents', () => {
+  afterEach(() => { while (dirs.length) rmSync(dirs.pop()!, { recursive: true, force: true }); });
+  it('init --for writes each tool\'s own rules file, and never overwrites an existing one', async () => {
+    const d = mk({ 'AGENTS.md': '# My project rules\nBe nice.\n' });
+    const r = await run(['init', d, '--for', 'cursor,codex,gemini,copilot,windsurf,cline,kiro']);
+    expect(r.code).toBe(0);
+    for (const f of ['.cursor/rules/fringe.mdc', 'GEMINI.md', '.github/copilot-instructions.md', '.windsurf/rules/fringe.md', '.clinerules/fringe.md', '.kiro/steering/fringe.md']) expect(existsSync(join(d, f)), f).toBe(true);
+    expect(readFileSync(join(d, '.cursor/rules/fringe.mdc'), 'utf8')).toMatch(/^---\ndescription: [\s\S]*alwaysApply: true\n---/);
+    const agents = readFileSync(join(d, 'AGENTS.md'), 'utf8');
+    expect(agents).toContain('Be nice.');                       // the user's rules survive
+    expect(agents).toContain('Fringe: handle your edges');      // ours appended
+    await run(['init', d, '--for', 'codex']);                   // second run adds nothing
+    expect(readFileSync(join(d, 'AGENTS.md'), 'utf8').match(/Fringe: handle your edges/g)).toHaveLength(1);
+    expect(existsSync(join(d, '.claude'))).toBe(false);          // --for does not touch Claude settings unless asked
+  });
+  it('rejects an unknown agent and lists the valid ones', async () => {
+    const r = await run(['init', mk({}), '--for', 'vim']);
+    expect(r.code).toBe(2);
+    expect(r.err).toContain('cursor');
+  });
+  it('init --git installs a pre-commit gate once, refuses to replace someone else\'s hook, and needs a repo', async () => {
+    const d = mk({ '.git/HEAD': 'ref: refs/heads/main\n' });
+    expect((await run(['init', d, '--git'])).code).toBe(0);
+    const hook = join(d, '.git/hooks/pre-commit');
+    expect(readFileSync(hook, 'utf8')).toMatch(/# fringe pre-commit[\s\S]*exit 1/);
+    expect(statSync(hook).mode & 0o111).not.toBe(0);             // executable
+    expect((await run(['init', d, '--git'])).out).toContain('already present');
+    writeFileSync(hook, '#!/bin/sh\necho mine\n');
+    expect((await run(['init', d, '--git'])).code).toBe(2);
+    expect((await run(['init', mk({}), '--git'])).err).toContain('not a git repository');
+  });
+  it('the shipped rules file is the same as the repo-root AGENTS.md', () => {
+    const root = join(__dirname, '..', '..', '..');
+    expect(readFileSync(join(root, 'AGENTS.md'), 'utf8')).toBe(readFileSync(join(__dirname, '..', 'rules', 'fringe.md'), 'utf8'));
   });
 });

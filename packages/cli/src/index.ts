@@ -14,11 +14,14 @@ import { writeBaseline } from './baseline.js';
 import { receipts } from './receipts.js';
 import { scan, mergeScan, parseStates, parseModes, MODES } from './scan.js';
 import type { ScanState } from './scan.js';
-import { initProject, isWired } from './init.js';
+import { initProject, initFor, initGit, isWired, AGENTS } from './init.js';
 import { homedir } from 'node:os';
 import { renderExplain } from './guidance.js';
 import { renderPatterns } from './patterns.js';
 import { toPlanJson, toPlanMarkdown } from './report/plan.js';
+import { buildHandoff, verifyHandoff, verifyToMarkdown } from './handoff.js';
+import type { Handoff } from './handoff.js';
+import { mkdirSync, writeFileSync } from 'node:fs';
 
 export interface CliOpts { log?: (s: string) => void; cwd?: string; err?: (s: string) => void; /** Home directory for `init --global` (tests override it). */ home?: string }
 const log = (o: CliOpts) => o.log ?? ((s: string) => console.log(s));
@@ -75,10 +78,14 @@ const HELP = `fringe check [--json] [--hook] [--record] [--manifest <path>] [pat
 fringe check --claude-hook [path]       for Claude Code hooks (feeds errors back to the agent)
 fringe check --update-baseline [path]   accept today's findings; only new ones gate
 fringe scan <url> [--states f] [--stress | --modes dark,reduced,reflow] [--json]               runtime check in a real browser (axe-core + keyboard walk); needs playwright-core and axe-core
+fringe handoff [dir|file] [--scan url]    a work order for another agent or CI (saved to .fringe/handoff.json)
+fringe verify [--handoff file]             did the receiving agent finish? exit 0 only when complete
 fringe plan [dir|file] [--scan url] [--json] [--limit n]   ordered fix batches with recipes; --scan adds the live page
 fringe explain pattern [form]           best-practice checklist for a component type
 fringe explain [FR-203]                 why a rule matters and how to fix it well
 fringe init [path] [--global]          add the Claude Code hook + skills (--global: every project)
+fringe init --for cursor,codex,...     write the rules file other agents read (cursor, codex, gemini, copilot, windsurf, cline, kiro, generic)
+fringe init --git                      pre-commit gate for any agent that commits
 fringe open [path] [--port <n>]   serve the .fringe ledger on 127.0.0.1
 fringe --help | --version`;
 
@@ -97,6 +104,30 @@ function parseArgs(rest: string[], warn: (s: string) => void): string[] {
     paths.push(a);
   }
   return paths;
+}
+
+/** Shared by `plan` and `handoff`: parse the target and flags, run the static check (and the live scan with --scan). */
+async function gather(opts: CliOpts, rest: string[]) {
+  const si = rest.indexOf('--scan');
+  const scanUrl = si !== -1 ? rest[si + 1] : undefined;
+  if (si !== -1 && (!scanUrl || scanUrl.startsWith('--'))) throw new Error('--scan needs a URL, e.g. fringe plan --scan http://localhost:3000');
+  const li = rest.indexOf('--limit');
+  const limit = li !== -1 ? Number(rest[li + 1]) || undefined : undefined;
+  const valued = new Set(['--limit', '--scan', '--states', '--modes', '--out']);
+  const flags = new Set(['--json', '--stress']);
+  const paths = parseArgs(rest.filter((a, i) => !valued.has(a) && !valued.has(rest[i - 1]) && !flags.has(a)), (s) => process.stderr.write(s));
+  const cwd = opts.cwd ?? process.cwd();
+  const { root, only } = resolveTarget(resolve(cwd, paths[0] ?? '.'));
+  const cfg = loadConfig(root);
+  let result = await runCheck(root, cfg, true, only);
+  const modes = loadModes(rest);
+  let scanMeta: { url: string; statesFile?: string; modes: string[] } | undefined;
+  if (scanUrl) {
+    result = mergeScan(result, await scan(scanUrl, cwd, loadStates(cwd, rest), modes), cfg.weights);
+    const sf = rest.indexOf('--states');
+    scanMeta = { url: scanUrl, ...(sf !== -1 ? { statesFile: resolve(cwd, rest[sf + 1]) } : {}), modes };
+  }
+  return { result, root, target: paths[0] ?? '.', only: only ? [...only][0] : undefined, limit, scan: scanMeta };
 }
 
 export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number> {
@@ -163,22 +194,37 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
       return result.counts.error > 0 ? 1 : 0;
     } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }
   }
-  if (cmd === 'plan') {
+  if (cmd === 'plan' || cmd === 'handoff') {
     try {
-      const si = rest.indexOf('--scan');
-      const scanUrl = si !== -1 ? rest[si + 1] : undefined;
-      if (si !== -1 && (!scanUrl || scanUrl.startsWith('--'))) { err(opts)('fringe: --scan needs a URL, e.g. fringe plan --scan http://localhost:3000\n'); return 2; }
-      const li = rest.indexOf('--limit');
-      const limit = li !== -1 ? Number(rest[li + 1]) || undefined : undefined;
-      const paths = parseArgs(rest.filter((a, i) => a !== '--limit' && rest[i - 1] !== '--limit' && a !== '--json' && a !== '--scan' && rest[i - 1] !== '--scan' && a !== '--states' && rest[i - 1] !== '--states' && a !== '--stress' && a !== '--modes' && rest[i - 1] !== '--modes'), err(opts));
-      const arg = resolve(opts.cwd ?? process.cwd(), paths[0] ?? '.');
-      const { root, only } = resolveTarget(arg);
-      const cfg = loadConfig(root);
-      let result = await runCheck(root, cfg, true, only);
-      if (scanUrl) { const cwd = opts.cwd ?? process.cwd(); result = mergeScan(result, await scan(scanUrl, cwd, loadStates(cwd, rest), loadModes(rest)), cfg.weights); }
-      log(opts)(rest.includes('--json') ? toPlanJson(result, limit) : toPlanMarkdown(result, paths[0] ?? '.', limit));
+      const g = await gather(opts, rest);
+      if (cmd === 'plan') {
+        log(opts)(rest.includes('--json') ? toPlanJson(g.result, g.limit) : toPlanMarkdown(g.result, g.target, g.limit));
+        return 0;
+      }
+      const h = buildHandoff(g.result, { root: g.root, target: g.target, ...(g.only ? { only: g.only } : {}), ...(g.scan ? { scan: g.scan } : {}) }, g.limit);
+      const oi = rest.indexOf('--out');
+      const outFile = resolve(g.root, oi !== -1 ? rest[oi + 1] ?? '' : '.fringe/handoff.json');
+      mkdirSync(dirname(outFile), { recursive: true });
+      writeFileSync(outFile, JSON.stringify(h, null, 2) + '\n');
+      log(opts)(rest.includes('--json') ? JSON.stringify(h, null, 2) : h.prompt);
+      err(opts)(`fringe: hand-off saved to ${outFile}; the receiving agent proves it is done with: fringe verify${oi !== -1 ? ` --handoff ${outFile}` : ''}\n`);
       return 0;
-    } catch (e) { err(opts)(`fringe: internal error: ${(e as Error).message}\n`); return 2; }
+    } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }
+  }
+  if (cmd === 'verify') {
+    try {
+      const hi = rest.indexOf('--handoff');
+      const file = resolve(opts.cwd ?? process.cwd(), hi !== -1 ? rest[hi + 1] ?? '' : '.fringe/handoff.json');
+      let h: Handoff;
+      try { h = JSON.parse(readFileSync(file, 'utf8')); } catch { throw new Error(`no readable hand-off at ${file} — run 'fringe handoff' first`); }
+      if (h.schema !== 'fringe/handoff.v1') throw new Error(`${file} is not a fringe/handoff.v1 file`);
+      const cfg = loadConfig(h.root);
+      let result = await runCheck(h.root, cfg, true, h.only ? new Set([h.only]) : undefined);
+      if (h.scan) result = mergeScan(result, await scan(h.scan.url, h.root, h.scan.statesFile ? parseStates(JSON.parse(readFileSync(resolve(h.root, h.scan.statesFile), 'utf8'))) : loadStates(h.root, []), h.scan.modes as never), cfg.weights);
+      const v = verifyHandoff(h, result);
+      log(opts)(rest.includes('--json') ? JSON.stringify(v, null, 2) : verifyToMarkdown(v));
+      return v.status === 'complete' ? 0 : 1;
+    } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }
   }
   if (cmd === 'explain' && rest[0] === 'pattern') {
     const out = renderPatterns(rest[1]);
@@ -195,8 +241,17 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
   if (cmd === 'init') {
     try {
       const global = rest.includes('--global') || rest.includes('-g');
-      const target = global ? (opts.home ?? homedir()) : resolve(opts.cwd ?? process.cwd(), rest.find((a) => !a.startsWith('-')) ?? '.');
-      for (const line of initProject(target)) log(opts)(`fringe: ${line}`);
+      const target = global ? (opts.home ?? homedir()) : resolve(opts.cwd ?? process.cwd(), rest.find((a, i) => !a.startsWith('-') && rest[i - 1] !== '--for') ?? '.');
+      const fi = rest.indexOf('--for');
+      const agents = fi !== -1 ? (rest[fi + 1] ?? '').split(',').map((a) => a.trim().toLowerCase()).filter(Boolean) : [];
+      if (fi !== -1 && agents.length === 0) throw new Error(`--for needs an agent: ${AGENTS.join(', ')}, claude`);
+      const lines: string[] = [];
+      const wantsClaude = (fi === -1 && !rest.includes('--git')) || agents.includes('claude');
+      if (wantsClaude) lines.push(...initProject(target));
+      const others = agents.filter((a) => a !== 'claude');
+      if (others.length) lines.push(...initFor(target, others));
+      if (rest.includes('--git')) lines.push(...initGit(target));
+      for (const line of lines) log(opts)(`fringe: ${line}`);
       if (global) log(opts)('fringe: set up for your user, so every project is covered (run without --global to set up one project only)');
       return 0;
     } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }

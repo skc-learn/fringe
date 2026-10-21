@@ -5,7 +5,7 @@ description: Use when the user asks to review, check or critique a UI, page or c
 
 # Fringe review
 
-Command: use `fringe` if it is on the PATH, otherwise `npx -y @fringetools/cli@0.4.0` in its place (e.g. `npx -y @fringetools/cli@0.4.0 check --json .`).
+Command: use `fringe` if it is on the PATH, otherwise `npx -y @fringetools/cli@0.4.1` in its place (e.g. `npx -y @fringetools/cli@0.4.1 check --json .`).
 
 1. Run `fringe check --json <file or folder>` from the project root: the file or page the user named, else `.`. Each finding already carries `priority` and `fixability`; report highest priority first. For the fix text use `fringe explain <rule>` (why, recipe, what to avoid) rather than improvising.
 2. Report in plain English, no jargon left unexplained:

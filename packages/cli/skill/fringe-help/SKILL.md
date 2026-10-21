@@ -18,7 +18,7 @@ Fringe checks agent-written frontends for accessibility, state, dark-pattern and
 | `/fringe-setup` | Guided onboarding: wire the hook, offer a baseline, set critical paths |
 | `/fringe-help` | This reference |
 
-**Commands** (`fringe`, or `npx -y @fringetools/cli@0.4.0`)
+**Commands** (`fringe`, or `npx -y @fringetools/cli@0.4.1`)
 
 | Command | What it does |
 |---|---|

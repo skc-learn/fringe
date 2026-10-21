@@ -7,7 +7,7 @@ description: Use when the user asks what Fringe findings have been silenced or d
 
 Fringe has two ways to defer a finding: an inline `fringe-ignore` comment and the `fringe.baseline.json` file. This lists both so a deferral can't quietly become permanent.
 
-Command: use `fringe` if it is on the PATH, otherwise `npx -y @fringetools/cli@0.4.0` in its place.
+Command: use `fringe` if it is on the PATH, otherwise `npx -y @fringetools/cli@0.4.1` in its place.
 
 1. **Inline suppressions.** `git grep --no-index --exclude-standard -nE 'fringe-ignore +FR-[0-9]+'`. One row per hit: `<file>:<line>, <rule> — <why, if the comment or nearby code says>`. Skip hits that are only prose mentioning the convention.
 2. **Baseline.** If `fringe.baseline.json` exists, count entries per rule (each entry is `rule|file|message`) and list the files with the most. If it is missing, say there is no baseline.
