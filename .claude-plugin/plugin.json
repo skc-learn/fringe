@@ -10,5 +10,23 @@
   "homepage": "https://github.com/skc-learn/fringe",
   "repository": "https://github.com/skc-learn/fringe",
   "license": "MIT",
-  "skills": "./packages/cli/skill/"
+  "skills": "./packages/cli/skill/",
+  "keywords": [
+    "accessibility",
+    "a11y",
+    "wcag",
+    "ux",
+    "frontend",
+    "linter",
+    "contrast",
+    "keyboard-navigation",
+    "dark-patterns",
+    "design-tokens",
+    "react",
+    "html",
+    "css",
+    "claude-code",
+    "hooks",
+    "code-review"
+  ]
 }

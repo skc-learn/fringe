@@ -2,13 +2,34 @@
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "fringe",
   "description": "Fringe: handle your edges. Accessibility and UX checks for agent-written frontends.",
-  "owner": { "name": "skc-learn", "url": "https://github.com/skc-learn" },
+  "owner": {
+    "name": "skc-learn",
+    "url": "https://github.com/skc-learn"
+  },
   "plugins": [
     {
       "name": "fringetool",
       "description": "Checks accessibility, states, dark patterns and AI-look after every edit; three-step ladder skill plus review, audit, debt and help.",
       "source": "./",
-      "category": "development"
+      "category": "development",
+      "keywords": [
+        "accessibility",
+        "a11y",
+        "wcag",
+        "ux",
+        "frontend",
+        "linter",
+        "contrast",
+        "keyboard-navigation",
+        "dark-patterns",
+        "design-tokens",
+        "react",
+        "html",
+        "css",
+        "claude-code",
+        "hooks",
+        "code-review"
+      ]
     }
   ]
 }
