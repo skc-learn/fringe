@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "fringetool",
-      "description": "Checks accessibility, states, dark patterns and AI-look after every edit; three-step ladder skill plus review, audit, debt and help.",
+      "description": "Accessibility (WCAG) and UX checker for Claude Code: catches missing labels, contrast and keyboard problems after every edit.",
       "source": "./",
       "category": "development",
       "keywords": [

@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/badge/node-%E2%89%A518-111111?style=flat-square" alt="Node 18+">
 </p>
 
-AI agents write UI fast, and quietly skip the unglamorous parts: an `alt` on the image, a label on the input, a name on the icon button, a visible focus ring. Fringe is a **static checker that runs after every edit**, hands the problems back to the agent, and keeps the agent from finishing with broken markup. Nothing leaves your machine.
+Fringe is an **accessibility (WCAG) and UX checker for Claude Code** and other AI coding agents. AI agents write UI fast, and quietly skip the unglamorous parts: an `alt` on the image, a label on the input, a name on the icon button, a visible focus ring. Fringe is a **static checker that runs after every edit**, hands the problems back to the agent, and keeps the agent from finishing with broken markup. Nothing leaves your machine.
 
 **Measured:** in our [benchmark](benchmarks/README.md), an agent asked for ordinary UI left error-level accessibility problems in **4 of 12 runs** on its own, and **1 of 12 with Fringe**, at the same cost. (Small test, honest caveats inside.)
 

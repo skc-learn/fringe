@@ -1,8 +1,8 @@
 {
   "name": "fringetool",
-  "displayName": "Fringe",
+  "displayName": "Fringe: Accessibility & UX Checker",
   "version": "0.6.0",
-  "description": "UX-quality layer for AI coding agents: checks accessibility and interaction edges after every edit and feeds errors back to the agent.",
+  "description": "Accessibility (WCAG) and UX checker for Claude Code: catches missing labels, contrast and keyboard problems after every edit.",
   "author": {
     "name": "skc-learn",
     "url": "https://github.com/skc-learn"
