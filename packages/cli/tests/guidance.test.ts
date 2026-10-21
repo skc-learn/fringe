@@ -34,10 +34,10 @@ describe('patterns', () => {
 });
 
 describe('more playbooks', () => {
-  it('lists eighteen, and marks runtime-checked items as verified by scan', async () => {
+  it('lists twenty-two, and marks runtime-checked items as verified by scan', async () => {
     const list: string[] = [];
     await runCli(['explain', 'pattern'], { log: (s) => list.push(s) });
-    expect(list.join('\n').split('\n').map((l) => l.split(/\s+/)[0]).sort()).toEqual(['accordion', 'auth', 'checkout', 'dashboard', 'data-view', 'datepicker', 'empty-state', 'form', 'modal', 'navigation', 'onboarding', 'pricing', 'search', 'settings', 'table', 'tabs', 'toast', 'upload']);
+    expect(list.join('\n').split('\n').map((l) => l.split(/\s+/)[0]).sort()).toEqual(['accordion', 'auth', 'carousel', 'chat', 'checkout', 'dashboard', 'data-view', 'datepicker', 'drag-and-drop', 'empty-state', 'form', 'modal', 'navigation', 'onboarding', 'pricing', 'rich-text', 'search', 'settings', 'table', 'tabs', 'toast', 'upload']);
     const table: string[] = [];
     await runCli(['explain', 'pattern', 'table'], { log: (s) => table.push(s) });
     expect(table.join('\n')).toContain('[verified by scan: FR-404]');

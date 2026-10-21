@@ -22,6 +22,10 @@ const SOURCES: Record<string, string[]> = {
   'data-view': [`${WCAG}/status-messages.html`],
   dashboard: [`${WCAG}/use-of-color.html`, `${WCAG}/non-text-content.html`, `${WCAG}/reflow.html`],
   settings: [`${WCAG}/status-messages.html`, `${WCAG}/labels-or-instructions.html`],
+  carousel: [`${APG}/carousel/`, `${WCAG}/pause-stop-hide.html`],
+  'drag-and-drop': [`${WCAG}/dragging-movements.html`],
+  'rich-text': [`${APG}/toolbar/`],
+  chat: [`${WCAG}/status-messages.html`],
 };
 export const sourcesOf = (name: string) => SOURCES[name] ?? [];
 export const PATTERNS: Record<string, { title: string; items: Item[] }> = {
@@ -239,6 +243,61 @@ export const PATTERNS: Record<string, { title: string; items: Item[] }> = {
       { text: 'Auto-refresh does not steal focus or reset filters, and announces changes politely' },
       { text: 'Cards stack to one column on a 320px screen without sideways scrolling', rules: ['FR-404'] },
       { text: 'Text and chart labels keep their contrast in dark mode', rules: ['FR-400'] },
+    ],
+  },
+  carousel: {
+    title: 'Carousel',
+    items: [
+      { text: 'If it rotates by itself, there is a button to stop and restart it, early in the tab order' },
+      { text: 'Rotation stops when keyboard focus enters the carousel and does not restart unless the user asks; it also stops while the pointer hovers over it' },
+      { text: 'Previous, next and slide-picker controls are buttons with names ("Next slide", "Slide 2 of 5")', rules: ['FR-202'] },
+      { text: 'The carousel is a labelled region (role="region", aria-roledescription="carousel") and each slide is labelled "2 of 5"; Fringe checks the spelling of the ARIA attributes', rules: ['FR-209'] },
+      { text: 'Slides that are not showing are hidden from screen readers and the keyboard, not just moved off-screen' },
+      { text: 'Changes of slide are announced politely when the user changes them, and not at all while it rotates by itself' },
+      { text: 'Slide images have alt text', rules: ['FR-201'] },
+      { text: 'Sliding animations respect reduced motion', rules: ['FR-219'] },
+      { text: 'Controls are large enough to tap', rules: ['FR-305'] },
+    ],
+  },
+  'drag-and-drop': {
+    title: 'Drag and drop',
+    items: [
+      { text: 'Every drag has an alternative that needs only a single click or tap: "Move up", "Move to…" buttons or a menu (WCAG 2.5.7)' },
+      { text: 'A keyboard way to do the same: pick up with Space or Enter, move with the arrow keys, drop with Space, cancel with Escape' },
+      { text: 'The drag handle is a real button with a name ("Reorder Task 3")', rules: ['FR-202'] },
+      { text: 'Pick-up, movement and drop are announced ("Task 3 moved to position 2 of 5") through a live region' },
+      { text: 'Handles are not revealed by hover alone', rules: ['FR-221'] },
+      { text: 'Focus is visible on the handle and the item', rules: ['FR-205'] },
+      { text: 'Items that react to clicks are buttons or links, not clickable divs', rules: ['FR-206'] },
+      { text: 'Drop targets are shown by more than color' },
+    ],
+  },
+  'rich-text': {
+    title: 'Rich-text editor',
+    items: [
+      { text: 'The toolbar is a labelled role="toolbar", its buttons have names and show their on/off state with aria-pressed (Fringe checks the names and the spelling of the attribute)', rules: ['FR-202', 'FR-209'] },
+      { text: 'Arrow keys move between toolbar buttons and only one is in the Tab sequence' },
+      { text: 'The editing area has an accessible name and role="textbox" with aria-multiline' },
+      { text: 'Tab leaves the editor (or the page documents how), so focus never gets stuck', rules: ['FR-401'] },
+      { text: 'Inserted images ask for alt text, and what the editor outputs has it', rules: ['FR-201'] },
+      { text: 'Inserted links ask for link text, and the output avoids "click here"', rules: ['FR-217'] },
+      { text: 'Autosave and save errors are announced (role="status" or "alert")' },
+      { text: 'Pasted content is cleaned before it is stored or shown' },
+      { text: 'Undo and redo are available from the keyboard and as buttons' },
+    ],
+  },
+  chat: {
+    title: 'Chat and messaging',
+    items: [
+      { text: 'The message list is a live log (role="log"): new messages are announced politely without moving focus' },
+      { text: 'The message box has a label, and the send button has a name', rules: ['FR-203', 'FR-202'] },
+      { text: 'The page says whether Enter sends or adds a new line (and Shift+Enter does the other)' },
+      { text: 'A typing or streaming indicator does not re-announce the whole message with every update' },
+      { text: 'Who sent each message, and when, is available as text, not by alignment or color alone' },
+      { text: 'A failed send shows what failed and a retry', rules: ['FR-215'] },
+      { text: 'New messages do not yank the view if the user scrolled up; a "jump to latest" control is offered' },
+      { text: 'Links inside messages have descriptive text', rules: ['FR-217'] },
+      { text: 'Entrance animations respect reduced motion', rules: ['FR-219'] },
     ],
   },
   'data-view': {
