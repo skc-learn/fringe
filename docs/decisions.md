@@ -28,6 +28,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | D-22 | Size-aware health score with soft decay | 2026-10-20 | 🔒 |
 | D-23 | Dashboard scope cut: minimal `fringe open` now, full dashboard later | 2026-10-20 | 🔒 / deferred |
 | D-24 | Flow evidence check; review/audit skills instead of levels | 2026-10-20 | 🔒 |
+| D-30 | Scan states are declarative JSON, each from a fresh load | 2026-10-21 | 🔒 |
 | D-29 | Runtime scan is opt-in, built on axe-core + Playwright, not a new engine | 2026-10-21 | 🔒 |
 | D-28 | UX best-practice rules (FR-216..222) start at review/signal and are validated on real repos first | 2026-10-21 | 🔒 |
 | D-27 | Priority is tier-first and published; guidance lives apart from rules | 2026-10-21 | 🔒 |
@@ -172,6 +173,11 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 **Decision:** `fringe scan <url>` uses the existing proven engine (axe-core) in headless Chrome via `playwright-core`, plus our own Tab walk, and maps results onto the same `Finding` shape (`FR-400` axe, `FR-401` keyboard). Dependencies are *optional peers resolved from the scanned project*, so the default `npx` check stays tiny and instant; Chrome is the user's installed one. Not in the edit hook (needs a running app, takes seconds). Only http(s)/file URLs are accepted.
 **Alternatives:** write our own contrast/name computation (reinventing axe, worse); bundle Playwright (150 MB, slows every install); drive Chrome by remote debugging (more setup).
 **Consequence / limits:** one URL, initial state; no source line. `fringe plan --scan <url>` merges runtime findings (priority = tier + WCAG level, one cluster per axe rule, selectors instead of lines) into the static plan; baseline and `fringe-ignore` do not cover scan findings yet. On a real HTML page from one of the author's projects the static check found nothing and the scan found 17 contrast errors (invisible to source analysis because the colors come from CSS rules in other blocks and variables). The first test run also proved the idea on a probe page: real computed contrast 1.91:1 (invisible to source analysis) and a deliberate keyboard trap were both caught.
+
+### D-30 — Scan states
+**Decision:** states are described in `fringe.scan.json` as named lists of steps from a six-verb vocabulary (click, fill, press, hover, waitFor, goto), not as scripts. Each state starts from a fresh load of the URL, runs its steps, then gets the same audit as the initial page; findings carry the state name and cluster apart from the initial page. A failed step becomes an `FR-402` review finding instead of crashing the scan.
+**Why declarative:** reviewable in a PR, validated up front with clear errors, no arbitrary code in a quality tool; the vocabulary covers menus, modals, forms and error states. **Alternatives:** a JS hook file (full power, but arbitrary code and harder to review); auto-exploring every clickable thing (unbounded, flaky, can click "Delete").
+**Limits:** states are independent; no login reuse; no multi-page flows beyond `goto`; selectors are the user's to maintain.
 
 ---
 

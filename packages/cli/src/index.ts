@@ -12,7 +12,8 @@ import { loadConfig } from './config.js';
 import { startBoard } from './board.js';
 import { writeBaseline } from './baseline.js';
 import { receipts } from './receipts.js';
-import { scan, mergeScan } from './scan.js';
+import { scan, mergeScan, parseStates } from './scan.js';
+import type { ScanState } from './scan.js';
 import { initProject } from './init.js';
 import { renderExplain } from './guidance.js';
 import { renderPatterns } from './patterns.js';
@@ -50,13 +51,23 @@ function resolveTarget(arg: string): { root: string; only?: Set<string> } {
   return { root: dir, only: new Set([arg]) };
 }
 
+/** `--states <file>`, else `fringe.scan.json` in the working directory when present. */
+function loadStates(cwd: string, rest: string[]): ScanState[] {
+  const i = rest.indexOf('--states');
+  const file = i !== -1 ? resolve(cwd, rest[i + 1] ?? '') : join(cwd, 'fringe.scan.json');
+  if (i === -1 && !existsSync(file)) return [];
+  let raw: unknown;
+  try { raw = JSON.parse(readFileSync(file, 'utf8')); } catch (e) { throw new Error(`${file}: ${(e as Error).message}`); }
+  return parseStates(raw);
+}
+
 /** A cut needs a reason a reviewer can check; empty or one-word filler does not count. */
 const weakEvidence = (e: unknown) => typeof e !== 'string' || e.trim().length < 12 || /^(n\/?a|none|tbd|obvious|unnecessary|clutter|unused)\.?$/i.test(e.trim());
 
 const HELP = `fringe check [--json] [--hook] [--record] [--manifest <path>] [path]
 fringe check --claude-hook [path]       for Claude Code hooks (feeds errors back to the agent)
 fringe check --update-baseline [path]   accept today's findings; only new ones gate
-fringe scan <url> [--json]               runtime check in a real browser (axe-core + keyboard walk); needs playwright-core and axe-core
+fringe scan <url> [--states f] [--json]               runtime check in a real browser (axe-core + keyboard walk); needs playwright-core and axe-core
 fringe plan [dir|file] [--scan url] [--json] [--limit n]   ordered fix batches with recipes; --scan adds the live page
 fringe explain pattern [form]           best-practice checklist for a component type
 fringe explain [FR-203]                 why a rule matters and how to fix it well
@@ -132,9 +143,10 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
   }
   if (cmd === 'scan') {
     try {
-      const url = rest.find((a) => !a.startsWith('--'));
+      const url = rest.find((a, i) => !a.startsWith('--') && rest[i - 1] !== '--states');
       if (!url) { err(opts)('fringe: scan needs a URL, e.g. fringe scan http://localhost:3000\n'); return 2; }
-      const result = await scan(url, opts.cwd ?? process.cwd());
+      const cwd = opts.cwd ?? process.cwd();
+      const result = await scan(url, cwd, loadStates(cwd, rest));
       log(opts)(rest.includes('--json') ? toJson(result) : toPretty(result));
       return result.counts.error > 0 ? 1 : 0;
     } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }
@@ -146,12 +158,12 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
       if (si !== -1 && (!scanUrl || scanUrl.startsWith('--'))) { err(opts)('fringe: --scan needs a URL, e.g. fringe plan --scan http://localhost:3000\n'); return 2; }
       const li = rest.indexOf('--limit');
       const limit = li !== -1 ? Number(rest[li + 1]) || undefined : undefined;
-      const paths = parseArgs(rest.filter((a, i) => a !== '--limit' && rest[i - 1] !== '--limit' && a !== '--json' && a !== '--scan' && rest[i - 1] !== '--scan'), err(opts));
+      const paths = parseArgs(rest.filter((a, i) => a !== '--limit' && rest[i - 1] !== '--limit' && a !== '--json' && a !== '--scan' && rest[i - 1] !== '--scan' && a !== '--states' && rest[i - 1] !== '--states'), err(opts));
       const arg = resolve(opts.cwd ?? process.cwd(), paths[0] ?? '.');
       const { root, only } = resolveTarget(arg);
       const cfg = loadConfig(root);
       let result = await runCheck(root, cfg, true, only);
-      if (scanUrl) result = mergeScan(result, await scan(scanUrl, opts.cwd ?? process.cwd()), cfg.weights);
+      if (scanUrl) { const cwd = opts.cwd ?? process.cwd(); result = mergeScan(result, await scan(scanUrl, cwd, loadStates(cwd, rest)), cfg.weights); }
       log(opts)(rest.includes('--json') ? toPlanJson(result, limit) : toPlanMarkdown(result, paths[0] ?? '.', limit));
       return 0;
     } catch (e) { err(opts)(`fringe: internal error: ${(e as Error).message}\n`); return 2; }

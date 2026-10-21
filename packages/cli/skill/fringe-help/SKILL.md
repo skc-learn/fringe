@@ -24,7 +24,7 @@ Fringe checks agent-written frontends for accessibility, state, dark-pattern and
 | `check [dir]` | Scan and print findings and the health score; exit 1 on any error |
 | `check --json` / `--hook` / `--claude-hook` | Machine output; CI gate; agent feedback form |
 | `check --update-baseline` | Accept today's findings; only new ones gate |
-| `scan <url>` | Runtime check of a live page: real contrast, keyboard walk (needs `playwright-core` + `axe-core`) |
+| `scan <url>` | Runtime check of a live page: real contrast, keyboard walk, and named states from `fringe.scan.json` (needs `playwright-core` + `axe-core`) |
 | `plan [dir\|file] [--scan url]` | Ordered fix batches (shared components first) with recipes; `--scan` adds the live page |
 | `explain [FR-203]` | Why a rule matters and how to fix it well |
 | `check --record [--manifest f]` | Append the run to `.fringe/ledger.jsonl` |

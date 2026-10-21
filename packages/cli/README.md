@@ -22,7 +22,7 @@ Prefer a permanent command? `npm install -D @fringetools/cli`, then `npx fringe 
 | Command | What it does |
 |---|---|
 | `fringe check [dir\|file]` | Scan a directory (default `.`) or judge one file (the project root is found by climbing to the nearest `package.json`). Prints findings and the health score. Exit `1` on any `error`. |
-| `fringe scan <url> [--json]` | **Runtime check of a live page** (needs `npm i -D playwright-core axe-core`; uses your installed Chrome). Runs axe-core for real contrast, computed names and ARIA relations (`FR-400`; critical/serious = `error`, the rest `review`), then walks the page with Tab and reports keyboard traps (`FR-401`, error) and controls Tab never reaches (review). Accepts `http(s)://` and `file://` URLs. Exit `1` on errors. |
+| `fringe scan <url> [--states file] [--json]` | **Runtime check of a live page** (needs `npm i -D playwright-core axe-core`; uses your installed Chrome). Runs axe-core for real contrast, computed names and ARIA relations (`FR-400`; critical/serious = `error`, the rest `review`), then walks the page with Tab and reports keyboard traps (`FR-401`, error) and controls Tab never reaches (review). Accepts `http(s)://` and `file://` URLs. Exit `1` on errors. |
 | `fringe plan [dir\|file] [--scan url] [--json] [--limit n]` | **Fix order for a repo with many findings**: P0 (errors in shared components or critical paths) → P1 (other errors, mechanical first) → P2 review → P3 polish, each cluster with its fix recipe. Never gates (exit 0). `--scan <url>` adds the live page's runtime findings to the same plan (one cluster per axe rule, with element selectors). `--json` = `fringe/plan.v1`. |
 | `fringe explain [FR-203]` | Why a rule matters, the preferred fix and the tempting fix to avoid. No id lists all 36 rules. |
 | `fringe explain pattern [form]` | Build-time best-practice checklist for a component type (`form`, `modal`, `navigation`, `data-view`); each item is marked *verified* (a rule checks it) or *judged*. |
@@ -72,7 +72,22 @@ npx @fringetools/cli scan http://localhost:3000
 
 What it reports: every axe-core WCAG 2.0 to 2.2 A/AA violation, one finding per element (`FR-400`, WCAG criterion attached), and a Tab walk (`FR-401`): focus that keeps landing on one element is a *keyboard trap*; interactive elements Tab never reaches are listed. Radio buttons (reached by arrow keys) and hidden controls are excluded.
 
-Example: on a real project page the static check reported no findings and `scan` reported 17 color-contrast errors. Limits, plainly: it scans one URL in its initial state (no login, no opening of menus or modals yet); it needs the page running; findings have no source line (they carry a CSS selector); automated checks only find part of the real problems. `fringe plan --scan <url>` merges it with the static findings into one fix order. It does not feed the baseline or `fringe-ignore` yet, and is not part of the edit hook (it needs a running app and takes seconds).
+Example: on a real project page the static check reported no findings and `scan` reported 17 color-contrast errors. ### States: audit what only exists after a click
+
+Most real problems live in states the first load never shows: an open menu, a modal, a form after a failed submit. Describe them in `fringe.scan.json` (found in the current directory, or pass `--states <file>`):
+
+```json
+{
+  "states": [
+    { "name": "filters open", "steps": [ { "click": "#open-filters" } ] },
+    { "name": "bad login",    "steps": [ { "fill": "#email", "value": "nobody@example.com" }, { "fill": "#password", "value": "wrong" }, { "click": "text=Sign in" }, { "waitFor": "[role=alert]" } ] }
+  ]
+}
+```
+
+For each state Fringe reloads the page, runs the steps, then audits the result (axe-core and the Tab walk). Steps are exactly one of `click`, `fill` (with `value`), `press`, `hover`, `waitFor`, `goto`; selectors are [Playwright selectors](https://playwright.dev/docs/other-locators) (CSS, `text=...`, `role=...`). Findings are labelled `[filters open]` and cluster separately from the same rule on the initial page. A step that fails (selector not found) is reported as `FR-402` ("state could not be reached") and nothing in that state is audited. Use throw-away test data in `fill` values and do not commit real credentials. `plan --scan` uses the same file.
+
+Limits, plainly: states are independent (each starts from a fresh load of the URL, so there are no multi-page flows that depend on earlier state beyond `goto`); it needs the page running; findings have no source line (they carry a CSS selector); automated checks only find part of the real problems. `fringe plan --scan <url>` merges it with the static findings into one fix order. It does not feed the baseline or `fringe-ignore` yet, and is not part of the edit hook (it needs a running app and takes seconds).
 
 ## Priority, clusters and fix plans
 

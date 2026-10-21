@@ -94,3 +94,29 @@ describe('plan --scan', () => {
     expect(out.join('\n')).toMatch(/FR-201[\s\S]*FR-400 · ×1/);
   }, 60000);
 });
+
+import { parseStates } from '../src/scan.js';
+describe('scan states', () => {
+  it('validates fringe.scan.json with clear messages', () => {
+    expect(parseStates({ states: [{ name: 'menu', steps: [{ click: '#m' }, { fill: '#q', value: 'x' }, { press: 'Escape' }] }] })).toHaveLength(1);
+    expect(() => parseStates({})).toThrow(/expected \{ "states"/);
+    expect(() => parseStates({ states: [{ name: 'a', steps: [] }] })).toThrow(/non-empty/);
+    expect(() => parseStates({ states: [{ name: 'a', steps: [{ click: '#a', hover: '#b' }] }] })).toThrow(/exactly one of/);
+    expect(() => parseStates({ states: [{ name: 'a', steps: [{ fill: '#a' }] }] })).toThrow(/exactly one of|value/);
+    expect(() => parseStates({ states: [{ steps: [{ click: '#a' }] }] })).toThrow(/needs a "name"/);
+  });
+  it.skipIf(!existsSync('/Applications/Google Chrome.app') && !existsSync('/usr/bin/google-chrome'))('finds a problem that only exists after a click, labels it with the state, and reports an unreachable state', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'fringe-states-'));
+    const page = join(dir, 'p.html');
+    writeFileSync(page, '<!doctype html><html lang="en"><head><title>t</title></head><body><main><h1>x</h1><button id="open" onclick="document.getElementById(\'d\').hidden=false">Open</button><div id="d" hidden><p style="color:#bbb;background:#fff">faint dialog text</p></div></main></body></html>');
+    const url = pathToFileURL(page).href;
+    const none = await scan(url, join(__dirname, '..'));
+    const r = await scan(url, join(__dirname, '..'), [{ name: 'dialog open', steps: [{ click: '#open' }] }, { name: 'broken', steps: [{ click: '#nope' }] }]);
+    rmSync(dir, { recursive: true, force: true });
+    expect(none.findings.some((f) => f.message.includes('color-contrast'))).toBe(false);
+    const hit = r.findings.find((f) => f.message.startsWith('[dialog open] color-contrast'));
+    expect(hit?.loc.file).toContain('[dialog open]');
+    expect(r.clusters!.some((c) => c.id.endsWith('[dialog open]'))).toBe(true);
+    expect(r.findings.find((f) => f.rule === 'FR-402')?.message).toContain('[broken] state could not be reached: step 1');
+  }, 90000);
+});

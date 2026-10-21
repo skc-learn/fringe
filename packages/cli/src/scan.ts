@@ -45,7 +45,62 @@ export function tabWalkFindings(url: string, focusables: string[], visits: Array
   return out;
 }
 
-export async function scan(url: string, cwd = process.cwd()): Promise<CheckResult> {
+/** One step in a state script. Selectors are Playwright selectors (CSS, text=..., role=...). */
+export type Step = { click: string } | { fill: string; value: string } | { press: string } | { hover: string } | { waitFor: string } | { goto: string };
+export interface ScanState { name: string; steps: Step[] }
+
+const STEP_KEYS = ['click', 'fill', 'press', 'hover', 'waitFor', 'goto'] as const;
+
+/** Validates the contents of fringe.scan.json: `{ "states": [{ "name": "menu open", "steps": [{ "click": "#menu" }] }] }`. */
+export function parseStates(json: unknown): ScanState[] {
+  const bad = (m: string): never => { throw new Error(`fringe.scan.json: ${m}`); };
+  const states = (json as { states?: unknown })?.states;
+  if (!Array.isArray(states)) return bad('expected { "states": [ ... ] }');
+  return states.map((s: any, i) => {
+    if (typeof s?.name !== 'string' || !s.name.trim()) bad(`states[${i}] needs a "name"`);
+    if (!Array.isArray(s.steps) || s.steps.length === 0) bad(`state "${s.name}" needs a non-empty "steps" list`);
+    for (const [k, step] of s.steps.entries()) {
+      const keys = STEP_KEYS.filter((x) => step && typeof step === 'object' && x in step);
+      if (keys.length !== 1 || typeof step[keys[0]] !== 'string') bad(`state "${s.name}" step ${k + 1} must be exactly one of ${STEP_KEYS.join(', ')} with a string value`);
+      if (keys[0] === 'fill' && typeof step.value !== 'string') bad(`state "${s.name}" step ${k + 1}: fill needs a "value"`);
+    }
+    return { name: s.name.trim(), steps: s.steps };
+  });
+}
+
+async function runStep(page: any, step: Step, base: string): Promise<void> {
+  const t = { timeout: 10000 };
+  if ('click' in step) await page.click(step.click, t);
+  else if ('fill' in step) await page.fill(step.fill, step.value, t);
+  else if ('press' in step) await page.keyboard.press(step.press);
+  else if ('hover' in step) await page.hover(step.hover, t);
+  else if ('waitFor' in step) await page.waitForSelector(step.waitFor, t);
+  else await page.goto(new URL(step.goto, base).href, { waitUntil: 'load', timeout: 30000 });
+  await page.waitForTimeout(150); // let transitions settle before the next step or the audit
+}
+
+/** axe-core plus a Tab walk on whatever the page looks like right now. */
+async function audit(page: any, axePath: string, url: string): Promise<Finding[]> {
+  if (!(await page.evaluate(() => !!(globalThis as any).axe))) await page.addScriptTag({ path: axePath });
+  const axeRes = await page.evaluate(() => (globalThis as any).axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] } }));
+  const describe = `(el) => { const i = [...document.querySelectorAll(${JSON.stringify(FOCUSABLE)})].indexOf(el); return i < 0 ? null : el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + '[' + i + ']'; }`;
+  const focusables: string[] = await page.evaluate(`[...document.querySelectorAll(${JSON.stringify(FOCUSABLE)})].filter((el) => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && !el.disabled; }).map((el, _i, all) => (${describe})(el))`);
+  const visits: Array<string | null> = [];
+  for (let i = 0; i < focusables.length + 6; i++) {
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(40); // let focus/blur handlers settle: a script that steals focus back only shows up after a tick
+    const now: string | null = await page.evaluate(`(${describe})(document.activeElement)`);
+    if (now === null && visits.length > 0) break; // focus left the page content: the walk wrapped around
+    visits.push(now);
+  }
+  return [...axeToFindings(url, axeRes.violations), ...tabWalkFindings(url, focusables, visits)];
+}
+
+/** Findings from a named state say so, and cluster separately from the same rule on the initial page. */
+const inState = (name: string, url: string, f: Finding): Finding =>
+  ({ ...f, message: `[${name}] ${f.message}`, loc: { ...f.loc, file: `${url} [${name}]` }, ...(f.cluster ? { cluster: `${f.cluster} [${name}]` } : {}) });
+
+export async function scan(url: string, cwd = process.cwd(), states: ScanState[] = []): Promise<CheckResult> {
   if (!/^(https?|file):\/\//i.test(url)) throw new Error(`fringe scan takes an http(s):// or file:// URL, got '${url}'`);
   const req = createRequire(join(cwd, 'noop.js'));
   let playwright: any, axePath: string;
@@ -56,22 +111,21 @@ export async function scan(url: string, cwd = process.cwd()): Promise<CheckResul
   try {
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: 'load', timeout: 30000 });
-    await page.addScriptTag({ path: axePath });
-    const axeRes = await page.evaluate(() => (globalThis as any).axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] } }));
-    const describe = `(el) => { const i = [...document.querySelectorAll(${JSON.stringify(FOCUSABLE)})].indexOf(el); return i < 0 ? null : el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + '[' + i + ']'; }`;
-    const focusables: string[] = await page.evaluate(`[...document.querySelectorAll(${JSON.stringify(FOCUSABLE)})].filter((el) => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && !el.disabled; }).map((el, _i, all) => (${describe})(el))`);
-    const visits: Array<string | null> = [];
-    for (let i = 0; i < focusables.length + 6; i++) {
-      await page.keyboard.press('Tab');
-      await page.waitForTimeout(40); // let focus/blur handlers settle: a script that steals focus back only shows up after a tick
-      const now: string | null = await page.evaluate(`(${describe})(document.activeElement)`);
-      if (now === null && visits.length > 0) break; // focus left the page content: the walk wrapped around
-      visits.push(now);
+    const all: Finding[] = await audit(page, axePath, url);
+    for (const st of states) {
+      await page.goto(url, { waitUntil: 'load', timeout: 30000 });
+      let step = 0;
+      try { for (; step < st.steps.length; step++) await runStep(page, st.steps[step], url); }
+      catch (e) {
+        all.push({ rule: 'FR-402', severity: 'review', message: `[${st.name}] state could not be reached: step ${step + 1} ${JSON.stringify(st.steps[step])} failed (${String((e as Error).message).split('\n')[0].slice(0, 120)})`, hint: 'fix the step in fringe.scan.json or the page; nothing in this state was audited', loc: { file: `${url} [${st.name}]`, line: 1, col: 0 } });
+        continue;
+      }
+      all.push(...(await audit(page, axePath, url)).map((f) => inState(st.name, url, f)));
     }
-    const { findings, clusters } = rankScan(url, [...axeToFindings(url, axeRes.violations), ...tabWalkFindings(url, focusables, visits)]);
+    const { findings, clusters } = rankScan(url, all);
     const counts = { error: 0, review: 0, signal: 0 };
     for (const f of findings) counts[f.severity]++;
-    return { stack: { jsx: false, tailwind: false, vue: false, svelte: false, html: true }, files: 1, skipped: [], findings, clusters, counts, score: score(counts, { error: 10, review: 3, signal: 1 }, 1) };
+    return { stack: { jsx: false, tailwind: false, vue: false, svelte: false, html: true }, files: 1 + states.length, skipped: [], findings, clusters, counts, score: score(counts, { error: 10, review: 3, signal: 1 }, 1) };
   } finally { await browser.close(); }
 }
 
@@ -81,7 +135,7 @@ export function rankScan(url: string, findings: Finding[]): { findings: Finding[
   const ranked = findings.map((f) => {
     const priority = Math.round(TIER[f.severity] + wcagBonus(f.wcag));
     const id = f.cluster ?? `${f.rule}@${url}`;
-    const c = clusters.get(id) ?? { id, rule: f.rule, file: url, count: 0, priority: 0, fixability: 'judgment', rootCause: 'local', importedBy: 0, critical: false } as Cluster;
+    const c = clusters.get(id) ?? { id, rule: f.rule, file: f.loc.file, count: 0, priority: 0, fixability: 'judgment', rootCause: 'local', importedBy: 0, critical: false } as Cluster;
     c.count++; c.priority = Math.max(c.priority, priority);
     clusters.set(id, c);
     return { ...f, priority, cluster: id, fixability: c.fixability };
