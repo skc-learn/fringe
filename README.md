@@ -132,7 +132,15 @@ Every command, flag, exit code and config key: **[CLI reference](packages/cli/RE
 | A rule is wrong for my case | `fringe-ignore` it on that line, and please [report the false positive](https://github.com/skc-learn/fringe/issues/new?template=false-positive.md) |
 | `exit 2` / "internal error" | The message names the cause: bad `fringe.config.json`, corrupt `fringe.baseline.json`, or an invalid `.claude/settings.json` |
 | It checked a folder I don't want | Add globs to `ignore` in `fringe.config.json`, e.g. `"examples/**"` (use the `dir/**` form) |
-| Remove it | Plugin: `/plugin uninstall fringe`. Init: delete the Fringe entry in `.claude/settings.json` and the `.claude/skills/fringe*` folders |
+| Remove it | Plugin: `/plugin uninstall fringetool`. Init: delete the Fringe entry in `.claude/settings.json` and the `.claude/skills/fringe*` folders |
+
+## What the plugin runs
+
+- **One hook**, [hooks/hooks.json](hooks/hooks.json): after Claude edits or writes a file it runs `npx -y @fringetools/cli@<plugin version> check --claude-hook`. The version is pinned to the plugin's own version, and a test fails if they drift.
+- **The package** is this repo's [packages/cli](packages/cli) (readable TypeScript source, MIT), published to npm by [a tagged GitHub Actions run](.github/workflows/publish.yml) with npm provenance, so the npm tarball can be traced to a commit here. Runtime dependencies: `@babel/parser`, `parse5`, `postcss`.
+- **It reads** the file that was edited and, for project-wide checks, the project's own source and `fringe.config.json`. **It writes** only under `.fringe/` and, if you ask, `fringe.baseline.json`.
+- **It does not** make network calls, send telemetry, read credentials or environment secrets, or change Claude's settings. The one exception is `fringe scan <url>`, which you run yourself against a page you name; it opens that URL in a local browser and nothing else.
+- **The skills** (`/fringetool:fringe-review` and the others) are Markdown instructions that run the same pinned command.
 
 **Privacy:** Fringe reads your source files locally and makes no network calls and sends no telemetry. The only download is `npx` fetching the package itself. Its run history stays in your repo (`.fringe/`).
 
