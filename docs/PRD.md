@@ -52,7 +52,7 @@ Requirements use stable IDs; **Status** reflects v0.1 (shipped) unless marked *p
 | F-12 | Exit codes: 0 clean / 1 error findings / 2 internal failure with one-line stderr message | ✅ |
 | F-13 | `--update-baseline` → `fringe.baseline.json`; later runs gate only on new findings (key = rule+file+message, multiset; corrupt file exits 2) | ✅ |
 | F-14 | Inline `fringe-ignore FR-xxx` suppression (rule IDs required, line or line above); always reported as `N suppressed` | ✅ |
-| F-15 | `fringe init`: merges the Claude Code `PostToolUse` hook into `.claude/settings.json` and installs the five skills; idempotent; never overwrites invalid JSON | ✅ |
+| F-15 | `fringe init`: merges the Claude Code `PostToolUse` hook into `.claude/settings.json` and installs the six skills; idempotent; never overwrites invalid JSON | ✅ |
 | F-16 | `fringe --help` / `-h` / `help` | ✅ |
 | F-17 | `fringe explain [FR-xxx]`: why / recipe / avoid / before-after per rule (guidance table kept apart from rules; a test fails if a rule lacks an entry) | ✅ |
 | F-18 | Priority + clusters on every finding (`priority`, `cluster`, `fixability`; top-level `clusters`): tier first, then WCAG level, critical path, blast radius; additive to `fringe/check.v1` | ✅ |
@@ -61,6 +61,7 @@ Requirements use stable IDs; **Status** reflects v0.1 (shipped) unless marked *p
 | F-21 | Config `critical: [globs]` raises priority for key paths | ✅ |
 | F-22 | Hook message carries each shown rule's fix recipe | ✅ |
 | F-24 | UX best-practice rules FR-216..222 (forms, links, page basics, reduced motion, autoplay, hover-only, filler text), all `review`/`signal`, validated on six real projects before shipping | ✅ |
+| F-30 | Simpler setup: `init --global` (user-level hook + skills), local installed copy preferred for the hook command, bare `fringe` checks and nudges until set up, `/fringe-setup` guided onboarding skill | ✅ |
 | F-29 | Scan stress modes (`--stress` / `--modes dark,reduced,reflow`): dark-mode contrast, animations still looping under reduced motion (FR-403), 320px reflow overflow (FR-404, WCAG 1.4.10); each mode on a fresh page, only findings the plain page lacked are kept | ✅ |
 | F-28 | Scan states: `fringe.scan.json` (`--states`), steps click/fill/press/hover/waitFor/goto, state-labelled findings and clusters, `FR-402` for unreachable states; validated with clear errors | ✅ |
 | F-27 | `fringe plan --scan <url>`: static and runtime findings in one ordered plan (runtime clusters per axe rule, element selectors) | ✅ |
@@ -133,7 +134,7 @@ The staged, evidence-driven version of this plan lives in [ROADMAP.md](ROADMAP.m
 
 | Release | Scope | Status |
 |---|---|---|
-| **v0.1** | Checker core: 29 rules (36 by 0.2), outputs, size-aware score, calibration, ledger, hooks, token sources, WCAG tags, baseline, suppression, `init`, minimal `open`, skill (Plans 1–2 + post-dogfood work) | ✅ published to npm as `@fringetools/cli@0.4.0` |
+| **v0.1** | Checker core: 29 rules (36 by 0.2), outputs, size-aware score, calibration, ledger, hooks, token sources, WCAG tags, baseline, suppression, `init`, minimal `open`, skill (Plans 1–2 + post-dogfood work) | ✅ published to npm as `@fringetools/cli@0.4.1` |
 | **v0.2** | ✅ `plan`, `explain`, recipes, priority/clusters, single-file check. Still planned: per-rule precision view from the ledger; full dashboard (`fringe board`, stat strip + ladder board + story drawer, handoff export) (Plan 3) | planned |
 | **v0.3** | Adapters for other agent platforms, slash commands, README site (Plan 4) — only if real use shows demand | planned |
 | **v0.4+** | Slop-tuning pass, Vue/Svelte tier-2 depth | backlog |

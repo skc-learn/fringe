@@ -48,7 +48,7 @@ One package does everything today: `packages/cli`. The dashboard (Plan 3) and sk
 | `src/suppress.ts` | Inline `fringe-ignore FR-xxx` comment lookup (line or line above) | `suppressedIds` |
 | `src/init.ts` | Merge the hook into `.claude/settings.json`, install the skill; never overwrites invalid JSON | `initProject` |
 | `src/board.ts` | Loopback-only ledger page (`fringe open`); output escaped | `renderBoard`, `startBoard` |
-| `skill/<name>/SKILL.md` | Five skills (`fringe`, `-review`, `-audit`, `-debt`, `-help`) — one folder each; shipped in the npm package, copied by `init`, and loaded by the Claude Code plugin (`.claude-plugin/plugin.json` → `./packages/cli/skill/`) | — |
+| `skill/<name>/SKILL.md` | Six skills (`fringe`, `-review`, `-audit`, `-debt`, `-setup`, `-help`) — one folder each; shipped in the npm package, copied by `init`, and loaded by the Claude Code plugin (`.claude-plugin/plugin.json` → `./packages/cli/skill/`) | — |
 | `.claude-plugin/`, `hooks/hooks.json` | Claude Code plugin + marketplace manifests; hook = the same `--claude-hook` command as `init` (a test keeps them in sync) | — |
 | `AGENTS.md`, `INSTALL.md` | Rules file for agents without hooks; per-agent install steps | — |
 | `src/guidance.ts` | Per-rule `why` / `recipe` / `avoid` / example / fixability (rules stay pure); `renderExplain` for `fringe explain` | `GUIDANCE`, `renderExplain` |

@@ -29,11 +29,14 @@ Pick **one**:
 /plugin install fringetool@fringe
 ```
 
-**B. One command in your project** (any Claude Code project, nothing to install first):
+**B. One command** (any Claude Code project, nothing to install first):
 
 ```sh
-npx @fringetools/cli init
+npx @fringetools/cli init            # this project
+npx @fringetools/cli init --global   # once, for every project
 ```
+
+Not sure whether it's set up? Run `npx @fringetools/cli` with no arguments: it checks the folder and tells you if the post-edit check isn't wired yet. Already inside Claude Code? Type `/fringe-setup` for a guided setup.
 
 **C. Just try the checker**, no agent needed:
 
@@ -70,7 +73,7 @@ Errors make the command exit `1` (so CI fails too). Everything else is advice an
 
 ## What you get
 
-**Five skills** your agent can use (Claude Code: type the slash command):
+**Six skills** your agent can use (Claude Code: type the slash command):
 
 | Skill | Use it to |
 |---|---|
@@ -78,6 +81,7 @@ Errors make the command exit `1` (so CI fails too). Everything else is advice an
 | `/fringe-review` | "Review this page": ranked, plain-English findings with the fix for each |
 | `/fringe-audit` | Audit a whole repo: top problems, a fix order, and an offer to set a baseline |
 | `/fringe-debt` | List everything silenced or deferred (suppressions and baseline) |
+| `/fringe-setup` | Guided onboarding from inside Claude Code: checks the environment, wires the hook, offers a baseline, records your critical pages |
 | `/fringe-help` | Quick reference |
 
 > Installed as a plugin, the names are namespaced: `/fringetool:fringe-review`. The review and audit skills run the checker, so Claude Code asks you to approve that command once.

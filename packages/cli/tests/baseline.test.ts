@@ -82,7 +82,7 @@ describe('manifest evidence', () => {
   it('init installs all three skills', async () => {
     const d = mk({});
     await run(['init', d]);
-    for (const n of ['fringe', 'fringe-review', 'fringe-audit', 'fringe-debt', 'fringe-help']) expect(existsSync(join(d, '.claude/skills', n, 'SKILL.md'))).toBe(true);
+    for (const n of ['fringe', 'fringe-review', 'fringe-audit', 'fringe-debt', 'fringe-help', 'fringe-setup']) expect(existsSync(join(d, '.claude/skills', n, 'SKILL.md'))).toBe(true);
   });
 });
 
@@ -108,5 +108,37 @@ describe('regression receipts in the Claude hook', () => {
     writeFileSync(join(d, '.fringe', 'last.json'), '{garbage');
     writeFileSync(join(d, 'a.html'), bad('a'));
     expect(await reason(d)).toContain('1 accessibility error'); // corrupt state: no comparison, no crash
+  });
+});
+
+describe('simpler setup', () => {
+  afterEach(() => { while (dirs.length) rmSync(dirs.pop()!, { recursive: true, force: true }); });
+  it('init --global writes the hook and skills under the home directory, leaving the project alone', async () => {
+    const home = mk({}), proj = mk({});
+    const out: string[] = [];
+    expect(await runCli(['init', '--global'], { log: (s) => out.push(s), err: () => {}, home, cwd: proj })).toBe(0);
+    expect(existsSync(join(home, '.claude/settings.json'))).toBe(true);
+    expect(existsSync(join(home, '.claude/skills/fringe-review/SKILL.md'))).toBe(true);
+    expect(existsSync(join(proj, '.claude'))).toBe(false);
+    expect(out.join('\n')).toContain('every project');
+  });
+  it('init uses the project\'s own installed copy when there is one', async () => {
+    const d = mk({ 'node_modules/@fringetools/cli/package.json': '{}' });
+    await run(['init', d]);
+    expect(readFileSync(join(d, '.claude/settings.json'), 'utf8')).toContain('npx --no-install fringe check --claude-hook');
+    const e = mk({});
+    await run(['init', e]);
+    expect(readFileSync(join(e, '.claude/settings.json'), 'utf8')).toContain('npx -y @fringetools/cli check --claude-hook');
+  });
+  it('bare `fringe` checks the folder and nudges until the hook is set up, then stops nudging', async () => {
+    const home = mk({}), d = mk({ 'a.html': IMG });
+    const out: string[] = [];
+    const code = await runCli([], { log: (s) => out.push(s), err: () => {}, cwd: d, home });
+    expect(code).toBe(1);                                    // same exit code as `check`
+    expect(out.join('\n')).toContain('init --global');
+    await runCli(['init', '--global'], { log: () => {}, err: () => {}, home });
+    const again: string[] = [];
+    await runCli([], { log: (s) => again.push(s), err: () => {}, cwd: d, home });
+    expect(again.join('\n')).not.toContain('not checking after');
   });
 });

@@ -19,7 +19,7 @@ describe('Claude Code plugin manifests', () => {
   it('every skill folder has a SKILL.md whose name matches the folder', () => {
     const dir = join(root, 'packages/cli/skill');
     const names = readdirSync(dir);
-    expect(names.length).toBeGreaterThanOrEqual(5);
+    expect(names.length).toBeGreaterThanOrEqual(6);
     for (const n of names) expect(readFileSync(join(dir, n, 'SKILL.md'), 'utf8')).toMatch(new RegExp(`^---\\nname: ${n}\\n`));
   });
   it('the plugin hook runs the same command `fringe init` writes, pinned to this version', () => {

@@ -28,6 +28,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | D-22 | Size-aware health score with soft decay | 2026-10-20 | 🔒 |
 | D-23 | Dashboard scope cut: minimal `fringe open` now, full dashboard later | 2026-10-20 | 🔒 / deferred |
 | D-24 | Flow evidence check; review/audit skills instead of levels | 2026-10-20 | 🔒 |
+| D-31 | Setup as close to zero steps as the host allows | 2026-10-21 | 🔒 |
 | D-30 | Scan states are declarative JSON, each from a fresh load | 2026-10-21 | 🔒 |
 | D-29 | Runtime scan is opt-in, built on axe-core + Playwright, not a new engine | 2026-10-21 | 🔒 |
 | D-28 | UX best-practice rules (FR-216..222) start at review/signal and are validated on real repos first | 2026-10-21 | 🔒 |
@@ -178,6 +179,12 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 **Decision:** states are described in `fringe.scan.json` as named lists of steps from a six-verb vocabulary (click, fill, press, hover, waitFor, goto), not as scripts. Each state starts from a fresh load of the URL, runs its steps, then gets the same audit as the initial page; findings carry the state name and cluster apart from the initial page. A failed step becomes an `FR-402` review finding instead of crashing the scan.
 **Why declarative:** reviewable in a PR, validated up front with clear errors, no arbitrary code in a quality tool; the vocabulary covers menus, modals, forms and error states. **Alternatives:** a JS hook file (full power, but arbitrary code and harder to review); auto-exploring every clickable thing (unbounded, flaky, can click "Delete").
 **Limits:** states are independent; no login reuse; no multi-page flows beyond `goto`; selectors are the user's to maintain.
+
+### D-31 — Simpler setup
+**Context:** Claude Code only runs a hook written in a settings file or shipped by a plugin; a package cannot register one itself (and must not edit user settings on install). Something has to write the config, so `init` exists. Users also asked why it must be per project, and noted that other tools offer a slash command for setup.
+**Decision:** keep `init` but shrink the work around it: `init --global` writes to `~/.claude` once for every project; `init` prefers the project's installed copy (`npx --no-install fringe …`, faster and offline-safe) and otherwise `npx -y`; bare `fringe` checks the folder and nudges until the hook or plugin is detected; `/fringe-setup` is a skill that does guided onboarding from inside Claude Code (environment check, init, baseline offer, critical paths), asking before each change. The plugin remains the one-step path for users who prefer it.
+**Alternatives:** postinstall script that edits settings (unsafe, surprising); auto-prompting on every `check` (noisy in agent runs, which are not a TTY).
+**Limit:** a global hook runs on every edit in every project; it is a quick check, but a project can still opt out by removing the entry.
 
 ---
 

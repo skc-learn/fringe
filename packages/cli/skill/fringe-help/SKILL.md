@@ -15,6 +15,7 @@ Fringe checks agent-written frontends for accessibility, state, dark-pattern and
 | `/fringe-review` | Review a page or component: ranked findings with plain-English fixes |
 | `/fringe-audit` | Audit the whole repo: top rules and files, a fix order, offer a baseline |
 | `/fringe-debt` | List silenced findings (`fringe-ignore`, baseline) |
+| `/fringe-setup` | Guided onboarding: wire the hook, offer a baseline, set critical paths |
 | `/fringe-help` | This reference |
 
 **Commands** (`fringe`, or `npx -y @fringetools/cli@0.4.0`)

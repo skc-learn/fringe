@@ -14,12 +14,13 @@ import { writeBaseline } from './baseline.js';
 import { receipts } from './receipts.js';
 import { scan, mergeScan, parseStates, parseModes, MODES } from './scan.js';
 import type { ScanState } from './scan.js';
-import { initProject } from './init.js';
+import { initProject, isWired } from './init.js';
+import { homedir } from 'node:os';
 import { renderExplain } from './guidance.js';
 import { renderPatterns } from './patterns.js';
 import { toPlanJson, toPlanMarkdown } from './report/plan.js';
 
-export interface CliOpts { log?: (s: string) => void; cwd?: string; err?: (s: string) => void }
+export interface CliOpts { log?: (s: string) => void; cwd?: string; err?: (s: string) => void; /** Home directory for `init --global` (tests override it). */ home?: string }
 const log = (o: CliOpts) => o.log ?? ((s: string) => console.log(s));
 const err = (o: CliOpts) => o.err ?? ((s: string) => process.stderr.write(s));
 
@@ -77,7 +78,7 @@ fringe scan <url> [--states f] [--stress | --modes dark,reduced,reflow] [--json]
 fringe plan [dir|file] [--scan url] [--json] [--limit n]   ordered fix batches with recipes; --scan adds the live page
 fringe explain pattern [form]           best-practice checklist for a component type
 fringe explain [FR-203]                 why a rule matters and how to fix it well
-fringe init [path]                       add the Claude Code hook + skill
+fringe init [path] [--global]          add the Claude Code hook + skills (--global: every project)
 fringe open [path] [--port <n>]   serve the .fringe ledger on 127.0.0.1
 fringe --help | --version`;
 
@@ -100,6 +101,11 @@ function parseArgs(rest: string[], warn: (s: string) => void): string[] {
 
 export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number> {
   const [cmd, ...rest] = argv;
+  if (cmd === undefined) { // bare `fringe`: check this folder, and say how to get the post-edit check if it is not set up yet
+    const code = await runCli(['check'], opts);
+    if (!isWired(opts.cwd ?? process.cwd(), opts.home ?? homedir())) log(opts)('\nfringe: not checking after your agent\'s edits yet. Run `npx @fringetools/cli init` (this project) or `init --global` (every project).');
+    return code;
+  }
   if (cmd === '--version' || cmd === '-v') { log(opts)(VERSION); return 0; }
   if (cmd === 'check') {
     try {
@@ -188,7 +194,10 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
   }
   if (cmd === 'init') {
     try {
-      for (const line of initProject(resolve(opts.cwd ?? process.cwd(), rest[0] ?? '.'))) log(opts)(`fringe: ${line}`);
+      const global = rest.includes('--global') || rest.includes('-g');
+      const target = global ? (opts.home ?? homedir()) : resolve(opts.cwd ?? process.cwd(), rest.find((a) => !a.startsWith('-')) ?? '.');
+      for (const line of initProject(target)) log(opts)(`fringe: ${line}`);
+      if (global) log(opts)('fringe: set up for your user, so every project is covered (run without --global to set up one project only)');
       return 0;
     } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }
   }

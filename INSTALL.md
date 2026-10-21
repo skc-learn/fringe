@@ -20,7 +20,8 @@ This adds the post-edit hook (`npx -y @fringetools/cli@0.4.0 check --claude-hook
 In your project:
 
 ```sh
-npx @fringetools/cli init
+npx @fringetools/cli init            # this project
+npx @fringetools/cli init --global   # once, for every project (writes to ~/.claude)
 ```
 
 Writes the same hook into `.claude/settings.json` (existing settings kept) and copies the skills to `.claude/skills/`. Skills are then `/fringe-review` and so on, with no namespace.
