@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { initProject } from '../src/init.js';
 import { join } from 'node:path';
 
 const root = join(__dirname, '..', '..', '..');
@@ -22,10 +24,18 @@ describe('Claude Code plugin manifests', () => {
     expect(names.length).toBeGreaterThanOrEqual(6);
     for (const n of names) expect(readFileSync(join(dir, n, 'SKILL.md'), 'utf8')).toMatch(new RegExp(`^---\\nname: ${n}\\n`));
   });
-  it('the plugin hook runs the same command `fringe init` writes, pinned to this version', () => {
-    const pinned = json('hooks/hooks.json').hooks.PostToolUse[0].hooks[0].command;
-    expect(pinned).toContain(`@fringetools/cli@${json('.claude-plugin/plugin.json').version} `);
-    const cmd = pinned.replace(/cli@[\d.]+ /, 'cli ');
-    expect(readFileSync(join(__dirname, '..', 'src', 'init.ts'), 'utf8')).toContain(`'${cmd}'`);
+  it('the plugin hooks run the same commands `fringe init` writes, pinned to this version', () => {
+    const hooks = json('hooks/hooks.json').hooks;
+    const version = json('.claude-plugin/plugin.json').version;
+    const dir = mkdtempSync(join(tmpdir(), 'fringe-plugin-'));
+    try {
+      initProject(dir);
+      const written = JSON.parse(readFileSync(join(dir, '.claude/settings.json'), 'utf8')).hooks;
+      for (const ev of ['PostToolUse', 'UserPromptSubmit']) {
+        const pinned: string = hooks[ev][0].hooks[0].command;
+        expect(pinned, ev).toContain(`@fringetools/cli@${version} `);
+        expect(pinned.replace(/cli@[\d.]+ /, 'cli '), ev).toBe(written[ev][0].hooks[0].command);
+      }
+    } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 });

@@ -19,13 +19,14 @@ import { initProject, initFor, initGit, isWired, AGENTS } from './init.js';
 import { homedir } from 'node:os';
 import { renderExplain } from './guidance.js';
 import { renderPatterns } from './patterns.js';
+import { promptHookOutput } from './promptHook.js';
 import { toPlanJson, toPlanMarkdown } from './report/plan.js';
 import { ruleReport, rulesToText } from './rulereport.js';
 import { buildHandoff, verifyHandoff, verifyToMarkdown } from './handoff.js';
 import type { Handoff } from './handoff.js';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
-export interface CliOpts { log?: (s: string) => void; cwd?: string; err?: (s: string) => void; /** Home directory for `init --global` (tests override it). */ home?: string; /** `fringe login` waits for this instead of Enter on the terminal (tests). */ waitForUser?: () => Promise<void> }
+export interface CliOpts { log?: (s: string) => void; cwd?: string; err?: (s: string) => void; /** Home directory for `init --global` (tests override it). */ home?: string; /** What `hook-prompt` reads instead of process.stdin (tests). */ stdin?: string; /** `fringe login` waits for this instead of Enter on the terminal (tests). */ waitForUser?: () => Promise<void> }
 const log = (o: CliOpts) => o.log ?? ((s: string) => console.log(s));
 const err = (o: CliOpts) => o.err ?? ((s: string) => process.stderr.write(s));
 
@@ -209,6 +210,14 @@ export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number
       log(opts)(rest.includes('--json') ? toJson(result) : toPretty(result));
       return result.counts.error > 0 ? 1 : 0;
     } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }
+  }
+  if (cmd === 'hook-prompt') { // Claude Code UserPromptSubmit hook: adds the matching playbook to the agent's context before it starts building
+    try {
+      const input = opts.stdin ?? await new Promise<string>((ok) => { let d = ''; process.stdin.setEncoding('utf8'); process.stdin.on('data', (c) => (d += c)); process.stdin.on('end', () => ok(d)); if (process.stdin.isTTY) ok(''); });
+      const out = promptHookOutput(input);
+      if (out) log(opts)(out);
+    } catch { /* a hook must never break the user's prompt */ }
+    return 0;
   }
   if (cmd === 'login') {
     try {

@@ -28,6 +28,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | D-22 | Size-aware health score with soft decay | 2026-10-20 | 🔒 |
 | D-23 | Dashboard scope cut: minimal `fringe open` now, full dashboard later | 2026-10-20 | 🔒 / deferred |
 | D-24 | Flow evidence check; review/audit skills instead of levels | 2026-10-20 | 🔒 |
+| D-35 | Playbooks are pushed to the agent at prompt time, not left for it to ask for | 2026-10-21 | 🔒 |
 | D-34 | Authenticated scans: session files, env-var logins, roles; secrets never printed | 2026-10-21 | 🔒 |
 | D-33 | Multi-agent support in tiers, claimed only where verified | 2026-10-21 | 🔒 |
 | D-32 | Agent hand-off protocol: work order + verify | 2026-10-21 | 🔒 |
@@ -206,6 +207,12 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 **Decision:** three ways in, one per situation: `fringe login` (a person signs in once in a real window, so MFA/SSO/captcha just work; the Playwright storage state is saved, default `.fringe/auth.json`); scripted `login` steps in `fringe.scan.json` for CI and agents; `sessions` for several roles, each running the whole scan and labelling findings `[as name]`. Credentials only ever come from `${env:NAME}` references, expanded at run time: a missing variable fails before a browser opens, step descriptions in messages keep the placeholder, and a test asserts the secret never lands in a result. When the page we land on is a different path that looks like a login (or has a password field), `FR-405` says the findings describe the login screen. A failed login step is `FR-402`, not a crash.
 **Alternatives:** storing credentials in the config (rejected: they get committed); cookies pasted by hand (fragile); crawling to find the login (guessing).
 **Limits:** sessions expire and are the user's to refresh; `fringe login` needs a display; sessions are independent (no multi-factor in scripted logins; use `fringe login` for those); a login that succeeds but lands elsewhere is not detected beyond the redirect heuristic.
+
+### D-35 — Playbooks delivered by a prompt hook
+**Context:** we wrote 22 playbooks and told the main skill to "run `fringe explain pattern <name>` before building". A benchmark (6 component tasks x 2 runs x 2 arms, prompts that never mention accessibility) showed agents **never did**: 0 of 12 fringe-arm runs read a playbook, and the checklist proxy scored 10/36 plain and 6/36 with Fringe installed. An instruction in a skill is not delivery.
+**Decision:** a `UserPromptSubmit` hook (`fringe hook-prompt`) reads the user's request; if it is a *building* request (create/build/add/...) that matches a playbook by keyword, it returns that playbook (max two) as additional context before the agent starts, each item marked as checked by Fringe or yours to get right. Prompts that are not building UI (fix, explain, refactor, run) get nothing. Installed by `init` and shipped in the plugin; the plugin test requires both hook commands to match what `init` writes.
+**Verified:** in a real Claude Code session the hook output reached the agent (1.4 KB for the carousel) and the resulting component had a pause control, focus-stop, `aria-roledescription` and reduced-motion handling, where the opt-in runs had none.
+**Cost:** only on matching prompts; one `npx` call per prompt (use a local install to make it instant). **Limits:** keyword matching can miss unusual wording or match loosely; Claude Code only (other agents get the rules file, which the same benchmark suggests is followed weakly).
 
 ---
 

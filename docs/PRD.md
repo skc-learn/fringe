@@ -66,6 +66,7 @@ Requirements use stable IDs; **Status** reflects v0.1 (shipped) unless marked *p
 | F-33 | Scan extras: `--storage-state` / `storageState` (pages behind a login), `--screenshots dir`, `scan --update-baseline` (`fringe.scan.baseline.json`) | ✅ |
 | F-34 | `fringe rules`: per-rule open / baselined / silenced counts plus ledger trend, flagging mostly-overridden rules (`fringe/rules.v1`) | ✅ |
 | F-35 | Pages behind a login: `fringe login <url>` (headed browser, saves a Playwright session), scripted `login` steps with `${env:NAME}` credentials (validated before the browser opens, never printed), `sessions` for several roles (findings labelled `[as role]`), `FR-405` when the scan is bounced to a login page, `FR-402` when a login step fails | ✅ |
+| F-36 | `fringe hook-prompt` (Claude Code `UserPromptSubmit` hook, installed by `init` and shipped in the plugin): when a *building* request matches a playbook, the playbook (max 2) is added to the agent's context before it starts; silent for every other prompt | ✅ |
 | F-30 | Simpler setup: `init --global` (user-level hook + skills), local installed copy preferred for the hook command, bare `fringe` checks and nudges until set up, `/fringe-setup` guided onboarding skill | ✅ |
 | F-29 | Scan stress modes (`--stress` / `--modes dark,reduced,reflow`): dark-mode contrast, animations still looping under reduced motion (FR-403), 320px reflow overflow (FR-404, WCAG 1.4.10); each mode on a fresh page, only findings the plain page lacked are kept | ✅ |
 | F-28 | Scan states: `fringe.scan.json` (`--states`), steps click/fill/press/hover/waitFor/goto, state-labelled findings and clusters, `FR-402` for unreachable states; validated with clear errors | ✅ |
@@ -139,7 +140,7 @@ The staged, evidence-driven version of this plan lives in [ROADMAP.md](ROADMAP.m
 
 | Release | Scope | Status |
 |---|---|---|
-| **v0.1** | Checker core: 29 rules (36 by 0.2), outputs, size-aware score, calibration, ledger, hooks, token sources, WCAG tags, baseline, suppression, `init`, minimal `open`, skill (Plans 1–2 + post-dogfood work) | ✅ published to npm as `@fringetools/cli@0.6.4` |
+| **v0.1** | Checker core: 29 rules (36 by 0.2), outputs, size-aware score, calibration, ledger, hooks, token sources, WCAG tags, baseline, suppression, `init`, minimal `open`, skill (Plans 1–2 + post-dogfood work) | ✅ published to npm as `@fringetools/cli@0.7.0` |
 | **v0.2** | ✅ `plan`, `explain`, recipes, priority/clusters, single-file check. Still planned: per-rule precision view from the ledger; full dashboard (`fringe board`, stat strip + ladder board + story drawer, handoff export) (Plan 3) | planned |
 | **v0.3** | Adapters for other agent platforms, slash commands, README site (Plan 4) — only if real use shows demand | planned |
 | **v0.4+** | Slop-tuning pass, Vue/Svelte tier-2 depth | backlog |

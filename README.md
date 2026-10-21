@@ -73,6 +73,8 @@ Errors make the command exit `1` (so CI fails too). Everything else is advice an
 
 ## What you get
 
+**Playbooks arrive on their own.** Ask your agent to build a carousel, a login form, a data table, a modal… and Fringe adds the matching checklist (22 of them, based on the W3C ARIA Authoring Practices and WCAG) to its context before it starts. Items Fringe can verify are marked as such; the rest are the agent's to get right. Nothing is added for other requests. Read any of them yourself with `npx @fringetools/cli explain pattern carousel`.
+
 **Six skills** your agent can use (Claude Code: type the slash command):
 
 | Skill | Use it to |

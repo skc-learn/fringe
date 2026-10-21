@@ -1,0 +1,394 @@
+[
+ {
+  "arm": "plain",
+  "task": "tabs",
+  "run": 1,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 2,
+  "of": 3,
+  "missed": [
+   "arrow-key handling"
+  ],
+  "turns": 4,
+  "cost": 0.29680080000000003,
+  "secs": 20
+ },
+ {
+  "arm": "plain",
+  "task": "carousel",
+  "run": 1,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 0,
+  "of": 3,
+  "missed": [
+   "pause/stop control",
+   "carousel semantics (aria-roledescription)",
+   "reduced motion handled or no autoplay"
+  ],
+  "turns": 4,
+  "cost": 0.2517918,
+  "secs": 27
+ },
+ {
+  "arm": "fringe",
+  "task": "tabs",
+  "run": 1,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 2,
+  "of": 3,
+  "missed": [
+   "arrow-key handling"
+  ],
+  "turns": 4,
+  "cost": 0.18087959999999997,
+  "secs": 27
+ },
+ {
+  "arm": "fringe",
+  "task": "carousel",
+  "run": 1,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 0,
+  "of": 3,
+  "missed": [
+   "pause/stop control",
+   "carousel semantics (aria-roledescription)",
+   "reduced motion handled or no autoplay"
+  ],
+  "turns": 7,
+  "cost": 0.2925153,
+  "secs": 45
+ },
+ {
+  "arm": "plain",
+  "task": "modal",
+  "run": 1,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 0,
+  "of": 3,
+  "missed": [
+   "dialog role + aria-modal",
+   "Escape closes",
+   "focus is moved/restored"
+  ],
+  "turns": 4,
+  "cost": 0.1794792,
+  "secs": 25
+ },
+ {
+  "arm": "plain",
+  "task": "login",
+  "run": 1,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 0,
+  "of": 3,
+  "missed": [
+   "password autocomplete",
+   "error is announced (role=alert/aria-live)",
+   "pending state on submit"
+  ],
+  "turns": 4,
+  "cost": 0.17663879999999998,
+  "secs": 20
+ },
+ {
+  "arm": "fringe",
+  "task": "modal",
+  "run": 1,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 0,
+  "of": 3,
+  "missed": [
+   "dialog role + aria-modal",
+   "Escape closes",
+   "focus is moved/restored"
+  ],
+  "turns": 4,
+  "cost": 0.17845860000000002,
+  "secs": 23
+ },
+ {
+  "arm": "fringe",
+  "task": "login",
+  "run": 1,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 0,
+  "of": 3,
+  "missed": [
+   "password autocomplete",
+   "error is announced (role=alert/aria-live)",
+   "pending state on submit"
+  ],
+  "turns": 4,
+  "cost": 0.1750986,
+  "secs": 21
+ },
+ {
+  "arm": "plain",
+  "task": "table",
+  "run": 1,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 0,
+  "of": 3,
+  "missed": [
+   "th with scope",
+   "table name (caption/aria-label)",
+   "aria-sort"
+  ],
+  "turns": 4,
+  "cost": 0.1846518,
+  "secs": 25
+ },
+ {
+  "arm": "plain",
+  "task": "search",
+  "run": 1,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 2,
+  "of": 3,
+  "missed": [
+   "result count announced (aria-live/role=status)"
+  ],
+  "turns": 5,
+  "cost": 0.19247700000000004,
+  "secs": 27
+ },
+ {
+  "arm": "fringe",
+  "task": "table",
+  "run": 1,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 0,
+  "of": 3,
+  "missed": [
+   "th with scope",
+   "table name (caption/aria-label)",
+   "aria-sort"
+  ],
+  "turns": 4,
+  "cost": 0.18286439999999998,
+  "secs": 27
+ },
+ {
+  "arm": "fringe",
+  "task": "search",
+  "run": 1,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 2,
+  "of": 3,
+  "missed": [
+   "result count announced (aria-live/role=status)"
+  ],
+  "turns": 5,
+  "cost": 0.2029497,
+  "secs": 28
+ },
+ {
+  "arm": "plain",
+  "task": "carousel",
+  "run": 2,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 0,
+  "of": 3,
+  "missed": [
+   "pause/stop control",
+   "carousel semantics (aria-roledescription)",
+   "reduced motion handled or no autoplay"
+  ],
+  "turns": 5,
+  "cost": 0.20192970000000002,
+  "secs": 31
+ },
+ {
+  "arm": "fringe",
+  "task": "carousel",
+  "run": 2,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 0,
+  "of": 3,
+  "missed": [
+   "pause/stop control",
+   "carousel semantics (aria-roledescription)",
+   "reduced motion handled or no autoplay"
+  ],
+  "turns": 7,
+  "cost": 0.236877,
+  "secs": 43
+ },
+ {
+  "arm": "plain",
+  "task": "tabs",
+  "run": 2,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 2,
+  "of": 3,
+  "missed": [
+   "arrow-key handling"
+  ],
+  "turns": 4,
+  "cost": 0.18045060000000002,
+  "secs": 24
+ },
+ {
+  "arm": "fringe",
+  "task": "tabs",
+  "run": 2,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 0,
+  "of": 3,
+  "missed": [
+   "tablist/tab/tabpanel roles",
+   "aria-selected",
+   "arrow-key handling"
+  ],
+  "turns": 5,
+  "cost": 0.19861649999999997,
+  "secs": 28
+ },
+ {
+  "arm": "plain",
+  "task": "modal",
+  "run": 2,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 1,
+  "of": 3,
+  "missed": [
+   "Escape closes",
+   "focus is moved/restored"
+  ],
+  "turns": 6,
+  "cost": 0.2075967,
+  "secs": 30
+ },
+ {
+  "arm": "fringe",
+  "task": "modal",
+  "run": 2,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 0,
+  "of": 3,
+  "missed": [
+   "dialog role + aria-modal",
+   "Escape closes",
+   "focus is moved/restored"
+  ],
+  "turns": 5,
+  "cost": 0.1841406,
+  "secs": 28
+ },
+ {
+  "arm": "plain",
+  "task": "login",
+  "run": 2,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 1,
+  "of": 3,
+  "missed": [
+   "error is announced (role=alert/aria-live)",
+   "pending state on submit"
+  ],
+  "turns": 4,
+  "cost": 0.17727479999999998,
+  "secs": 20
+ },
+ {
+  "arm": "fringe",
+  "task": "login",
+  "run": 2,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 0,
+  "of": 3,
+  "missed": [
+   "password autocomplete",
+   "error is announced (role=alert/aria-live)",
+   "pending state on submit"
+  ],
+  "turns": 4,
+  "cost": 0.1766739,
+  "secs": 22
+ },
+ {
+  "arm": "plain",
+  "task": "table",
+  "run": 2,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 0,
+  "of": 3,
+  "missed": [
+   "th with scope",
+   "table name (caption/aria-label)",
+   "aria-sort"
+  ],
+  "turns": 4,
+  "cost": 0.1790559,
+  "secs": 23
+ },
+ {
+  "arm": "fringe",
+  "task": "table",
+  "run": 2,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 0,
+  "of": 3,
+  "missed": [
+   "th with scope",
+   "table name (caption/aria-label)",
+   "aria-sort"
+  ],
+  "turns": 4,
+  "cost": 0.18043920000000002,
+  "secs": 25
+ },
+ {
+  "arm": "plain",
+  "task": "search",
+  "run": 2,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 2,
+  "of": 3,
+  "missed": [
+   "result count announced (aria-live/role=status)"
+  ],
+  "turns": 4,
+  "cost": 0.1766052,
+  "secs": 20
+ },
+ {
+  "arm": "fringe",
+  "task": "search",
+  "run": 2,
+  "readPlaybook": false,
+  "ranFringe": true,
+  "score": 2,
+  "of": 3,
+  "missed": [
+   "result count announced (aria-live/role=status)"
+  ],
+  "turns": 5,
+  "cost": 0.2043234,
+  "secs": 31
+ }
+]

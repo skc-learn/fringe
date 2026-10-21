@@ -37,6 +37,14 @@ export function initProject(root: string): string[] {
     writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n');
     done.push(`hook added to ${settingsPath}`);
   }
+  const prompt: any[] = ((settings.hooks ??= {}).UserPromptSubmit ??= []);
+  if (/hook-prompt/.test(JSON.stringify(prompt))) done.push('playbook hook already present');
+  else {
+    prompt.push({ hooks: [{ type: 'command', command: hookCommand(root).replace('check --claude-hook', 'hook-prompt'), timeout: 20 }] });
+    mkdirSync(dirname(settingsPath), { recursive: true });
+    writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n');
+    done.push('playbook hook added (adds the matching playbook when you ask for a component)');
+  }
   for (const name of readdirSync(SKILL_DIR)) {
     const skillPath = join(root, '.claude', 'skills', name, 'SKILL.md');
     if (existsSync(skillPath)) done.push(`skill ${name} already present`);
