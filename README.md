@@ -139,7 +139,7 @@ Every command, flag, exit code and config key: **[CLI reference](packages/cli/RE
 - **One hook**, [hooks/hooks.json](hooks/hooks.json): after Claude edits or writes a file it runs `npx -y @fringetools/cli@<plugin version> check --claude-hook`. The version is pinned to the plugin's own version, and a test fails if they drift.
 - **The package** is this repo's [packages/cli](packages/cli) (readable TypeScript source, MIT), published to npm by [a tagged GitHub Actions run](.github/workflows/publish.yml) with npm provenance, so the npm tarball can be traced to a commit here. Runtime dependencies: `@babel/parser`, `parse5`, `postcss`.
 - **It reads** the file that was edited and, for project-wide checks, the project's own source and `fringe.config.json`. **It writes** only under `.fringe/` and, if you ask, `fringe.baseline.json`.
-- **It does not** make network calls, send telemetry, read credentials or environment secrets, or change Claude's settings. The one exception is `fringe scan <url>`, which you run yourself against a page you name; it opens that URL in a local browser and nothing else.
+- **It does not** make network calls, send telemetry, read credentials or environment secrets, or change Claude's settings on its own. Two commands you run yourself are the exceptions: `fringe scan <url>` opens the page you name in a local browser, and `fringe init` writes the hook and skills into your `.claude/` folder.
 - **The skills** (`/fringetool:fringe-review` and the others) are Markdown instructions that run the same pinned command.
 
 **Privacy:** Fringe reads your source files locally and makes no network calls and sends no telemetry. The only download is `npx` fetching the package itself. Its run history stays in your repo (`.fringe/`).
