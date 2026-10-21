@@ -181,6 +181,10 @@ Want something sooner? [Open an issue](https://github.com/skc-learn/fringe/issue
 
 Bug reports, false positives and rule ideas are all welcome as [issues](https://github.com/skc-learn/fringe/issues). Code changes: every change starts as a failing test; adding a rule is a documented recipe. Start at **[CONTRIBUTING.md](CONTRIBUTING.md)**.
 
+## Privacy and terms
+
+[Privacy Policy](PRIVACY.md) · [Terms of Use](TERMS.md)
+
 ## License
 
 [MIT](LICENSE). The dark-pattern taxonomy is adapted, with attribution, from Design with Intent's CC0 library.
