@@ -61,6 +61,8 @@ Requirements use stable IDs; **Status** reflects v0.1 (shipped) unless marked *p
 | F-21 | Config `critical: [globs]` raises priority for key paths | ✅ |
 | F-22 | Hook message carries each shown rule's fix recipe | ✅ |
 | F-24 | UX best-practice rules FR-216..222 (forms, links, page basics, reduced motion, autoplay, hover-only, filler text), all `review`/`signal`, validated on six real projects before shipping | ✅ |
+| F-31 | `fringe handoff` / `fringe verify` (`fringe/handoff.v1`, `fringe/verify.v1`): a self-contained work order for another agent, and a re-check that reports complete / partial / regressed, fixed vs introduced, and new suppressions; exit 0 only when complete | ✅ |
+| F-32 | `init --for <agents>` writes the rules file for codex/generic/gemini/cursor/copilot/windsurf/cline/kiro (appends, never overwrites); `init --git` installs a fail-open pre-commit gate | ✅ |
 | F-30 | Simpler setup: `init --global` (user-level hook + skills), local installed copy preferred for the hook command, bare `fringe` checks and nudges until set up, `/fringe-setup` guided onboarding skill | ✅ |
 | F-29 | Scan stress modes (`--stress` / `--modes dark,reduced,reflow`): dark-mode contrast, animations still looping under reduced motion (FR-403), 320px reflow overflow (FR-404, WCAG 1.4.10); each mode on a fresh page, only findings the plain page lacked are kept | ✅ |
 | F-28 | Scan states: `fringe.scan.json` (`--states`), steps click/fill/press/hover/waitFor/goto, state-labelled findings and clusters, `FR-402` for unreachable states; validated with clear errors | ✅ |

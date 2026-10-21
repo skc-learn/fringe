@@ -28,6 +28,15 @@ Writes the same hook into `.claude/settings.json` (existing settings kept) and c
 
 ## Any other agent (Cursor, Copilot, Windsurf, Cline, Codex, Gemini, …)
 
+One command writes the rules file in the place each tool reads:
+
+```sh
+npx @fringetools/cli init --for cursor,codex,gemini,copilot,windsurf,cline,kiro   # pick yours
+npx @fringetools/cli init --git                                                   # optional commit gate for any agent
+```
+
+If your agent runs in a sandbox with no network, install once with `npm i -D @fringetools/cli` so the check does not need `npx` to download anything. The manual route is below.
+
 1. Copy [`AGENTS.md`](AGENTS.md) into your project (or your agent's rules file).
 2. Have the agent run `npx -y @fringetools/cli check` after edits. These agents have no Fringe hook yet, so the instruction does the work. Most also read the skill files in [`packages/cli/skill/`](packages/cli/skill/) if you copy them into your agent's skills folder.
 

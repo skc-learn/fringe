@@ -105,6 +105,8 @@ Full rule table: **[CLI reference](packages/cli/README.md#rules)**.
 | Check my project | `npx @fringetools/cli check` (a folder, default `.`, or one file) |
 | Know what to fix first | `npx @fringetools/cli plan` (add `--scan http://localhost:3000` to include the live page): batches ordered by impact, shared components first, with the fix for each rule |
 | See the running page (real contrast, keyboard, menus and modals) | `npm i -D playwright-core axe-core`, then `npx @fringetools/cli scan http://localhost:3000`. Add a `fringe.scan.json` to also audit states like "menu open" ([how](packages/cli/README.md#states-audit-what-only-exists-after-a-click)) |
+| Use another agent (Codex, Cursor, Copilot, Gemini…) | `npx @fringetools/cli init --for cursor,codex` writes the rules file each reads; add `--git` for a commit gate that works with any agent |
+| Hand the fixing to another agent or CI | `npx @fringetools/cli handoff > prompt.md`, give it to the agent, then `npx @fringetools/cli verify` (exit 0 only when done; reports anything it silenced) |
 | Understand a rule | `npx @fringetools/cli explain FR-203`: why it matters, the right fix, the tempting wrong one |
 | Use it on a repo that already has problems | `npx @fringetools/cli check --update-baseline`, commit `fringe.baseline.json`. Now only **new** problems gate |
 | Silence a real false positive | Put `// fringe-ignore FR-203` on the line or the line above (JSX: `{/* fringe-ignore FR-203 */}`, HTML: `<!-- … -->`). It is always counted in the report |

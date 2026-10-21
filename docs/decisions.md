@@ -28,6 +28,8 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | D-22 | Size-aware health score with soft decay | 2026-10-20 | 🔒 |
 | D-23 | Dashboard scope cut: minimal `fringe open` now, full dashboard later | 2026-10-20 | 🔒 / deferred |
 | D-24 | Flow evidence check; review/audit skills instead of levels | 2026-10-20 | 🔒 |
+| D-33 | Multi-agent support in tiers, claimed only where verified | 2026-10-21 | 🔒 |
+| D-32 | Agent hand-off protocol: work order + verify | 2026-10-21 | 🔒 |
 | D-31 | Setup as close to zero steps as the host allows | 2026-10-21 | 🔒 |
 | D-30 | Scan states are declarative JSON, each from a fresh load | 2026-10-21 | 🔒 |
 | D-29 | Runtime scan is opt-in, built on axe-core + Playwright, not a new engine | 2026-10-21 | 🔒 |
@@ -185,6 +187,17 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 **Decision:** keep `init` but shrink the work around it: `init --global` writes to `~/.claude` once for every project; `init` prefers the project's installed copy (`npx --no-install fringe …`, faster and offline-safe) and otherwise `npx -y`; bare `fringe` checks the folder and nudges until the hook or plugin is detected; `/fringe-setup` is a skill that does guided onboarding from inside Claude Code (environment check, init, baseline offer, critical paths), asking before each change. The plugin remains the one-step path for users who prefer it.
 **Alternatives:** postinstall script that edits settings (unsafe, surprising); auto-prompting on every `check` (noisy in agent runs, which are not a TTY).
 **Limit:** a global hook runs on every edit in every project; it is a quick check, but a project can still opt out by removing the entry.
+
+### D-32 — Agent hand-off
+**Context:** Fringe served a person and an agent working together. With no human in the middle (an agent or CI job handing work to another agent) the receiver needs a self-contained task and the sender needs proof.
+**Decision:** `fringe handoff` emits a prompt (rules, definition of done, ordered plan with recipes) and saves `fringe/handoff.v1` with fingerprints of every finding, the scan target/states/modes, and the suppression count. `fringe verify` re-runs the same checks and reports `complete | partial | regressed`, fixed vs introduced, and new suppressions; it exits 0 only on `complete`. The receiving agent is told never to silence rules to get green and to list any `fringe-ignore` it adds; `verify` makes silencing visible regardless of what the agent says.
+**Evidence:** a fresh agent given only the prompt fixed 122/122 errors on the messy app; `verify` reported complete, 0 introduced, 0 silenced; it added 40 visible labels and no aria-labels (one run, a different prompt from the earlier benchmark, so not comparable to those numbers).
+**Limits:** fingerprints use rule+file+message, so a finding whose message changes counts as fixed plus introduced; verify trusts the working tree it is run in.
+
+### D-33 — Other coding agents
+**Decision:** three tiers. (1) Instruction tier: `init --for` writes the same rules text to each tool's own file (AGENTS.md, GEMINI.md, .cursor/rules, copilot-instructions, windsurf, cline, kiro), appending behind a marker, never overwriting. (2) `init --git`: a pre-commit gate for any agent that commits, which **fails open** (only an error-level finding blocks; a checker that cannot run never blocks a commit). (3) Live hooks only per host and only after testing against the real tool, since Claude Code's hook silently ignored our first output format.
+**Verified:** Claude Code; Codex CLI read AGENTS.md and attempted the check (its sandbox crashed npx, which led to the "install locally" advice in the rules). Gemini CLI could not be verified here (no headless output). Codex has PostToolUse hooks, a candidate for a verified adapter next.
+**Not done:** MCP (parked by choice), Cursor/Copilot/Codex hook adapters.
 
 ---
 

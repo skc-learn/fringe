@@ -23,6 +23,8 @@ Prefer a permanent command? `npm install -D @fringetools/cli`, then `npx fringe 
 |---|---|
 | `fringe check [dir\|file]` | Scan a directory (default `.`) or judge one file (the project root is found by climbing to the nearest `package.json`). Prints findings and the health score. Exit `1` on any `error`. |
 | `fringe scan <url> [--states file] [--json]` | **Runtime check of a live page** (needs `npm i -D playwright-core axe-core`; uses your installed Chrome). Runs axe-core for real contrast, computed names and ARIA relations (`FR-400`; critical/serious = `error`, the rest `review`), then walks the page with Tab and reports keyboard traps (`FR-401`, error) and controls Tab never reaches (review). Accepts `http(s)://` and `file://` URLs. Exit `1` on errors. |
+| `fringe handoff [dir\|file] [--scan url]` | **Work order for another agent or CI.** Prints a self-contained prompt (rules, definition of done, the ordered plan) and saves `.fringe/handoff.json` (`fringe/handoff.v1`). `--json` prints the file; `--out` chooses where. |
+| `fringe verify [--handoff file] [--json]` | **Proof it was done.** Re-checks everything the hand-off covered and reports `complete` / `partial` / `regressed`: errors fixed, remaining, introduced, and how many findings were silenced with `fringe-ignore` since. Exit `0` only when `complete` (`fringe/verify.v1`). |
 | `fringe plan [dir\|file] [--scan url] [--json] [--limit n]` | **Fix order for a repo with many findings**: P0 (errors in shared components or critical paths) → P1 (other errors, mechanical first) → P2 review → P3 polish, each cluster with its fix recipe. Never gates (exit 0). `--scan <url>` adds the live page's runtime findings to the same plan (one cluster per axe rule, with element selectors). `--json` = `fringe/plan.v1`. |
 | `fringe explain [FR-203]` | Why a rule matters, the preferred fix and the tempting fix to avoid. No id lists all 36 rules. |
 | `fringe explain pattern [form]` | Build-time best-practice checklist for a component type (`form`, `modal`, `navigation`, `data-view`); each item is marked *verified* (a rule checks it) or *judged*. |
@@ -32,6 +34,8 @@ Prefer a permanent command? `npm install -D @fringetools/cli`, then `npx fringe 
 | `fringe check --update-baseline` | Accept today's findings into `fringe.baseline.json` (commit it). Exit `0`. |
 | `fringe check --record [--manifest <path>]` | Also append this run to `.fringe/ledger.jsonl`, optionally merging an agent flow manifest. |
 | `fringe` (no arguments) | Checks the current folder, and if the post-edit check is not set up yet, says how to set it up. |
+| `fringe init --for <agents>` | Writes the Fringe rules where other agents read them: `codex`, `generic` (AGENTS.md), `gemini` (GEMINI.md), `cursor` (.cursor/rules), `copilot`, `windsurf`, `cline`, `kiro`. Appends to an existing file, never overwrites. Comma-separate several. |
+| `fringe init --git` | Installs a git pre-commit gate that blocks a commit while error-level problems remain, for any agent that commits. It fails open: if the checker cannot run (no network, no node), the commit goes through. Never replaces someone else's hook. |
 | `fringe init [path] [--global]` | Add the Claude Code hook and install the six skills. `--global` writes to `~/.claude` so every project is covered. Uses the project's own installed copy of Fringe when there is one (faster), otherwise `npx`. Safe to re-run; refuses to touch an invalid `settings.json`. |
 | `fringe open [path] [--port <n>]` | Serve the ledger as a plain HTML page on `127.0.0.1:4173` (loopback only). Ctrl+C to stop. |
 | `fringe --help` · `--version` | Usage / version. |
@@ -104,6 +108,29 @@ npx @fringetools/cli scan http://localhost:3000 --modes dark,reflow      # a sub
 Each mode runs on a fresh page so one mode's emulation never leaks into the next, and only findings the plain page did not already have are kept. Findings are labelled `[dark mode]`, `[reduced motion]`, `[reflow]`. Modes apply to the initial page, not to named states.
 
 Limits, plainly: states are independent (each starts from a fresh load of the URL, so there are no multi-page flows that depend on earlier state beyond `goto`); it needs the page running; findings have no source line (they carry a CSS selector); automated checks only find part of the real problems. `fringe plan --scan <url>` merges it with the static findings into one fix order. It does not feed the baseline or `fringe-ignore` yet, and is not part of the edit hook (it needs a running app and takes seconds).
+
+## Agent hand-off
+
+For agent-to-agent or CI-to-agent work with no human in the middle: one agent (or a CI job) finds problems, another fixes them, and a check proves it.
+
+```sh
+fringe handoff --scan http://localhost:3000 > prompt.md    # the work order; also saved as .fringe/handoff.json
+claude -p "$(cat prompt.md)"                               # or any agent that takes a prompt
+fringe verify                                              # exit 0 only when complete; --json for the orchestrator
+```
+
+The prompt carries the rules (fix the cause, never silence a rule to get green, list any `fringe-ignore` you add, stop and report anything that needs a human decision), the definition of done, and the ordered plan with fix recipes. `verify` compares with the hand-off's fingerprints, so it can tell an error that was *fixed* from one that was *introduced*, and it reports new suppressions for a human to review. Tested end to end: a fresh agent given only the prompt fixed all 122 errors of a messy app, `verify` returned `complete` with 0 introduced and 0 silenced.
+
+## Using Fringe with other coding agents
+
+| Layer | Works with | Notes |
+|---|---|---|
+| **Rules file** (`init --for …`) | Codex, Gemini CLI, Cursor, Copilot, Windsurf, Cline, Kiro, Amp, Jules, Zed, anything reading `AGENTS.md` | The agent is told to run `fringe check` after edits and fix errors. It depends on the model following instructions. |
+| **Git pre-commit gate** (`init --git`) | Any agent that runs `git commit` | The hook output goes to the agent's terminal. Fails open. |
+| **CLI, `plan`, `handoff`/`verify`, CI** | Everything | Plain commands, exit codes and JSON. |
+| **Live post-edit hook** | Claude Code | Verified. Other hosts have their own hook contracts, which must each be tested against the real tool before we claim support. |
+
+Verified so far: Claude Code (hook and skills); Codex CLI (read `AGENTS.md` and tried to run the check; its sandbox crashed `npx` with a keychain error, so there use `npm i -D @fringetools/cli`). Gemini CLI could not be tested here (no output headlessly), so `GEMINI.md` is written but unverified.
 
 ## Priority, clusters and fix plans
 
