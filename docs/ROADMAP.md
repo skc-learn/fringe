@@ -81,7 +81,7 @@ Shipped in 0.2: `fringe plan` (priority order, clusters, shared components first
 
 ## Stage 5: Beyond static (v1.0; first slice shipped in 0.3.0)
 
-Shipped: `fringe scan <url>`: axe-core + keyboard walk on one URL. Merged into `plan` via `--scan` in 0.3.1; declarative multi-state scans (`fringe.scan.json`) in 0.4.0. Still ahead: login/session reuse, reduced-motion/zoom/dark-mode passes, screenshots, baseline support for scan findings.
+Shipped: `fringe scan <url>`: axe-core + keyboard walk on one URL. Merged into `plan` via `--scan` in 0.3.1; declarative multi-state scans (`fringe.scan.json`) in 0.4.0. Stress modes (dark, reduced motion, 320px reflow) in 0.4.1. Still ahead: login/session reuse, screenshots, baseline support for scan findings, text-spacing and forced-colors passes.
 
 *For a user who needs more than source analysis can say.*
 

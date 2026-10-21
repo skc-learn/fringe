@@ -61,6 +61,7 @@ Requirements use stable IDs; **Status** reflects v0.1 (shipped) unless marked *p
 | F-21 | Config `critical: [globs]` raises priority for key paths | ✅ |
 | F-22 | Hook message carries each shown rule's fix recipe | ✅ |
 | F-24 | UX best-practice rules FR-216..222 (forms, links, page basics, reduced motion, autoplay, hover-only, filler text), all `review`/`signal`, validated on six real projects before shipping | ✅ |
+| F-29 | Scan stress modes (`--stress` / `--modes dark,reduced,reflow`): dark-mode contrast, animations still looping under reduced motion (FR-403), 320px reflow overflow (FR-404, WCAG 1.4.10); each mode on a fresh page, only findings the plain page lacked are kept | ✅ |
 | F-28 | Scan states: `fringe.scan.json` (`--states`), steps click/fill/press/hover/waitFor/goto, state-labelled findings and clusters, `FR-402` for unreachable states; validated with clear errors | ✅ |
 | F-27 | `fringe plan --scan <url>`: static and runtime findings in one ordered plan (runtime clusters per axe rule, element selectors) | ✅ |
 | F-26 | `fringe scan <url>`: axe-core in headless Chrome (FR-400) + Tab walk (FR-401: keyboard traps, unreachable controls); optional peer deps `playwright-core` and `axe-core`, loaded from the scanned project; http(s)/file URLs only | ✅ first slice |

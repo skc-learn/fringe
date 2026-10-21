@@ -100,7 +100,50 @@ async function audit(page: any, axePath: string, url: string): Promise<Finding[]
 const inState = (name: string, url: string, f: Finding): Finding =>
   ({ ...f, message: `[${name}] ${f.message}`, loc: { ...f.loc, file: `${url} [${name}]` }, ...(f.cluster ? { cluster: `${f.cluster} [${name}]` } : {}) });
 
-export async function scan(url: string, cwd = process.cwd(), states: ScanState[] = []): Promise<CheckResult> {
+export const MODES = ['dark', 'reduced', 'reflow'] as const;
+export type Mode = (typeof MODES)[number];
+
+/** `--stress` = every mode; `--modes dark,reflow` = a subset. */
+export function parseModes(list: string): Mode[] {
+  const out = list.split(',').map((m) => m.trim()).filter(Boolean);
+  const bad = out.find((m) => !(MODES as readonly string[]).includes(m));
+  if (bad || out.length === 0) throw new Error(`unknown scan mode '${bad ?? ''}': use ${MODES.join(', ')}`);
+  return out as Mode[];
+}
+
+/** A stress pass re-runs the whole audit, so most of what it finds was already reported on the plain page. Keep only what is new. */
+export function onlyNew(base: Finding[], extra: Finding[]): Finding[] {
+  const seen = new Set(base.map((f) => `${f.rule}|${f.message}`));
+  return extra.filter((f) => !seen.has(`${f.rule}|${f.message}`));
+}
+
+const countRunningLoops = `[...document.getAnimations()].filter((a) => a.playState === 'running' && a.effect && a.effect.getComputedTiming().iterations === Infinity).map((a) => { const t = a.effect.target; return t ? t.tagName.toLowerCase() + (t.id ? '#' + t.id : '') + (typeof t.className === 'string' && t.className ? '.' + t.className.trim().split(/\\s+/)[0] : '') : 'unknown'; })`;
+
+/** Re-checks the plain page under conditions many users really have. Findings are labelled with the mode. */
+async function stress(browser: any, axePath: string, url: string, mode: Mode, base: Finding[]): Promise<Finding[]> {
+  const page = await browser.newPage(); // a fresh page per mode: media emulation never leaks from one mode into the next
+  try { return await stressOn(page, axePath, url, mode, base); } finally { await page.close(); }
+}
+
+async function stressOn(page: any, axePath: string, url: string, mode: Mode, base: Finding[]): Promise<Finding[]> {
+  const at0 = { file: `${url} [${mode}]`, line: 1, col: 0 };
+  await page.goto(url, { waitUntil: 'load', timeout: 30000 });
+  if (mode === 'dark') {
+    await page.emulateMedia({ colorScheme: 'dark' }); await page.waitForTimeout(150);
+    return onlyNew(base, await audit(page, axePath, url)).map((f) => inState('dark mode', url, f));
+  }
+  if (mode === 'reduced') {
+    await page.emulateMedia({ reducedMotion: 'reduce' }); await page.waitForTimeout(300);
+    const loops: string[] = await page.evaluate(countRunningLoops);
+    return loops.length === 0 ? [] : [{ rule: 'FR-403', severity: 'review', message: `[reduced motion] ${loops.length} animation(s) keep looping when the user asks for reduced motion: ${loops.slice(0, 3).join(', ')}`, hint: 'honour prefers-reduced-motion: stop or replace infinite animations under @media (prefers-reduced-motion: reduce)', loc: at0 }];
+  }
+  await page.setViewportSize({ width: 320, height: 256 }); await page.waitForTimeout(250); // 400% zoom of a 1280px window
+  const wide: number = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  const out: Finding[] = wide > 1 ? [{ rule: 'FR-404', severity: 'review', message: `[reflow] content is ${wide}px wider than a 320px screen, so it needs horizontal scrolling`, hint: 'let content reflow to one column at 320px (WCAG 1.4.10); wide tables and code blocks may scroll inside their own container', loc: at0, wcag: '1.4.10' }] : [];
+  return [...out, ...onlyNew(base, await audit(page, axePath, url)).map((f) => inState('reflow', url, f))];
+}
+
+export async function scan(url: string, cwd = process.cwd(), states: ScanState[] = [], modes: Mode[] = []): Promise<CheckResult> {
   if (!/^(https?|file):\/\//i.test(url)) throw new Error(`fringe scan takes an http(s):// or file:// URL, got '${url}'`);
   const req = createRequire(join(cwd, 'noop.js'));
   let playwright: any, axePath: string;
@@ -112,6 +155,7 @@ export async function scan(url: string, cwd = process.cwd(), states: ScanState[]
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: 'load', timeout: 30000 });
     const all: Finding[] = await audit(page, axePath, url);
+    const plain = [...all];
     for (const st of states) {
       await page.goto(url, { waitUntil: 'load', timeout: 30000 });
       let step = 0;
@@ -122,10 +166,11 @@ export async function scan(url: string, cwd = process.cwd(), states: ScanState[]
       }
       all.push(...(await audit(page, axePath, url)).map((f) => inState(st.name, url, f)));
     }
+    for (const m of modes) all.push(...(await stress(browser, axePath, url, m, plain)));
     const { findings, clusters } = rankScan(url, all);
     const counts = { error: 0, review: 0, signal: 0 };
     for (const f of findings) counts[f.severity]++;
-    return { stack: { jsx: false, tailwind: false, vue: false, svelte: false, html: true }, files: 1 + states.length, skipped: [], findings, clusters, counts, score: score(counts, { error: 10, review: 3, signal: 1 }, 1) };
+    return { stack: { jsx: false, tailwind: false, vue: false, svelte: false, html: true }, files: 1 + states.length + modes.length, skipped: [], findings, clusters, counts, score: score(counts, { error: 10, review: 3, signal: 1 }, 1) };
   } finally { await browser.close(); }
 }
 

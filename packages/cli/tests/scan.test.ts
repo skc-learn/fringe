@@ -120,3 +120,32 @@ describe('scan states', () => {
     expect(r.findings.find((f) => f.rule === 'FR-402')?.message).toContain('[broken] state could not be reached: step 1');
   }, 90000);
 });
+
+import { parseModes, onlyNew, MODES } from '../src/scan.js';
+describe('stress modes', () => {
+  it('parses a mode list and rejects unknown names', () => {
+    expect(parseModes('dark, reflow')).toEqual(['dark', 'reflow']);
+    expect(() => parseModes('dark,sepia')).toThrow(/unknown scan mode 'sepia'/);
+    expect(MODES).toEqual(['dark', 'reduced', 'reflow']);
+  });
+  it('keeps only findings the plain page did not already have', () => {
+    const a = { rule: 'FR-400', severity: 'error' as const, message: 'm1', hint: '', loc: { file: 'u', line: 1, col: 0 } };
+    expect(onlyNew([a], [a, { ...a, message: 'm2' }]).map((f) => f.message)).toEqual(['m2']);
+  });
+  it.skipIf(!existsSync('/Applications/Google Chrome.app') && !existsSync('/usr/bin/google-chrome'))('finds dark-mode contrast, an animation that ignores reduced motion, and a 320px overflow', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'fringe-stress-'));
+    const page = join(dir, 'p.html');
+    writeFileSync(page, `<!doctype html><html lang="en"><head><title>t</title><style>
+      @media (prefers-color-scheme: dark) { body { background:#222 } p { color:#333 } }
+      @keyframes pulse { to { opacity:.5 } } .pulse { animation: pulse 1s infinite alternate }
+      .wide { width: 600px; background:#eee }
+    </style></head><body><main><h1>x</h1><p>readable on light</p><div class="pulse">live</div><div class="wide">wide block</div></main></body></html>`);
+    const url = pathToFileURL(page).href;
+    const r = await scan(url, join(__dirname, '..'), [], ['dark', 'reduced', 'reflow']);
+    rmSync(dir, { recursive: true, force: true });
+    expect(r.findings.some((f) => f.message.startsWith('[dark mode] color-contrast'))).toBe(true);
+    expect(r.findings.some((f) => f.rule === 'FR-403')).toBe(true);
+    expect(r.findings.some((f) => f.rule === 'FR-404' && f.wcag === '1.4.10')).toBe(true);
+    expect(r.findings.some((f) => f.message.startsWith('[reflow] color-contrast'))).toBe(false); // dark emulation must not leak into the next mode
+  }, 90000);
+});
