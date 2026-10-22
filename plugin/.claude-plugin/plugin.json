@@ -1,7 +1,7 @@
 {
   "name": "fringetool",
   "displayName": "Fringe: Accessibility & UX Checker",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Accessibility (WCAG) and UX checker for Claude Code: catches missing labels, contrast and keyboard problems after every edit.",
   "author": {
     "name": "skc-learn",
@@ -10,7 +10,7 @@
   "homepage": "https://github.com/skc-learn/fringe",
   "repository": "https://github.com/skc-learn/fringe",
   "license": "MIT",
-  "skills": "./packages/cli/skill/",
+  "skills": "./skills/",
   "keywords": [
     "accessibility",
     "a11y",
@@ -21,7 +21,7 @@
     "contrast",
     "keyboard-navigation",
     "dark-patterns",
-    "design-tokens",
+    "design-system",
     "react",
     "html",
     "css",

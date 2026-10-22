@@ -1,6 +1,6 @@
 ---
 name: fringe
-description: Use when writing or changing frontend code (JSX/TSX, HTML, CSS, Vue, Svelte). Runs the Fringe checker so accessibility, state handling, dark patterns, token drift and the generic "AI look" are measured, not guessed.
+description: Use when writing or changing frontend code (JSX/TSX, HTML, CSS, Vue, Svelte). Runs the Fringe checker so accessibility, state handling, dark patterns, design-system drift and the generic "AI look" are measured, not guessed.
 ---
 
 # Fringe

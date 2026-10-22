@@ -53,7 +53,7 @@ One package does everything today: `packages/cli`. The dashboard (Plan 3) and sk
 | `src/init.ts` | Claude hook + skills (`initProject`); other agents' rules files (`initFor`); git pre-commit gate (`initGit`); never overwrites | `initProject`, `initFor`, `initGit` |
 | `src/board.ts` | Loopback-only ledger page (`fringe open`); output escaped | `renderBoard`, `startBoard` |
 | `skill/<name>/SKILL.md` | Six skills (`fringe`, `-review`, `-audit`, `-debt`, `-setup`, `-help`) — one folder each; shipped in the npm package, copied by `init`, and loaded by the Claude Code plugin (`.claude-plugin/plugin.json` → `./packages/cli/skill/`) | — |
-| `.claude-plugin/`, `hooks/hooks.json` | Claude Code plugin + marketplace manifests; hook = the same `--claude-hook` command as `init` (a test keeps them in sync) | — |
+| `plugin/`, `.claude-plugin/marketplace.json` | The Claude Code plugin ships from its own folder (`plugin/`: manifest, icon, `hooks/hooks.json`, `skills/`), so a directory scan of the plugin sees only the plugin; the marketplace points at it with `source: ./plugin`. `plugin/skills` is copied from `packages/cli/skill` by `scripts/sync-plugin.mjs` and a test fails on drift; hooks run the same commands as `init` (also tested). | — |
 | `AGENTS.md`, `INSTALL.md` | Rules file for agents without hooks; per-agent install steps | — |
 | `src/guidance.ts` | Per-rule `why` / `recipe` / `avoid` / example / fixability (rules stay pure); `renderExplain` for `fringe explain` | `GUIDANCE`, `renderExplain` |
 | `src/prioritize.ts` | Post-pass: `priority`, `cluster`, `fixability` per finding and the `clusters` list; blast radius from import counts | `prioritize` |

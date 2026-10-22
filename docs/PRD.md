@@ -102,7 +102,7 @@ Requirements use stable IDs; **Status** reflects v0.1 (shipped) unless marked *p
 | ID | Requirement | Status |
 |---|---|---|
 | S-01 | Canonical SKILL.md teaching the ladder (Flow → Edges → Polish), no silencing rules to get green, suppression must be disclosed; shipped in the npm package and installed by `fringe init`. Loop verified with real Claude Code sessions (3 tasks) | ✅ (slash commands S-02 not built) |
-| S-02b | `fringe-debt` (suppressions + baseline ledger) and `fringe-help` skills; Claude Code plugin (`.claude-plugin/`, `hooks/hooks.json`, skills loaded from `packages/cli/skill/`) with one-step install; root `AGENTS.md` and `INSTALL.md` for other agents. Verified: plugin loaded in a real session, five `fringe:*` skills registered, hook fired, agent fixed the findings | ✅ |
+| S-02b | `fringe-debt` (suppressions + baseline ledger) and `fringe-help` skills; Claude Code plugin (`plugin/`: manifest, `hooks/hooks.json`, `skills/` copied from `packages/cli/skill/`) with one-step install; root `AGENTS.md` and `INSTALL.md` for other agents. Verified: plugin loaded in a real session, five `fringe:*` skills registered, hook fired, agent fixed the findings | ✅ |
 | S-02a | `fringe-review` and `fringe-audit` skills (`/fringe-review`, `/fringe-audit`): ranked plain-English report from `check --json`; whole-repo plan + baseline offer. Tried with a real session: runs the checker and reports score and findings (needs one Bash approval) | ✅ |
 | S-02 | Slash commands `/fringe [lite\|full\|ultra]` (ultra = multi-pass review), `/fringe-review` (named rubric: usability, hierarchy, consistency, accessibility), `/fringe-audit` (by WCAG criterion), `/fringe-open` | 🔜 Plan 4 |
 | S-03 | Adapter generation for ~20 agent platforms from one canonical source; CI freshness check | 🔜 Plan 4 |
@@ -140,7 +140,7 @@ The staged, evidence-driven version of this plan lives in [ROADMAP.md](ROADMAP.m
 
 | Release | Scope | Status |
 |---|---|---|
-| **v0.1** | Checker core: 29 rules (36 by 0.2), outputs, size-aware score, calibration, ledger, hooks, token sources, WCAG tags, baseline, suppression, `init`, minimal `open`, skill (Plans 1–2 + post-dogfood work) | ✅ published to npm as `@fringetools/cli@0.7.0` |
+| **v0.1** | Checker core: 29 rules (36 by 0.2), outputs, size-aware score, calibration, ledger, hooks, token sources, WCAG tags, baseline, suppression, `init`, minimal `open`, skill (Plans 1–2 + post-dogfood work) | ✅ published to npm as `@fringetools/cli@0.7.1` |
 | **v0.2** | ✅ `plan`, `explain`, recipes, priority/clusters, single-file check. Still planned: per-rule precision view from the ledger; full dashboard (`fringe board`, stat strip + ladder board + story drawer, handoff export) (Plan 3) | planned |
 | **v0.3** | Adapters for other agent platforms, slash commands, README site (Plan 4) — only if real use shows demand | planned |
 | **v0.4+** | Slop-tuning pass, Vue/Svelte tier-2 depth | backlog |

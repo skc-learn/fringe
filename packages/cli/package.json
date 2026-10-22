@@ -1,6 +1,6 @@
 {
   "name": "@fringetools/cli",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "license": "MIT",
   "type": "module",
   "bin": {
@@ -12,12 +12,14 @@
   "files": [
     "dist",
     "skill",
-    "rules"
+    "rules",
+    "npm-shrinkwrap.json"
   ],
   "scripts": {
     "build": "tsup src/index.ts src/bin.ts --format esm --dts --outDir dist --clean",
     "test": "vitest run",
-    "prepublishOnly": "pnpm build && pnpm test"
+    "prepublishOnly": "node scripts/shrinkwrap.mjs && pnpm build && pnpm test",
+    "shrinkwrap": "node scripts/shrinkwrap.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
