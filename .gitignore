@@ -4,3 +4,6 @@ node_modules/
 dist/
 .video_agent/
 .DS_Store
+# the plugin's vendored runtime (dependencies, including their dist/ folders) is committed on purpose: see scripts/vendor-plugin.mjs
+!/plugin/vendor/
+!/plugin/vendor/**

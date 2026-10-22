@@ -42,6 +42,11 @@ describe('Claude Code plugin manifests', () => {
     expect(files.length).toBeLessThan(512);
     for (const f of files) { expect(statSync(f).size, f).toBeLessThan(256 * 1024); expect(f).not.toMatch(/\.(map|d\.ts|d\.mts|d\.cts)$/); }
   });
+  it('every vendored file is committed (a .gitignore rule once hid node_modules and dist, so a GitHub install had no dependencies)', () => {
+    const git = spawnSync('git', ['ls-files', '--others', '--ignored', '--exclude-standard', 'plugin'], { cwd: root, encoding: 'utf8' });
+    if (git.status !== 0) return; // not a git checkout (e.g. an exported tarball)
+    expect(git.stdout.trim().split('\n').filter(Boolean)).toEqual([]);
+  });
   it('the vendored hooks really run: a block for a bad file, a playbook for a build request, silence otherwise, exit 0 always', () => {
     const hook = join(root, 'plugin/vendor/cli/pluginHook.js');
     const dir = mkdtempSync(join(tmpdir(), 'fringe-vendored-'));
