@@ -1,7 +1,7 @@
 {
   "name": "fringetool",
   "displayName": "Fringe: Accessibility & UX Checker",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "Accessibility (WCAG) and UX checker for Claude Code: catches missing labels, contrast and keyboard problems after every edit.",
   "author": {
     "name": "skc-learn",

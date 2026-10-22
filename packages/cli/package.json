@@ -1,6 +1,6 @@
 {
   "name": "@fringetools/cli",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "license": "MIT",
   "type": "module",
   "bin": {
@@ -30,7 +30,8 @@
     "vitest": "^2.0.0"
   },
   "dependencies": {
-    "@babel/parser": "^7.29.9",
+    "@sveltejs/acorn-typescript": "^1.0.13",
+    "acorn": "^8.19.0",
     "parse5": "^7.3.0",
     "postcss": "^8.5.31"
   },
@@ -56,8 +57,8 @@
     "url": "https://github.com/skc-learn/fringe/issues"
   },
   "peerDependencies": {
-    "playwright-core": ">=1.40",
-    "axe-core": ">=4.8"
+    "axe-core": ">=4.8",
+    "playwright-core": ">=1.40"
   },
   "peerDependenciesMeta": {
     "playwright-core": {

@@ -28,6 +28,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | D-22 | Size-aware health score with soft decay | 2026-10-20 | 🔒 |
 | D-23 | Dashboard scope cut: minimal `fringe open` now, full dashboard later | 2026-10-20 | 🔒 / deferred |
 | D-24 | Flow evidence check; review/audit skills instead of levels | 2026-10-20 | 🔒 |
+| D-36 | The plugin runs vendored code, not a package fetched at run time; parser swapped to fit | 2026-10-22 | 🔒 |
 | D-35 | Playbooks are pushed to the agent at prompt time, not left for it to ask for | 2026-10-21 | 🔒 |
 | D-34 | Authenticated scans: session files, env-var logins, roles; secrets never printed | 2026-10-21 | 🔒 |
 | D-33 | Multi-agent support in tiers, claimed only where verified | 2026-10-21 | 🔒 |
@@ -101,7 +102,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 **Consequence:** breaking either schema is a major-version event; adapters (Plan 4) build on them.
 
 ### D-13 — Node ≥ 18, pinned majors
-**Context:** @babel/parser@8 requires Node ≥22.18 — silently raising our floor.
+**Context:** (superseded by D-36: Babel is gone) @babel/parser@8 requires Node ≥22.18 — silently raising our floor.
 **Decision:** engines `>=18`; all runtime deps pinned to Node-18-compatible majors (`@babel/parser@^7.29.9`, `parse5@^7.3.0` — its v8 pulls `entities@8` needing Node ≥20 — `postcss@^8.5.31`). No other runtime deps without a decision entry.
 **Consequence:** install works everywhere agents run; dependency bumps must check transitive engines (this rule caught two real incidents).
 
@@ -215,6 +216,13 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 **Measured after shipping (v0.7.0, same benchmark):** checklist score 33/36 with the hook vs 9/36 plain (it was 6/36 vs 10/36 before). The price: about 40% more cost ($0.27 vs $0.19) and 71 s vs 25 s per task, partly the extra code and partly two `npx` hook calls per step (1 to 4 s each; a local install is under a second). The checks are a text-search proxy derived from the playbook itself, so this shows agents follow a checklist they are given, not that the result is more usable. See [benchmarks/README.md](../benchmarks/README.md).
 **Runtime check of the output (same 24 components, built and run in Chrome):** 9 of 9 judgeable behaviour probes pass with the pushed playbook versus 2 of 12 plain (a pause button that really freezes the carousel, arrow keys on tabs, `aria-sort`, announced search results); axe-core and the keyboard walk found nothing in either arm, so the difference is behaviour that only a probe sees. One of 12 fringe-arm components did not compile (unescaped quotes in a string), which the checklist proxy had scored 6/6 and Fringe's own check skipped silently.
 **Cost:** only on matching prompts; one `npx` call per prompt (use a local install to make it instant). **Limits:** keyword matching can miss unusual wording or match loosely; Claude Code only (other agents get the rules file, which the same benchmark suggests is followed weakly).
+
+### D-36 — Vendored plugin runtime and the parser swap
+**Context:** the Claude directory held the plugin on "Runs a pinned npx or uvx package": a hook ran `npx @fringetools/cli@<version>`, which pins our package but not its dependencies. Shipping `npm-shrinkwrap.json` in the package (0.7.1) did not clear it. The validator's stated alternative is to vendor the readable source into the plugin and run it from `${CLAUDE_PLUGIN_ROOT}`, with every file under 256 KiB and the plugin under 512 files.
+**Decision:** the plugin's hooks run `node ${CLAUDE_PLUGIN_ROOT}/vendor/cli/pluginHook.js`. That is a dedicated entry (`src/pluginHook.ts`) containing only the post-edit check and the playbook hook, bundled unminified, plus the production dependencies installed from the shrinkwrap (`npm ci`) and pruned to what runs. No `npx`, no network, no `process.env` in the vendored code. `scripts/vendor-plugin.mjs` fails the build if a file reaches 256 KiB.
+**Why the parser changed:** `@babel/parser` is a single 481 KB file (289 KB minified), over the limit, so it could not be vendored. `acorn` (241 KiB) with `@sveltejs/acorn-typescript` (210 KiB) fits. Measured before switching: on 1,020 real files from five projects it parsed 1,008 against Babel's 1,011 and found the same 24,227 JSX elements; the files only Babel parsed were `.ts` generic arrows, fixed by trying `.ts` without JSX first. After switching: findings were **identical per rule** on all six real projects (cw-ops, pointvault, thetrailglobal, vcard, projectmgmt, projectmgmt-dev: ~3,300 findings) and every golden and calibration test passed unchanged; the new parser skips two fewer files overall.
+**Alternatives rejected:** keep Babel and run `npx --no-install` (needs the user to install the CLI first, losing the one-step plugin); split Babel into two files (single-module bundle, unsafe); a hand-rolled JSX scanner (loses AST precision, against D-06).
+**Consequence:** plugin releases now need `node scripts/vendor-plugin.mjs` (documented in CONTRIBUTING, enforced by tests). The `init` route (settings hooks with `npx`) is unchanged: the directory policy applies to the listed plugin, not to a project's own settings.
 
 ---
 

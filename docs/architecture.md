@@ -33,7 +33,7 @@ One package does everything today: `packages/cli`. The dashboard (Plan 3) and sk
 | `src/config.ts` | Load/validate `fringe.config.json`; defaults; mutation-safe (cloned) | `loadConfig`, `DEFAULT_CONFIG` |
 | `src/detect.ts` | Stack auto-detection (deps + file markers, depth-capped scan skipping build dirs) | `detectStack(root): StackInfo` |
 | `src/walk.ts` | File discovery: extension allowlist, dot/node_modules skip, glob→regex ignores | `walk(root, cfg): string[]` |
-| `src/parse/jsx.ts` | `@babel/parser` AST → flat `Elem[]` with parent linkage; throws `parse-skip:` on hard failure | `parseJsx(file, source)` |
+| `src/parse/jsx.ts` | acorn + `@sveltejs/acorn-typescript` AST (`.ts` without JSX first, then with) → flat `Elem[]` with parent linkage; throws `parse-skip:` on hard failure | `parseJsx(file, source)` |
 | `src/parse/html.ts` | parse5 → same `Elem` shape (`class` not `className`) | `parseHtml(file, source)` |
 | `src/parse/css.ts` | PostCSS → `CssDecl[]` (nearest-ancestor selector; at-rules inherit) | `parseCss(file, source)` |
 | `src/color.ts` | Pure WCAG math: `parseColor` (hex/rgb()/rgba()/hsl()/hsla(); null when unparseable), `relativeLuminance`, `contrastRatio` | — |
@@ -53,7 +53,8 @@ One package does everything today: `packages/cli`. The dashboard (Plan 3) and sk
 | `src/init.ts` | Claude hook + skills (`initProject`); other agents' rules files (`initFor`); git pre-commit gate (`initGit`); never overwrites | `initProject`, `initFor`, `initGit` |
 | `src/board.ts` | Loopback-only ledger page (`fringe open`); output escaped | `renderBoard`, `startBoard` |
 | `skill/<name>/SKILL.md` | Six skills (`fringe`, `-review`, `-audit`, `-debt`, `-setup`, `-help`) — one folder each; shipped in the npm package, copied by `init`, and loaded by the Claude Code plugin (`.claude-plugin/plugin.json` → `./packages/cli/skill/`) | — |
-| `plugin/`, `.claude-plugin/marketplace.json` | The Claude Code plugin ships from its own folder (`plugin/`: manifest, icon, `hooks/hooks.json`, `skills/`), so a directory scan of the plugin sees only the plugin; the marketplace points at it with `source: ./plugin`. `plugin/skills` is copied from `packages/cli/skill` by `scripts/sync-plugin.mjs` and a test fails on drift; hooks run the same commands as `init` (also tested). | — |
+| `plugin/`, `.claude-plugin/marketplace.json` | The Claude Code plugin ships from its own folder (`plugin/`: manifest, icon, `hooks/hooks.json`, `skills/`, `vendor/`), so a directory scan of the plugin sees only the plugin; the marketplace points at it with `source: ./plugin`. `plugin/skills` is copied from `packages/cli/skill` by `scripts/sync-plugin.mjs`. `plugin/vendor` is the hooks' whole runtime, built by `scripts/vendor-plugin.mjs` from `src/pluginHook.ts` plus the shrinkwrapped production dependencies; the hooks run `node ${CLAUDE_PLUGIN_ROOT}/vendor/cli/pluginHook.js`, never `npx`. Tests enforce skill sync, the vendored version, the 256 KiB / 512-file limits, and that the hooks really run. | — |
+| `src/pluginHook.ts` | The plugin's entire runtime: the post-edit check and the playbook prompt hook, bundled on their own (no scan, login, hand-off, init or env access); always exits 0 | `main` |
 | `AGENTS.md`, `INSTALL.md` | Rules file for agents without hooks; per-agent install steps | — |
 | `src/guidance.ts` | Per-rule `why` / `recipe` / `avoid` / example / fixability (rules stay pure); `renderExplain` for `fringe explain` | `GUIDANCE`, `renderExplain` |
 | `src/prioritize.ts` | Post-pass: `priority`, `cluster`, `fixability` per finding and the `clusters` list; blast radius from import counts | `prioritize` |

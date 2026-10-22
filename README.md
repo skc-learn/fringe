@@ -139,13 +139,14 @@ Every command, flag, exit code and config key: **[CLI reference](packages/cli/RE
 
 ## What the plugin runs
 
-- **One hook**, [plugin/hooks/hooks.json](plugin/hooks/hooks.json): after Claude edits or writes a file it runs `npx -y @fringetools/cli@<plugin version> check --claude-hook`. The version is pinned to the plugin's own version, and a test fails if they drift.
-- **The package** is this repo's [packages/cli](packages/cli) (readable TypeScript source, MIT), published to npm by [a tagged GitHub Actions run](.github/workflows/publish.yml) with npm provenance, so the npm tarball can be traced to a commit here. Runtime dependencies: `@babel/parser`, `parse5`, `postcss`.
+- **Two hooks**, [plugin/hooks/hooks.json](plugin/hooks/hooks.json): after Claude edits or writes a file, and when you ask it to build something, they run `node ${CLAUDE_PLUGIN_ROOT}/vendor/cli/pluginHook.js` (`check` and `hook-prompt`). That file is **inside the plugin**: nothing is fetched from npm or anywhere else when the hooks run, and a test fails if a hook ever uses `npx`, `npm`, `uvx` or a URL.
+- **The vendored runtime** is [plugin/vendor](plugin/vendor): our two hooks bundled as one readable (unminified) file built from [packages/cli/src/pluginHook.ts](packages/cli/src/pluginHook.ts), plus the production dependencies (`acorn`, `@sveltejs/acorn-typescript`, `parse5`, `postcss` and their dependencies) at the exact versions pinned in `npm-shrinkwrap.json`. Every file is under 256 KiB and the whole plugin is under 512 files, both enforced by a test. `scripts/vendor-plugin.mjs` regenerates it. The hook subset contains no browser, login, hand-off or init code and does not read environment variables.
+- **The package** on npm is this repo's [packages/cli](packages/cli) (readable TypeScript source, MIT), published by [a tagged GitHub Actions run](.github/workflows/publish.yml) with npm provenance and a shipped `npm-shrinkwrap.json`. The plugin does not depend on it at run time.
 - **It reads** the file that was edited and, for project-wide checks, the project's own source and `fringe.config.json`. **It writes** only under `.fringe/` and, if you ask, `fringe.baseline.json`.
 - **It does not** make network calls, send telemetry, or change Claude's settings on its own, and the hook and skills never read credentials. Three commands you run yourself are the exceptions: `fringe scan <url>` opens the page you name in a local browser; `fringe login <url>` saves a browser session you create by logging in yourself to `.fringe/auth.json` (keep it out of git); and `fringe init` writes the hook and skills into your `.claude/` folder. A `fringe.scan.json` login script may reference environment variables **you name** as `${env:NAME}`: Fringe reads only those, types them into the page you pointed it at, and never prints or saves their values.
-- **The skills** (`/fringetool:fringe-review` and the others) are Markdown instructions that run the same pinned command.
+- **The skills** (`/fringetool:fringe-review` and the others) are Markdown instructions; when you invoke one, it asks Claude to run the `fringe` command (from your own install, or `npx` if you have none) with your approval.
 
-**Privacy:** Fringe reads your source files locally and makes no network calls and sends no telemetry. The only download is `npx` fetching the package itself. Its run history stays in your repo (`.fringe/`).
+**Privacy:** Fringe reads your source files locally and makes no network calls and sends no telemetry. The plugin downloads nothing at run time; the only download anywhere is `npx` fetching the package if you choose the `npx @fringetools/cli` route. Its run history stays in your repo (`.fringe/`).
 
 ---
 

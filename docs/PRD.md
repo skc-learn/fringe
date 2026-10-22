@@ -41,7 +41,7 @@ Requirements use stable IDs; **Status** reflects v0.1 (shipped) unless marked *p
 | F-01 | `fringe check [paths...]` scans a directory root; first path is root for config+scan; unknown flags warn to stderr and never crash | ✅ |
 | F-02 | Stack auto-detection from package.json + file markers (React/Preact/Solid, Vue, Svelte, Tailwind, HTML); reported in output and ledger | ✅ |
 | F-03 | File discovery: extensions `.jsx .tsx .js .ts .html .css .scss .vue .svelte .astro`; always skips node_modules, dot-dirs; config `ignore` globs (`dir/**` form) | ✅ |
-| F-04 | Parsing tiers: JSX/TSX via @babel/parser AST (first-class), HTML via parse5 (first-class), CSS/SCSS via PostCSS (first-class); other template files get text-level rules only; unparseable files are skipped and reported, never crash | ✅ |
+| F-04 | Parsing tiers: JSX/TSX via acorn + acorn-typescript AST (first-class), HTML via parse5 (first-class), CSS/SCSS via PostCSS (first-class); other template files get text-level rules only; unparseable files are skipped and reported, never crash | ✅ |
 | F-05 | 36 rules with stable IDs and three severities (`error` 8 / `review` 13 / `signal` 15) — full table in the [package README](../packages/cli/README.md#rules) | ✅ |
 | F-06 | Dark-pattern rules FR-210–214 adapted (attributed) from Design with Intent's CC0 taxonomy | ✅ |
 | F-07 | WCAG success-criterion tags on a11y findings (10 rules tagged) | ✅ |
@@ -120,7 +120,7 @@ Requirements use stable IDs; **Status** reflects v0.1 (shipped) unless marked *p
 | ID | Requirement |
 |---|---|
 | N-01 | Node ≥ 18 (enforced engines; all transitive deps verified Node-18-compatible) |
-| N-02 | Runtime deps limited to `@babel/parser@^7`, `parse5@^7`, `postcss@^8` — nothing else without a decision record |
+| N-02 | Runtime deps limited to `acorn`, `@sveltejs/acorn-typescript`, `parse5@^7`, `postcss@^8` — nothing else without a decision record |
 | N-03 | Never crash the agent's run: unknown flags/paths tolerated, parse failures skipped, internal failures exit 2 with a message |
 | N-04 | Zero-config defaults must produce useful true-positive findings on any React+Tailwind repo |
 | N-05 | Pristine test output; 100% TDD (failing test first) for every change |
@@ -140,7 +140,7 @@ The staged, evidence-driven version of this plan lives in [ROADMAP.md](ROADMAP.m
 
 | Release | Scope | Status |
 |---|---|---|
-| **v0.1** | Checker core: 29 rules (36 by 0.2), outputs, size-aware score, calibration, ledger, hooks, token sources, WCAG tags, baseline, suppression, `init`, minimal `open`, skill (Plans 1–2 + post-dogfood work) | ✅ published to npm as `@fringetools/cli@0.7.1` |
+| **v0.1** | Checker core: 29 rules (36 by 0.2), outputs, size-aware score, calibration, ledger, hooks, token sources, WCAG tags, baseline, suppression, `init`, minimal `open`, skill (Plans 1–2 + post-dogfood work) | ✅ published to npm as `@fringetools/cli@0.7.2` |
 | **v0.2** | ✅ `plan`, `explain`, recipes, priority/clusters, single-file check. Still planned: per-rule precision view from the ledger; full dashboard (`fringe board`, stat strip + ladder board + story drawer, handoff export) (Plan 3) | planned |
 | **v0.3** | Adapters for other agent platforms, slash commands, README site (Plan 4) — only if real use shows demand | planned |
 | **v0.4+** | Slop-tuning pass, Vue/Svelte tier-2 depth | backlog |
