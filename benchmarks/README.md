@@ -47,3 +47,18 @@ The one error left in the fringe arm is `FR-206` on a modal backdrop `<div onCli
 - The hook-only arm hid 20 informative product images with `alt=""` in one run and used `fringe-ignore` once per run; the `full` arm did neither. Two runs per arm is not enough to say the skills caused that.
 - The comparison that favours Fringe is still the earlier one: agents asked to *build* UI left errors in 4 of 12 runs without it, 1 of 12 with it, at the same cost. Fringe's value is clearest when the agent is not told to fix accessibility.
 - n = 2 per arm, one model, a synthetic app.
+
+## Playbooks: asking for them vs pushing them (v0.6.4 vs v0.7.0, 2026-10-21)
+
+`node benchmarks/playbooks.mjs`. Six component tasks (carousel, tabs, modal, login, table, search), 2 runs per cell, two arms: **plain** (nothing installed) and **fringe** (`fringe init`). The prompts never mention accessibility or playbooks (e.g. "Create src/Carousel.tsx: a React image carousel with 4 slides, previous and next buttons, and automatic rotation."). Each task has 3 checks that a text search can verify (e.g. a pause control, `aria-roledescription`, reduced-motion handling for the carousel), so the score is a **proxy for a few playbook items, not an accessibility audit**. Rows: [opt-in](results-playbooks-optin-2026-10-21.json), [pushed](results-playbooks-pushed-2026-10-21.json).
+
+| | plain | fringe |
+|---|---|---|
+| **v0.6.4, playbook opt-in** (the skill says "run `explain pattern` first") | 10/36 | 6/36 |
+| **v0.7.0, playbook pushed** (a prompt hook adds the matching playbook before the agent starts) | 9/36 | **33/36** |
+| Mean turns / cost / time (v0.7.0) | 4.7 / $0.19 / 25 s | 5.4 / $0.27 / 71 s |
+
+- **Asking does not work.** With the skill telling the agent to read the playbook, it did so in **0 of 12** runs, and the score was no better than doing nothing.
+- **Pushing does.** With the hook, every task jumped (carousel 0 to 5 of 6, login 0 to 6, table 0 to 6, tabs 2 to 6). The three checks still missed were a modal's dialog role and Escape handling in one run, and reduced motion in one carousel run.
+- **It costs time.** About 40% more spend and nearly three times the wall-clock time, from the agent writing more complete components plus two `npx` hook calls per step (each 1 to 4 s; a locally installed copy, `npm i -D @fringetools/cli`, brings that to well under a second).
+- **Read it carefully.** The checks come from the playbook, and the plain agents never saw it, so this shows agents *follow a checklist they are given*, not that the components are more usable. The checks are text searches (a pause button that exists but does not work would still pass). 12 runs per arm, one model, small components.
