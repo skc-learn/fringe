@@ -62,3 +62,20 @@ The one error left in the fringe arm is `FR-206` on a modal backdrop `<div onCli
 - **Pushing does.** With the hook, every task jumped (carousel 0 to 5 of 6, login 0 to 6, table 0 to 6, tabs 2 to 6). The three checks still missed were a modal's dialog role and Escape handling in one run, and reduced motion in one carousel run.
 - **It costs time.** About 40% more spend and nearly three times the wall-clock time, from the agent writing more complete components plus two `npx` hook calls per step (each 1 to 4 s; a locally installed copy, `npm i -D @fringetools/cli`, brings that to well under a second).
 - **Read it carefully.** The checks come from the playbook, and the plain agents never saw it, so this shows agents *follow a checklist they are given*, not that the components are more usable. The checks are text searches (a pause button that exists but does not work would still pass). 12 runs per arm, one model, small components.
+
+### Do the pushed-playbook components actually work? (runtime check, same 24 components)
+
+`node benchmarks/runtime-check.mjs <results dir>` builds every component the playbook benchmark produced (esbuild + React), opens it in Chrome, runs `fringe scan` (axe-core + keyboard walk) and one **behaviour probe** per task: a carousel's pause button really freezes the slides (compared by screenshot), ArrowRight moves between tabs, an empty sign-in submit gives an announced error, sorting a table sets `aria-sort`, a search with no match announces something, Escape closes a modal. Rows: [results-playbooks-runtime-2026-10-21.json](results-playbooks-runtime-2026-10-21.json).
+
+| | plain | fringe (v0.7.0, playbook pushed) |
+|---|---|---|
+| Components that built | 12 of 12 | **11 of 12** |
+| Behaviour probes that passed | **2 of 12** (both sign-in forms) | **9 of 9** that could be judged |
+| Could not be judged | 0 | 2 (modal: needs props to open) |
+| axe-core errors (excluding touch-target size on unstyled controls) | 0 | 0 |
+| Keyboard traps | 0 | 0 |
+
+- **The behaviours are real, not just text.** The pushed playbook produced carousels whose pause button stops the rotation, tabs that respond to the arrow keys, tables that set `aria-sort` when sorted, and searches that announce results. The plain components mostly had none of it.
+- **It also produced one broken file.** In one tabs run the agent put unescaped double quotes inside a string, so the component did not compile (`Expected "}" but found "Exactly"`). The checklist proxy had scored that run 6/6. Fringe's own check skipped the unparseable file without telling the agent, which is a gap (see the roadmap).
+- **axe-core finds nothing either way.** These small unstyled components have no color or markup problems for it to catch, so the difference between the arms is behaviour (keyboard, announcements, state), which static and axe checks do not see. That is also why the probes exist.
+- Limits: 12 components per arm, one model, probes are my own and cover one behaviour per task, the two modal cells could not be tested without props.

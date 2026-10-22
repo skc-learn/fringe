@@ -52,6 +52,8 @@ Shipped in 0.2: `fringe plan` (priority order, clusters, shared components first
 | ✅ Messy-repo benchmark (100+ findings) with and without `plan` + recipes | Done 2026-10-21: no fix-quality gain and ~70% more cost than a plain agent; claims limited accordingly. Repeat with a prompt that does not say "keep the design" and with more runs |
 | FR-216 advisory: input labelled only by `aria-label` | Only if the benchmark shows agents keep choosing the weaker pattern |
 
+| Tell the agent when a file could not be parsed | The runtime check found a generated component with a syntax error that Fringe skipped silently; the hook should say "X could not be read, so it was not checked" (only for files that newly failed, so old broken files do not nag) |
+
 ## Stage 3: Works wherever you work (v0.3)
 
 *For a new user on a team, not just one agent.*
