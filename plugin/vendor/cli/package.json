@@ -1,6 +1,6 @@
 {
   "name": "@fringetools/cli-plugin-hooks",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "type": "module",
   "private": true,
   "description": "Vendored hook subset of @fringetools/cli, built by scripts/vendor-plugin.mjs"

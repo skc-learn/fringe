@@ -7,11 +7,13 @@ import type { CheckResult, Counts, Finding } from './types.js';
 export interface Handoff {
   schema: 'fringe/handoff.v1';
   createdAt: string;
-  /** Absolute project root; `verify` re-runs against it from anywhere. */
+  /** Project root as it was when the hand-off was made (informational: it may not exist where `verify` runs). */
   root: string;
+  /** The root relative to the folder this file lives in, so the pair can move together between machines. */
+  rootRel?: string;
   /** What `check` / `plan` were pointed at (relative to where handoff ran). */
   target: string;
-  /** Absolute path when the hand-off covers a single file. */
+  /** The single file the hand-off covers, relative to the root (older files hold an absolute path). */
   only?: string;
   scan?: { url: string; statesFile?: string; modes: string[]; storageState?: string };
   score: number;
@@ -73,17 +75,17 @@ export function buildHandoff(result: CheckResult, meta: { root: string; target: 
 }
 
 /** Compares a fresh result with the hand-off: what got fixed, what is left, what the receiving agent broke or silenced. */
-export function verifyHandoff(h: Handoff, now: CheckResult): Verify {
+export function verifyHandoff(h: Handoff, now: CheckResult, root = h.root): Verify {
   const left = new Map<string, number>();
   for (const k of h.fingerprints) left.set(k, (left.get(k) ?? 0) + 1);
   const introduced: Finding[] = [];
   const remaining: Finding[] = [];
   for (const f of now.findings) {
-    const k = fp(h.root, f), n = left.get(k) ?? 0;
+    const k = fp(root, f), n = left.get(k) ?? 0;
     if (n > 0) { left.set(k, n - 1); remaining.push(f); } else introduced.push(f);
   }
   const errs = (fs: Finding[]) => fs.filter((f) => f.severity === 'error');
-  const row = (f: Finding) => ({ rule: f.rule, where: where(h.root, f), message: f.message });
+  const row = (f: Finding) => ({ rule: f.rule, where: where(root, f), message: f.message });
   const remainingErrors = errs(remaining).length, introducedErrors = errs(introduced).length;
   return {
     schema: 'fringe/verify.v1',

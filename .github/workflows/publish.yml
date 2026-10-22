@@ -25,12 +25,16 @@ jobs:
           v=$(node -p "require('./packages/cli/package.json').version")
           test "v$v" = "${GITHUB_REF_NAME}" || { echo "tag ${GITHUB_REF_NAME} != package.json v$v"; exit 1; }
       - run: pnpm test            # drift test also checks plugin.json and --version
-      - name: Publish
+      # GitHub first: the release (with the packed tarball attached) exists even if npm is down or slow, so there is always a download.
+      - name: GitHub Release with the tarball
         working-directory: packages/cli
-        run: npm publish --provenance --access public
-      - name: GitHub Release
-        # GitHub's API occasionally returns a transient 500; npm already published by now, so retry rather than fail the run.
         run: |
-          for i in 1 2 3; do gh release create "${GITHUB_REF_NAME}" --generate-notes --title "${GITHUB_REF_NAME}" && break; sleep 15; done
+          npm pack --silent
+          gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 || for i in 1 2 3; do gh release create "${GITHUB_REF_NAME}" --generate-notes --title "${GITHUB_REF_NAME}" && break; sleep 15; done
+          gh release upload "${GITHUB_REF_NAME}" ./*.tgz --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish to npm
+        working-directory: packages/cli
+        timeout-minutes: 10      # npm's registry can hang; fail loudly instead of holding the run for hours
+        run: npm publish --provenance --access public

@@ -1,4 +1,5 @@
-import { appendFileSync, mkdirSync, readFileSync } from 'node:fs';
+import { appendFileSync, readFileSync } from 'node:fs';
+import { fringeDir } from './state.js';
 import { join } from 'node:path';
 import type { Counts, StackInfo } from './types.js';
 
@@ -23,7 +24,7 @@ export function ledgerPath(root: string): string {
 }
 
 export function appendRecord(root: string, rec: LedgerRecord): void {
-  mkdirSync(join(root, '.fringe'), { recursive: true });
+  fringeDir(root);
   appendFileSync(ledgerPath(root), JSON.stringify(rec) + '\n');
 }
 

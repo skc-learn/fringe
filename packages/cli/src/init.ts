@@ -1,9 +1,11 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, copyFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { VERSION } from './version.js';
 
-// npx runs a locally installed copy if there is one and downloads otherwise, so init needs no prior install.
-const HOOK = 'npx -y @fringetools/cli check --claude-hook';
+// Pinned to the version that ran init: an unpinned `npx -y` would run whatever is newest on npm at every edit and commit. Re-run init to upgrade.
+const PKG = `@fringetools/cli@${VERSION}`;
+const HOOK = `npx -y ${PKG} check --claude-hook`;
 // Every folder under packages/cli/skill/ is one skill (same layout the Claude Code plugin loads).
 const SKILL_DIR = fileURLToPath(new URL('../skill/', import.meta.url));
 
@@ -30,7 +32,7 @@ export function initProject(root: string): string[] {
     catch { throw new Error(`${settingsPath} is not valid JSON — fix it and rerun`); }
   }
   const post: any[] = ((settings.hooks ??= {}).PostToolUse ??= []);
-  if (/(fringe|@fringetools\/cli) check/.test(JSON.stringify(post))) done.push('hook already present');
+  if (/(fringe|@fringetools\/cli(@[\w.-]+)?) check/.test(JSON.stringify(post))) done.push('hook already present');
   else {
     post.push({ matcher: 'Edit|Write', hooks: [{ type: 'command', command: hookCommand(root) }] });
     mkdirSync(dirname(settingsPath), { recursive: true });
@@ -101,11 +103,11 @@ export function initGit(root: string): string[] {
   const file = join(dir, 'pre-commit');
   const local = existsSync(join(root, 'node_modules', '@fringetools', 'cli', 'package.json'));
   // Fails open: only a real error-level finding blocks the commit. If the checker cannot run at all (no network, no node), the commit goes through.
-  const cmd = local ? 'npx --no-install fringe check' : 'npx -y @fringetools/cli check';
+  const cmd = local ? 'npx --no-install fringe check' : `npx -y ${PKG} check`;
   const script = `#!/bin/sh\n# fringe pre-commit: blocks the commit while error-level UX/accessibility problems remain\nout=$(${cmd} 2>&1); code=$?\nprintf '%s\\n' "$out"\nif [ "$code" -eq 1 ] && printf '%s' "$out" | grep -q '^\\[ERROR\\]'; then\n  echo "fringe: fix the errors above (or record them with: fringe check --update-baseline) and commit again." >&2\n  exit 1\nfi\nexit 0\n`;
   if (existsSync(file)) {
     if (readFileSync(file, 'utf8').includes('# fringe pre-commit')) return ['pre-commit hook already present'];
-    throw new Error(`${file} already exists and is not Fringe's: add 'npx -y @fringetools/cli check || exit 1' to it yourself`);
+    throw new Error(`${file} already exists and is not Fringe's: add 'npx -y ${PKG} check || exit 1' to it yourself`);
   }
   mkdirSync(dir, { recursive: true });
   writeFileSync(file, script, { mode: 0o755 });

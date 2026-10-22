@@ -45,7 +45,7 @@ describe('init', () => {
     const s = JSON.parse(readFileSync(join(d, '.claude/settings.json'), 'utf8'));
     expect(s.permissions.allow).toEqual(['x']);
     expect(s.hooks.PostToolUse).toHaveLength(1);
-    expect(s.hooks.PostToolUse[0].hooks[0].command).toContain('@fringetools/cli check --claude-hook');
+    expect(s.hooks.PostToolUse[0].hooks[0].command).toMatch(/@fringetools\/cli@\d+\.\d+\.\d+ check --claude-hook/);
     expect(existsSync(join(d, '.claude/skills/fringe/SKILL.md'))).toBe(true);
   });
   it('refuses to overwrite invalid settings.json', async () => {
@@ -128,7 +128,7 @@ describe('simpler setup', () => {
     expect(readFileSync(join(d, '.claude/settings.json'), 'utf8')).toContain('npx --no-install fringe check --claude-hook');
     const e = mk({});
     await run(['init', e]);
-    expect(readFileSync(join(e, '.claude/settings.json'), 'utf8')).toContain('npx -y @fringetools/cli check --claude-hook');
+    expect(readFileSync(join(e, '.claude/settings.json'), 'utf8')).toMatch(/npx -y @fringetools\/cli@\d+\.\d+\.\d+ check --claude-hook/);
   });
   it('bare `fringe` checks the folder and nudges until the hook is set up, then stops nudging', async () => {
     const home = mk({}), d = mk({ 'a.html': IMG });

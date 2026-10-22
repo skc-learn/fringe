@@ -135,6 +135,7 @@ Every command, flag, exit code and config key: **[CLI reference](packages/cli/RE
 | A rule is wrong for my case | `fringe-ignore` it on that line, and please [report the false positive](https://github.com/skc-learn/fringe/issues/new?template=false-positive.md) |
 | `exit 2` / "internal error" | The message names the cause: bad `fringe.config.json`, corrupt `fringe.baseline.json`, or an invalid `.claude/settings.json` |
 | It checked a folder I don't want | Add globs to `ignore` in `fringe.config.json`, e.g. `"examples/**"` (use the `dir/**` form) |
+| A `.fringe/` folder appeared in my project | It is local state (run history, hand-offs, saved login sessions). Fringe creates it with its own `.gitignore` of `*`, so git never sees it |
 | Remove it | Plugin: `/plugin uninstall fringetool`. Init: delete the Fringe entry in `.claude/settings.json` and the `.claude/skills/fringe*` folders |
 
 ## What the plugin runs

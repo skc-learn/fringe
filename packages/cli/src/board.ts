@@ -1,5 +1,6 @@
 import { createServer } from 'node:http';
 import type { Server } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { readLedger } from './ledger.js';
 import type { LedgerRecord } from './ledger.js';
 
@@ -24,7 +25,10 @@ export function renderBoard(records: LedgerRecord[], corrupt = 0): string {
 
 /** Serves the project's ledger on loopback only; re-reads on every request so reload shows new runs. */
 export function startBoard(root: string, port: number): Promise<Server> {
-  const server = createServer((_req, res) => {
+  const server = createServer((req, res) => {
+    // DNS rebinding: a web page can point its own hostname at 127.0.0.1 and read this port. Only answer to our own addresses.
+    const port = (server.address() as AddressInfo).port;
+    if (!['127.0.0.1', 'localhost', '[::1]'].some((h) => req.headers.host?.toLowerCase() === `${h}:${port}`)) { res.statusCode = 421; return res.end('Misdirected request'); }
     const { records, corrupt } = readLedger(root);
     res.setHeader('content-type', 'text/html; charset=utf-8');
     res.end(renderBoard(records, corrupt));

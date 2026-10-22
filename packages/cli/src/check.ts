@@ -13,7 +13,7 @@ import { applyBaseline } from './baseline.js';
 import { suppressedIds } from './suppress.js';
 import { prioritize } from './prioritize.js';
 
-export async function runCheck(root: string, cfg: FringeConfig = loadConfig(root), useBaseline = true, only?: Set<string>): Promise<CheckResult> {
+export async function runCheck(root: string, cfg: FringeConfig = loadConfig(root), useBaseline = true, only?: Set<string>, lean = false): Promise<CheckResult> {
   // Two-phase by design: walk+parse everything first, then run rules over the contexts.
   // ACCEPTED DEVIATION (memory profile): every RuleContext — including its full source
   // string — is retained until the run completes, because the token gather needs all CSS
@@ -28,7 +28,9 @@ export async function runCheck(root: string, cfg: FringeConfig = loadConfig(root
   const skipped: string[] = [];
   const cssSources: Array<{ file: string; source: string }> = [];
   const contexts: RuleContext[] = [];
-  for (const file of files) {
+  // `lean` (the post-edit hook): parse only the file being judged. Everything else is needed only for token colors and import counts, which the hook does not use.
+  const toParse = lean && only && !cfg.tokenSource ? files.filter((f) => only.has(f)) : files;
+  for (const file of toParse) {
     let source = '';
     try { source = readFileSync(file, 'utf8'); } catch { skipped.push(file); continue; }
     const ctx: RuleContext = { file, source, elems: [], css: [], tokenColors: [] };

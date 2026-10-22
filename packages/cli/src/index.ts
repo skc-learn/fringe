@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { existsSync, readFileSync, statSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { VERSION } from './version.js';
 import { runCheck } from './check.js';
 import { toJson } from './report/json.js';
@@ -25,6 +25,7 @@ import { ruleReport, rulesToText } from './rulereport.js';
 import { buildHandoff, verifyHandoff, verifyToMarkdown } from './handoff.js';
 import type { Handoff } from './handoff.js';
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { fringeDir } from './state.js';
 
 export interface CliOpts { log?: (s: string) => void; cwd?: string; err?: (s: string) => void; /** Home directory for `init --global` (tests override it). */ home?: string; /** What `hook-prompt` reads instead of process.stdin (tests). */ stdin?: string; /** `fringe login` waits for this instead of Enter on the terminal (tests). */ waitForUser?: () => Promise<void> }
 const log = (o: CliOpts) => o.log ?? ((s: string) => console.log(s));
@@ -129,7 +130,7 @@ async function gather(opts: CliOpts, rest: string[]) {
   const limit = li !== -1 ? Number(rest[li + 1]) || undefined : undefined;
   const valued = new Set(['--limit', '--scan', '--states', '--modes', '--out', '--storage-state', '--screenshots']);
   const flags = new Set(['--json', '--stress']);
-  const paths = parseArgs(rest.filter((a, i) => !valued.has(a) && !valued.has(rest[i - 1]) && !flags.has(a)), (s) => process.stderr.write(s));
+  const paths = parseArgs(rest.filter((a, i) => !valued.has(a) && !valued.has(rest[i - 1]) && !flags.has(a)), err(opts));
   const cwd = opts.cwd ?? process.cwd();
   const { root, only } = resolveTarget(resolve(cwd, paths[0] ?? '.'));
   const cfg = loadConfig(root);
@@ -144,174 +145,184 @@ async function gather(opts: CliOpts, rest: string[]) {
   return { result, root, target: paths[0] ?? '.', only: only ? [...only][0] : undefined, limit, scan: scanMeta };
 }
 
+type Run = (rest: string[], o: CliOpts) => Promise<number>;
+const cwdOf = (o: CliOpts) => o.cwd ?? process.cwd();
+const flagValue = (rest: string[], name: string) => { const i = rest.indexOf(name); return i === -1 ? undefined : rest[i + 1]; };
+/** One place for "report the message on stderr and exit 2", so no command can forget it. `label` is the prefix some commands have always used. */
+const guard = (run: Run, label = ''): Run => async (rest, o) => {
+  try { return await run(rest, o); } catch (e) { err(o)(`fringe: ${label}${(e as Error).message}\n`); return 2; }
+};
+const INTERNAL = 'internal error: ';
+
+const check: Run = async (rest, o) => {
+  const paths = parseArgs(rest, err(o));
+  const cwd = cwdOf(o);
+  // First path is the check root (config + scan); extra paths accepted so agent-invoked runs never crash.
+  const { root, only } = resolveTarget(paths.length > 0 ? resolve(cwd, paths[0]) : cwd);
+  // Loaded once here and passed through, so the --record path can cite the same config.
+  const cfg = loadConfig(root);
+  if (rest.includes('--update-baseline')) {
+    const all = await runCheck(root, cfg, false);
+    writeBaseline(root, all.findings);
+    log(o)(`fringe: baseline written — ${all.findings.length} known findings in fringe.baseline.json (commit it); only new ones gate from now on`);
+    return 0;
+  }
+  const result = await runCheck(root, cfg, true, only);
+  if (rest.includes('--claude-hook')) {
+    const out = toClaudeHook(result, root, receipts(root, result.findings, only && [...only]));
+    if (out) log(o)(out);
+    return 0; // Claude reads the JSON, not the exit code; a non-zero exit would be discarded
+  }
+  if (rest.includes('--hook')) log(o)(toHook(result));
+  else if (rest.includes('--json')) log(o)(toJson(result));
+  else log(o)(toPretty(result));
+  if (rest.includes('--record')) {
+    const rec: LedgerRecord = {
+      id: randomUUID(),
+      ts: new Date().toISOString(),
+      stack: result.stack,
+      files: result.files,
+      counts: result.counts,
+      score: result.score,
+      byRule: result.findings.reduce<Record<string, number>>((m, f) => ((m[f.rule] = (m[f.rule] ?? 0) + 1), m), {}),
+      suppressed: result.suppressed,
+      tokenSource: cfg.tokenSource?.kind,
+    };
+    const manifest = flagValue(rest, '--manifest');
+    if (manifest !== undefined) rec.manifest = readManifest(manifest, err(o));
+    appendRecord(root, rec);
+  }
+  return result.counts.error > 0 ? 1 : 0;
+};
+
+const scanCmd: Run = async (rest, o) => {
+  const url = rest.find((a, i) => !a.startsWith('--') && !['--states', '--modes', '--storage-state', '--screenshots'].includes(rest[i - 1]));
+  if (!url) { err(o)('fringe: scan needs a URL, e.g. fringe scan http://localhost:3000\n'); return 2; }
+  const cwd = cwdOf(o);
+  const so = loadScanOptions(cwd, rest);
+  const result = await scan(url, cwd, so);
+  if (so.updateBaseline) { log(o)(`fringe: scan baseline written: ${result.baselined ?? 0} known findings in fringe.scan.baseline.json (commit it); only new ones show from now on`); return 0; }
+  if (so.screenshots) err(o)(`fringe: screenshots saved in ${so.screenshots}\n`);
+  log(o)(rest.includes('--json') ? toJson(result) : toPretty(result));
+  return result.counts.error > 0 ? 1 : 0;
+};
+
+/** Claude Code UserPromptSubmit hook: adds the matching playbook to the agent's context before it starts building. It must never break the user's prompt. */
+const hookPrompt: Run = async (_rest, o) => {
+  try {
+    const input = o.stdin ?? await new Promise<string>((ok) => { let d = ''; process.stdin.setEncoding('utf8'); process.stdin.on('data', (c) => (d += c)); process.stdin.on('end', () => ok(d)); if (process.stdin.isTTY) ok(''); });
+    const out = promptHookOutput(input);
+    if (out) log(o)(out);
+  } catch { /* swallowed on purpose */ }
+  return 0;
+};
+
+const login: Run = async (rest, o) => {
+  const url = rest.find((a, i) => !a.startsWith('--') && rest[i - 1] !== '--out');
+  if (!url) { err(o)('fringe: login needs a URL, e.g. fringe login http://localhost:3000/login\n'); return 2; }
+  const cwd = cwdOf(o);
+  const outArg = flagValue(rest, '--out');
+  const out = resolve(cwd, outArg ?? '.fringe/auth.json');
+  if (dirname(out) === join(cwd, '.fringe')) fringeDir(cwd); // creates .fringe/ with its own .gitignore, so the session can never be committed by accident
+  await saveSession(url, cwd, out, { headless: rest.includes('--headless'), wait: o.waitForUser });
+  log(o)(`fringe: session saved to ${out}\nIt holds your logged-in cookies.${dirname(out) === join(cwd, '.fringe') ? ' .fringe/ is ignored by git automatically.' : ' Keep it out of git.'} Use it with: fringe scan <url> --storage-state ${outArg ?? '.fringe/auth.json'}`);
+  return 0;
+};
+
+const rules: Run = async (rest, o) => {
+  const rows = await ruleReport(resolve(cwdOf(o), rest.find((a) => !a.startsWith('--')) ?? '.'));
+  log(o)(rest.includes('--json') ? JSON.stringify({ schema: 'fringe/rules.v1', rules: rows }, null, 2) : rulesToText(rows));
+  return 0;
+};
+
+const plan: Run = async (rest, o) => {
+  const g = await gather(o, rest);
+  log(o)(rest.includes('--json') ? toPlanJson(g.result, g.limit) : toPlanMarkdown(g.result, g.target, g.limit));
+  return 0;
+};
+
+const handoff: Run = async (rest, o) => {
+  const g = await gather(o, rest);
+  const inside = (p?: string) => (p && p.startsWith(g.root + sep) ? relative(g.root, p) : p); // paths inside the project travel as relative ones
+  const h = buildHandoff(g.result, { root: g.root, target: g.target, ...(g.only ? { only: inside(g.only) } : {}), ...(g.scan ? { scan: { ...g.scan, ...(g.scan.statesFile ? { statesFile: inside(g.scan.statesFile) } : {}), ...(g.scan.storageState ? { storageState: inside(g.scan.storageState) } : {}) } } : {}) }, g.limit);
+  const outArg = flagValue(rest, '--out');
+  const outFile = resolve(g.root, outArg ?? '.fringe/handoff.json');
+  h.rootRel = relative(dirname(outFile), g.root) || '.';
+  if (dirname(outFile) === join(g.root, '.fringe')) fringeDir(g.root); else mkdirSync(dirname(outFile), { recursive: true });
+  writeFileSync(outFile, JSON.stringify(h, null, 2) + '\n');
+  log(o)(rest.includes('--json') ? JSON.stringify(h, null, 2) : h.prompt);
+  err(o)(`fringe: hand-off saved to ${outFile}; the receiving agent proves it is done with: fringe verify${outArg ? ` --handoff ${outFile}` : ''}\n`);
+  return 0;
+};
+
+const verify: Run = async (rest, o) => {
+  const cwd = cwdOf(o);
+  const file = resolve(cwd, flagValue(rest, '--handoff') ?? '.fringe/handoff.json');
+  let h: Handoff;
+  try { h = JSON.parse(readFileSync(file, 'utf8')); } catch { throw new Error(`no readable hand-off at ${file} — run 'fringe handoff' first`); }
+  if (h.schema !== 'fringe/handoff.v1') throw new Error(`${file} is not a fringe/handoff.v1 file`);
+  // Where the project is NOW: an explicit --root, else the folder the hand-off file sits beside, else where it was made, else here.
+  const rootFlag = flagValue(rest, '--root');
+  const root = [rootFlag && resolve(cwd, rootFlag), h.rootRel !== undefined && resolve(dirname(file), h.rootRel), h.root, cwd].find((d): d is string => !!d && existsSync(d)) ?? cwd;
+  const cfg = loadConfig(root);
+  let result = await runCheck(root, cfg, true, h.only ? new Set([resolve(root, h.only)]) : undefined);
+  if (h.scan) {
+    const base = loadScanOptions(root, h.scan.statesFile ? ['--states', resolve(root, h.scan.statesFile)] : []);
+    result = mergeScan(result, await scan(h.scan.url, root, { ...base, modes: h.scan.modes as never, ...(h.scan.storageState ? { storageState: resolve(root, h.scan.storageState) } : {}) }), cfg.weights);
+  }
+  const v = verifyHandoff(h, result, root);
+  log(o)(rest.includes('--json') ? JSON.stringify(v, null, 2) : verifyToMarkdown(v));
+  return v.status === 'complete' ? 0 : 1;
+};
+
+const explain: Run = async (rest, o) => {
+  const pattern = rest[0] === 'pattern';
+  const out = pattern ? renderPatterns(rest[1]) : renderExplain(rest[0]);
+  if (out === undefined) { err(o)(`fringe: unknown ${pattern ? 'pattern' : 'rule'} '${pattern ? rest[1] : rest[0]}' — run 'fringe explain${pattern ? ' pattern' : ''}' to list them\n`); return 2; }
+  log(o)(out);
+  return 0;
+};
+
+const init: Run = async (rest, o) => {
+  const global = rest.includes('--global') || rest.includes('-g');
+  const target = global ? (o.home ?? homedir()) : resolve(cwdOf(o), rest.find((a, i) => !a.startsWith('-') && rest[i - 1] !== '--for') ?? '.');
+  const forArg = flagValue(rest, '--for');
+  const agents = rest.includes('--for') ? (forArg ?? '').split(',').map((a) => a.trim().toLowerCase()).filter(Boolean) : [];
+  if (rest.includes('--for') && agents.length === 0) throw new Error(`--for needs an agent: ${AGENTS.join(', ')}, claude`);
+  const lines: string[] = [];
+  const wantsClaude = (!rest.includes('--for') && !rest.includes('--git')) || agents.includes('claude');
+  if (wantsClaude) lines.push(...initProject(target));
+  const others = agents.filter((a) => a !== 'claude');
+  if (others.length) lines.push(...initFor(target, others));
+  if (rest.includes('--git')) lines.push(...initGit(target));
+  for (const line of lines) log(o)(`fringe: ${line}`);
+  if (global) log(o)('fringe: set up for your user, so every project is covered (run without --global to set up one project only)');
+  return 0;
+};
+
+const open: Run = async (rest, o) => {
+  const port = Number(flagValue(rest, '--port')) || 4173;
+  const path = rest.find((a, i) => !a.startsWith('--') && rest[i - 1] !== '--port');
+  await startBoard(resolve(cwdOf(o), path ?? '.'), port);
+  log(o)(`fringe: ledger at http://127.0.0.1:${port} — Ctrl+C to stop`);
+  return await new Promise<number>(() => {});
+};
+
+const COMMANDS: Record<string, Run> = {
+  check: guard(check, INTERNAL), scan: guard(scanCmd), 'hook-prompt': hookPrompt, login: guard(login), rules: guard(rules),
+  plan: guard(plan), handoff: guard(handoff), verify: guard(verify), explain, init: guard(init), open: guard(open, INTERNAL),
+  '--help': async (_r, o) => (log(o)(HELP), 0), '-h': async (_r, o) => (log(o)(HELP), 0), help: async (_r, o) => (log(o)(HELP), 0),
+  '--version': async (_r, o) => (log(o)(VERSION), 0), '-v': async (_r, o) => (log(o)(VERSION), 0),
+};
+
 export async function runCli(argv: string[], opts: CliOpts = {}): Promise<number> {
   const [cmd, ...rest] = argv;
   if (cmd === undefined) { // bare `fringe`: check this folder, and say how to get the post-edit check if it is not set up yet
     const code = await runCli(['check'], opts);
-    if (!isWired(opts.cwd ?? process.cwd(), opts.home ?? homedir())) log(opts)('\nfringe: not checking after your agent\'s edits yet. Run `npx @fringetools/cli init` (this project) or `init --global` (every project).');
+    if (!isWired(cwdOf(opts), opts.home ?? homedir())) log(opts)('\nfringe: not checking after your agent\'s edits yet. Run `npx @fringetools/cli init` (this project) or `init --global` (every project).');
     return code;
   }
-  if (cmd === '--version' || cmd === '-v') { log(opts)(VERSION); return 0; }
-  if (cmd === 'check') {
-    try {
-      const paths = parseArgs(rest, err(opts));
-      const cwd = opts.cwd ?? process.cwd();
-      // First path is the check root (config + scan); extra paths accepted so agent-invoked runs never crash.
-      const { root, only } = resolveTarget(paths.length > 0 ? resolve(cwd, paths[0]) : cwd);
-      // Loaded once here and passed through, so the --record path can cite the same config.
-      const cfg = loadConfig(root);
-      if (rest.includes('--update-baseline')) {
-        const all = await runCheck(root, cfg, false);
-        writeBaseline(root, all.findings);
-        log(opts)(`fringe: baseline written — ${all.findings.length} known findings in fringe.baseline.json (commit it); only new ones gate from now on`);
-        return 0;
-      }
-      const result = await runCheck(root, cfg, true, only);
-      if (rest.includes('--claude-hook')) {
-        const out = toClaudeHook(result, root, receipts(root, result.findings));
-        if (out) log(opts)(out);
-        return 0; // Claude reads the JSON, not the exit code; a non-zero exit would be discarded
-      }
-      if (rest.includes('--hook')) log(opts)(toHook(result));
-      else if (rest.includes('--json')) log(opts)(toJson(result));
-      else log(opts)(toPretty(result));
-      if (rest.includes('--record')) {
-        const rec: LedgerRecord = {
-          id: randomUUID(),
-          ts: new Date().toISOString(),
-          stack: result.stack,
-          files: result.files,
-          counts: result.counts,
-          score: result.score,
-          byRule: result.findings.reduce<Record<string, number>>((m, f) => ((m[f.rule] = (m[f.rule] ?? 0) + 1), m), {}),
-          suppressed: result.suppressed,
-          tokenSource: cfg.tokenSource?.kind,
-        };
-        const mIdx = rest.indexOf('--manifest');
-        if (mIdx !== -1 && rest[mIdx + 1] !== undefined) rec.manifest = readManifest(rest[mIdx + 1], err(opts));
-        appendRecord(root, rec);
-      }
-      return result.counts.error > 0 ? 1 : 0;
-    } catch (e) {
-      // Internal failure (unreadable root, bad config, unexpected rule crash): report and exit 2.
-      err(opts)(`fringe: internal error: ${(e as Error).message}\n`);
-      return 2;
-    }
-  }
-  if (cmd === 'scan') {
-    try {
-      const url = rest.find((a, i) => !a.startsWith('--') && !['--states', '--modes', '--storage-state', '--screenshots'].includes(rest[i - 1]));
-      if (!url) { err(opts)('fringe: scan needs a URL, e.g. fringe scan http://localhost:3000\n'); return 2; }
-      const cwd = opts.cwd ?? process.cwd();
-      const so = loadScanOptions(cwd, rest);
-      const result = await scan(url, cwd, so);
-      if (so.updateBaseline) { log(opts)(`fringe: scan baseline written: ${result.baselined ?? 0} known findings in fringe.scan.baseline.json (commit it); only new ones show from now on`); return 0; }
-      if (so.screenshots) err(opts)(`fringe: screenshots saved in ${so.screenshots}\n`);
-      log(opts)(rest.includes('--json') ? toJson(result) : toPretty(result));
-      return result.counts.error > 0 ? 1 : 0;
-    } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }
-  }
-  if (cmd === 'hook-prompt') { // Claude Code UserPromptSubmit hook: adds the matching playbook to the agent's context before it starts building
-    try {
-      const input = opts.stdin ?? await new Promise<string>((ok) => { let d = ''; process.stdin.setEncoding('utf8'); process.stdin.on('data', (c) => (d += c)); process.stdin.on('end', () => ok(d)); if (process.stdin.isTTY) ok(''); });
-      const out = promptHookOutput(input);
-      if (out) log(opts)(out);
-    } catch { /* a hook must never break the user's prompt */ }
-    return 0;
-  }
-  if (cmd === 'login') {
-    try {
-      const url = rest.find((a, i) => !a.startsWith('--') && rest[i - 1] !== '--out');
-      if (!url) { err(opts)('fringe: login needs a URL, e.g. fringe login http://localhost:3000/login\n'); return 2; }
-      const cwd = opts.cwd ?? process.cwd();
-      const oi = rest.indexOf('--out');
-      const out = resolve(cwd, oi !== -1 ? rest[oi + 1] ?? '' : '.fringe/auth.json');
-      await saveSession(url, cwd, out, { headless: rest.includes('--headless'), wait: opts.waitForUser });
-      log(opts)(`fringe: session saved to ${out}\nIt holds your logged-in cookies: keep it out of git. Use it with: fringe scan <url> --storage-state ${oi !== -1 ? rest[oi + 1] : '.fringe/auth.json'}`);
-      if (oi === -1 && existsSync(join(cwd, '.gitignore')) && !/\.fringe/.test(readFileSync(join(cwd, '.gitignore'), 'utf8'))) log(opts)('fringe: your .gitignore does not list .fringe/: add it, or the session file could be committed.');
-      return 0;
-    } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }
-  }
-  if (cmd === 'rules') {
-    try {
-      const root = resolve(opts.cwd ?? process.cwd(), rest.find((a) => !a.startsWith('--')) ?? '.');
-      const rows = await ruleReport(root);
-      log(opts)(rest.includes('--json') ? JSON.stringify({ schema: 'fringe/rules.v1', rules: rows }, null, 2) : rulesToText(rows));
-      return 0;
-    } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }
-  }
-  if (cmd === 'plan' || cmd === 'handoff') {
-    try {
-      const g = await gather(opts, rest);
-      if (cmd === 'plan') {
-        log(opts)(rest.includes('--json') ? toPlanJson(g.result, g.limit) : toPlanMarkdown(g.result, g.target, g.limit));
-        return 0;
-      }
-      const h = buildHandoff(g.result, { root: g.root, target: g.target, ...(g.only ? { only: g.only } : {}), ...(g.scan ? { scan: g.scan } : {}) }, g.limit);
-      const oi = rest.indexOf('--out');
-      const outFile = resolve(g.root, oi !== -1 ? rest[oi + 1] ?? '' : '.fringe/handoff.json');
-      mkdirSync(dirname(outFile), { recursive: true });
-      writeFileSync(outFile, JSON.stringify(h, null, 2) + '\n');
-      log(opts)(rest.includes('--json') ? JSON.stringify(h, null, 2) : h.prompt);
-      err(opts)(`fringe: hand-off saved to ${outFile}; the receiving agent proves it is done with: fringe verify${oi !== -1 ? ` --handoff ${outFile}` : ''}\n`);
-      return 0;
-    } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }
-  }
-  if (cmd === 'verify') {
-    try {
-      const hi = rest.indexOf('--handoff');
-      const file = resolve(opts.cwd ?? process.cwd(), hi !== -1 ? rest[hi + 1] ?? '' : '.fringe/handoff.json');
-      let h: Handoff;
-      try { h = JSON.parse(readFileSync(file, 'utf8')); } catch { throw new Error(`no readable hand-off at ${file} — run 'fringe handoff' first`); }
-      if (h.schema !== 'fringe/handoff.v1') throw new Error(`${file} is not a fringe/handoff.v1 file`);
-      const cfg = loadConfig(h.root);
-      let result = await runCheck(h.root, cfg, true, h.only ? new Set([h.only]) : undefined);
-      if (h.scan) result = mergeScan(result, await scan(h.scan.url, h.root, { ...loadScanOptions(h.root, h.scan.statesFile ? ['--states', h.scan.statesFile] : []), modes: h.scan.modes as never, ...(h.scan.storageState ? { storageState: h.scan.storageState } : {}) }), cfg.weights);
-      const v = verifyHandoff(h, result);
-      log(opts)(rest.includes('--json') ? JSON.stringify(v, null, 2) : verifyToMarkdown(v));
-      return v.status === 'complete' ? 0 : 1;
-    } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }
-  }
-  if (cmd === 'explain' && rest[0] === 'pattern') {
-    const out = renderPatterns(rest[1]);
-    if (out === undefined) { err(opts)(`fringe: unknown pattern '${rest[1]}' — run 'fringe explain pattern' to list them\n`); return 2; }
-    log(opts)(out);
-    return 0;
-  }
-  if (cmd === 'explain') {
-    const out = renderExplain(rest[0]);
-    if (out === undefined) { err(opts)(`fringe: unknown rule '${rest[0]}' — run 'fringe explain' to list them\n`); return 2; }
-    log(opts)(out);
-    return 0;
-  }
-  if (cmd === 'init') {
-    try {
-      const global = rest.includes('--global') || rest.includes('-g');
-      const target = global ? (opts.home ?? homedir()) : resolve(opts.cwd ?? process.cwd(), rest.find((a, i) => !a.startsWith('-') && rest[i - 1] !== '--for') ?? '.');
-      const fi = rest.indexOf('--for');
-      const agents = fi !== -1 ? (rest[fi + 1] ?? '').split(',').map((a) => a.trim().toLowerCase()).filter(Boolean) : [];
-      if (fi !== -1 && agents.length === 0) throw new Error(`--for needs an agent: ${AGENTS.join(', ')}, claude`);
-      const lines: string[] = [];
-      const wantsClaude = (fi === -1 && !rest.includes('--git')) || agents.includes('claude');
-      if (wantsClaude) lines.push(...initProject(target));
-      const others = agents.filter((a) => a !== 'claude');
-      if (others.length) lines.push(...initFor(target, others));
-      if (rest.includes('--git')) lines.push(...initGit(target));
-      for (const line of lines) log(opts)(`fringe: ${line}`);
-      if (global) log(opts)('fringe: set up for your user, so every project is covered (run without --global to set up one project only)');
-      return 0;
-    } catch (e) { err(opts)(`fringe: ${(e as Error).message}\n`); return 2; }
-  }
-  if (cmd === 'open') {
-    try {
-      const port = Number(rest[rest.indexOf('--port') + 1]) || 4173;
-      const path = rest.find((a, i) => !a.startsWith('--') && rest[i - 1] !== '--port');
-      await startBoard(resolve(opts.cwd ?? process.cwd(), path ?? '.'), port);
-      log(opts)(`fringe: ledger at http://127.0.0.1:${port} — Ctrl+C to stop`);
-      return await new Promise<number>(() => {});
-    } catch (e) { err(opts)(`fringe: internal error: ${(e as Error).message}\n`); return 2; }
-  }
-  if (cmd === '--help' || cmd === '-h' || cmd === 'help') { log(opts)(HELP); return 0; }
-  log(opts)(`fringe: unknown command '${cmd ?? ''}' — try 'fringe check --help'`);
+  if (Object.hasOwn(COMMANDS, cmd)) return COMMANDS[cmd](rest, opts); // hasOwn: 'constructor' or 'toString' are not commands
+  log(opts)(`fringe: unknown command '${cmd}' — try 'fringe check --help'`);
   return 2;
 }

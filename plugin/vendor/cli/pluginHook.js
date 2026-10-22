@@ -1,3 +1,7 @@
+// src/pluginHook.ts
+import { realpathSync } from "fs";
+import { isAbsolute as isAbsolute2, join as join8, relative as relative6 } from "path";
+
 // src/check.ts
 import { readFileSync as readFileSync5 } from "fs";
 
@@ -1374,7 +1378,7 @@ function prioritize(findings, sources, root, critical) {
 }
 
 // src/check.ts
-async function runCheck(root, cfg = loadConfig(root), useBaseline = true, only) {
+async function runCheck(root, cfg = loadConfig(root), useBaseline = true, only, lean = false) {
   const stack = detectStack(root);
   const files = walk(root, cfg);
   const rules = activeRules(cfg);
@@ -1382,7 +1386,8 @@ async function runCheck(root, cfg = loadConfig(root), useBaseline = true, only) 
   const skipped = [];
   const cssSources = [];
   const contexts = [];
-  for (const file2 of files) {
+  const toParse = lean && only && !cfg.tokenSource ? files.filter((f) => only.has(f)) : files;
+  for (const file2 of toParse) {
     let source = "";
     try {
       source = readFileSync5(file2, "utf8");
@@ -1424,30 +1429,56 @@ async function runCheck(root, cfg = loadConfig(root), useBaseline = true, only) 
 }
 
 // src/receipts.ts
-import { mkdirSync, readFileSync as readFileSync6, writeFileSync as writeFileSync2 } from "fs";
+import { readFileSync as readFileSync6, renameSync, writeFileSync as writeFileSync3 } from "fs";
+import { join as join7, relative as relative4 } from "path";
+
+// src/state.ts
+import { existsSync as existsSync2, mkdirSync, writeFileSync as writeFileSync2 } from "fs";
 import { join as join6 } from "path";
-var file = (root) => join6(root, ".fringe", "last.json");
-function receipts(root, findings) {
-  const errs = findings.filter((f) => f.severity === "error");
-  const keys = errs.map((f) => keyOf(root, f));
-  let prev;
+function fringeDir(root) {
+  const dir = join6(root, ".fringe");
+  mkdirSync(dir, { recursive: true });
+  const ignore = join6(dir, ".gitignore");
+  if (!existsSync2(ignore)) writeFileSync2(ignore, "*\n");
+  return dir;
+}
+
+// src/receipts.ts
+var file = (root) => join7(root, ".fringe", "last.json");
+function readState(root) {
   try {
     const p = JSON.parse(readFileSync6(file(root), "utf8"));
-    if (Array.isArray(p)) prev = p;
+    return p && typeof p === "object" && !Array.isArray(p) ? p : void 0;
   } catch {
+    return void 0;
   }
+}
+function receipts(root, findings, scope) {
+  const errs = findings.filter((f) => f.severity === "error");
+  const cur = {};
+  for (const f of errs) (cur[relative4(root, f.loc.file)] ??= []).push(keyOf(root, f));
+  const scoped = scope ? new Set(scope.map((s) => relative4(root, s))) : void 0;
+  const prevState = readState(root);
   try {
-    mkdirSync(join6(root, ".fringe"), { recursive: true });
-    writeFileSync2(file(root), JSON.stringify(keys));
+    const next = { ...scoped ? prevState : void 0 };
+    for (const k of scoped ?? Object.keys({ ...prevState, ...cur })) {
+      if (cur[k]?.length) next[k] = cur[k];
+      else delete next[k];
+    }
+    const tmp = `${file(root)}.${process.pid}.tmp`;
+    fringeDir(root);
+    writeFileSync3(tmp, JSON.stringify(next));
+    renameSync(tmp, file(root));
   } catch {
   }
-  if (!prev) return void 0;
+  if (!prevState) return void 0;
   const left = /* @__PURE__ */ new Map();
-  for (const k of prev) left.set(k, (left.get(k) ?? 0) + 1);
-  const introduced = errs.filter((f, i) => {
-    const n = left.get(keys[i]) ?? 0;
+  for (const [f, keys] of Object.entries(prevState)) if (!scoped || scoped.has(f)) for (const k of keys) left.set(k, (left.get(k) ?? 0) + 1);
+  const inScope = errs.filter((f) => !scoped || scoped.has(relative4(root, f.loc.file)));
+  const introduced = inScope.filter((f) => {
+    const k = keyOf(root, f), n = left.get(k) ?? 0;
     if (n > 0) {
-      left.set(keys[i], n - 1);
+      left.set(k, n - 1);
       return false;
     }
     return true;
@@ -1456,7 +1487,7 @@ function receipts(root, findings) {
 }
 
 // src/report/hook.ts
-import { relative as relative4 } from "path";
+import { relative as relative5 } from "path";
 function toClaudeHook(r, root, history) {
   const all = r.findings.filter((f) => f.severity === "error");
   if (all.length === 0) return "";
@@ -1464,7 +1495,7 @@ function toClaudeHook(r, root, history) {
   const errs = [...all.filter((f) => fresh.has(f)), ...all.filter((f) => !fresh.has(f))];
   const note = history && (history.introduced.length > 0 || history.fixed > 0) ? `Your last edit introduced ${history.introduced.length} new error(s)${history.fixed ? ` and fixed ${history.fixed}` : ""}; ${errs.length} failing in total. New ones are marked NEW.
 ` : "";
-  const shown = errs.slice(0, 8).map((f) => `- ${fresh.has(f) ? "NEW " : ""}${f.rule} ${relative4(root, f.loc.file)}:${f.loc.line} \u2014 ${f.message} (${f.hint})`);
+  const shown = errs.slice(0, 8).map((f) => `- ${fresh.has(f) ? "NEW " : ""}${f.rule} ${relative5(root, f.loc.file)}:${f.loc.line} \u2014 ${f.message} (${f.hint})`);
   const shownRules = [...new Set(errs.slice(0, 8).map((f) => f.rule))];
   const recipes = shownRules.map((id) => {
     const g = GUIDANCE[id];
@@ -1815,10 +1846,15 @@ var TRIGGERS = [
   ["navigation", /navbar|nav ?bar|navigation|sidebar|menu|breadcrumb/i],
   ["form", /\bforms?\b|input field|contact form|signup form/i]
 ];
+var AMBIGUOUS = /* @__PURE__ */ new Set(["table", "search", "settings", "chat", "form", "dashboard", "auth", "pricing", "checkout", "navigation", "upload"]);
+var UI_CUE = /\b(component|page|screen|ui|ux|frontend|front-end|react|vue|svelte|angular|next\.?js|tailwind|jsx|tsx|html|css|button|modal|layout|widget|view|widgets)\b|\.(tsx|jsx|vue|svelte|html|css)\b/i;
+var BACKEND_CUE = /\b(database|sql|postgres|mysql|migration|schema|orm|api|endpoint|cli|command[- ]line|script|backend|server|query|docker|kubernetes|logs?|cron|worker|queue)\b/i;
 var BUILD = /\b(create|build|add|make|implement|write|design|develop|generate|scaffold|set up|put together)\b/i;
 function matchPlaybooks(prompt, max = 2) {
   if (!BUILD.test(prompt)) return [];
-  return TRIGGERS.filter(([, re]) => re.test(prompt)).map(([name]) => name).slice(0, max);
+  const ui = UI_CUE.test(prompt);
+  if (BACKEND_CUE.test(prompt) && !ui) return [];
+  return TRIGGERS.filter(([name, re]) => re.test(prompt) && (ui || !AMBIGUOUS.has(name))).map(([name]) => name).slice(0, max);
 }
 function playbookContext(names) {
   const blocks = names.map((n) => {
@@ -1853,12 +1889,24 @@ var readStdin = () => new Promise((ok) => {
   process.stdin.on("data", (c) => d += c);
   process.stdin.on("end", () => ok(d));
 });
+function editedFile(stdin, cwd) {
+  try {
+    const p = JSON.parse(stdin)?.tool_input?.file_path;
+    if (typeof p !== "string") return void 0;
+    const rel = relative6(realpathSync(cwd), realpathSync(p));
+    return rel && !rel.startsWith("..") && !isAbsolute2(rel) ? join8(cwd, rel) : void 0;
+  } catch {
+    return void 0;
+  }
+}
 async function main(argv, cwd, log) {
   try {
     if (argv[0] === "check") {
       const cfg = loadConfig(cwd);
-      const result = await runCheck(cwd, cfg);
-      const out = toClaudeHook(result, cwd, receipts(cwd, result.findings));
+      const file2 = editedFile(await readStdin(), cwd);
+      const only = file2 ? /* @__PURE__ */ new Set([file2]) : void 0;
+      const result = await runCheck(cwd, cfg, true, only, true);
+      const out = toClaudeHook(result, cwd, receipts(cwd, result.findings, file2 ? [file2] : void 0));
       if (out) log(out);
     } else if (argv[0] === "hook-prompt") {
       const out = promptHookOutput(await readStdin());

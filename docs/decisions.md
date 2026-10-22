@@ -28,6 +28,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | D-22 | Size-aware health score with soft decay | 2026-10-20 | 🔒 |
 | D-23 | Dashboard scope cut: minimal `fringe open` now, full dashboard later | 2026-10-20 | 🔒 / deferred |
 | D-24 | Flow evidence check; review/audit skills instead of levels | 2026-10-20 | 🔒 |
+| D-37 | Audit fixes: ignored state folder, relocatable hand-offs, pinned init, per-file hook, gated playbooks | 2026-10-22 | 🔒 |
 | D-36 | The plugin runs vendored code, not a package fetched at run time; parser swapped to fit | 2026-10-22 | 🔒 |
 | D-35 | Playbooks are pushed to the agent at prompt time, not left for it to ask for | 2026-10-21 | 🔒 |
 | D-34 | Authenticated scans: session files, env-var logins, roles; secrets never printed | 2026-10-21 | 🔒 |
@@ -223,6 +224,19 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 **Why the parser changed:** `@babel/parser` is a single 481 KB file (289 KB minified), over the limit, so it could not be vendored. `acorn` (241 KiB) with `@sveltejs/acorn-typescript` (210 KiB) fits. Measured before switching: on 1,020 real files from five projects it parsed 1,008 against Babel's 1,011 and found the same 24,227 JSX elements; the files only Babel parsed were `.ts` generic arrows, fixed by trying `.ts` without JSX first. After switching: findings were **identical per rule** on all six real projects (cw-ops, pointvault, thetrailglobal, vcard, projectmgmt, projectmgmt-dev: ~3,300 findings) and every golden and calibration test passed unchanged; the new parser skips two fewer files overall.
 **Alternatives rejected:** keep Babel and run `npx --no-install` (needs the user to install the CLI first, losing the one-step plugin); split Babel into two files (single-module bundle, unsafe); a hand-rolled JSX scanner (loses AST precision, against D-06).
 **Consequence:** plugin releases now need `node scripts/vendor-plugin.mjs` (documented in CONTRIBUTING, enforced by tests). The `init` route (settings hooks with `npx`) is unchanged: the directory policy applies to the listed plugin, not to a project's own settings.
+
+### D-37 — Whole-repo audit fixes
+A ponytail audit of the repo found 11 issues; all were fixed, each with a test that fails if it returns.
+- **`.fringe/` leaked into git.** The hook created it in every project and `fringe login` put live session cookies in it, with nothing stopping `git add -A`. Now every writer goes through `fringeDir()`, which creates `.fringe/.gitignore` containing `*` (test: after a hook run `git status` is empty).
+- **Hand-offs broke when the checkout moved** (verify scanned the old absolute path). Paths inside the project are stored relative; `verify` finds the project beside the hand-off file, then the original path, then the current directory, or `--root`. `verifyHandoff` takes the root it actually ran in.
+- **`init` and the commit gate ran unpinned `npx -y`**, executing whatever was newest on npm at every edit and commit: the same weakness the directory rejected in the plugin. They now pin the version that ran `init` (re-run to upgrade) and prefer a local install.
+- **The hook re-parsed the whole project on every edit** (about 2 s on a 736-file project). It now reads `tool_input.file_path`, judges only that file and parses nothing else (`lean` mode; skipped when a token source needs the CSS). Receipts are kept per file so a one-file run never marks other files fixed; the state file is replaced atomically.
+- **Playbooks fired for backend work** ("add a column to the users table", "search the logs", "a settings flag for the CLI", "a chat completion client"). Ambiguous words (table, search, settings, chat, form, dashboard, auth, pricing, checkout, navigation, upload) now need a UI cue (component, page, React, `.tsx`...) and a backend cue with no UI cue vetoes; unmistakable components (carousel, tabs, modal...) still fire alone.
+- **The commit gate script was only checked as text.** A test now runs it in a real git repo with a fake `npx`: a finding blocks, a clean run passes, a checker failure and a missing `npx` both pass (fail open).
+- **Doc numbers went stale** (a test count was already wrong). A test now fails if any "N rules", "N playbooks" or "N items" in the docs differs from the code; test counts are no longer written in the docs.
+- **`index.ts` was a chain of 15 command branches** with the same try/catch in nine of them. It is now a table of handlers plus one `guard` that reports errors and exits 2 (and `constructor`/`toString` are no longer treated as commands).
+- **The ledger page** answered any `Host` header, so a DNS-rebinding page could read it. It now answers only `127.0.0.1`, `localhost` and `[::1]` on its own port.
+- **Three copies of the rules text** are now generated: `node scripts/sync-plugin.mjs` copies `AGENTS.md` to `packages/cli/rules/fringe.md` and the skills into the plugin.
 
 ---
 
