@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/vendor/cli/pluginHook.js\" check",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/check.sh\"",
             "timeout": 60
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/vendor/cli/pluginHook.js\" hook-prompt",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/prompt.sh\"",
             "timeout": 20
           }
         ]

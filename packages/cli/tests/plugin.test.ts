@@ -29,7 +29,7 @@ describe('Claude Code plugin manifests', () => {
   it('the plugin hooks run vendored code from the plugin itself, never a package fetched at run time', () => {
     const hooks = json('plugin/hooks/hooks.json').hooks;
     const cmds: string[] = [hooks.PostToolUse[0].hooks[0].command, hooks.UserPromptSubmit[0].hooks[0].command];
-    expect(cmds).toEqual(['node "${CLAUDE_PLUGIN_ROOT}/vendor/cli/pluginHook.js" check', 'node "${CLAUDE_PLUGIN_ROOT}/vendor/cli/pluginHook.js" hook-prompt']);
+    expect(cmds).toEqual(['sh "${CLAUDE_PLUGIN_ROOT}/hooks/check.sh"', 'sh "${CLAUDE_PLUGIN_ROOT}/hooks/prompt.sh"']);
     for (const c of cmds) expect(c).not.toMatch(/npx|npm |uvx|https?:/);
     expect(existsSync(join(root, 'plugin/vendor/cli/pluginHook.js'))).toBe(true);
     // the vendored copy is the one this version builds (run `node scripts/vendor-plugin.mjs` after any change)
@@ -47,19 +47,24 @@ describe('Claude Code plugin manifests', () => {
     if (git.status !== 0) return; // not a git checkout (e.g. an exported tarball)
     expect(git.stdout.trim().split('\n').filter(Boolean)).toEqual([]);
   });
-  it('the vendored hooks really run: a block for a bad file, a playbook for a build request, silence otherwise, exit 0 always', () => {
-    const hook = join(root, 'plugin/vendor/cli/pluginHook.js');
+  it('the plugin ships no third-party code, and its hook scripts run: a block for a bad file, a playbook for a build request, silence otherwise, exit 0 always', () => {
+    expect(readdirSync(join(root, 'plugin/vendor')).sort()).toEqual(['README.md', 'cli']);
     const dir = mkdtempSync(join(tmpdir(), 'fringe-vendored-'));
     try {
       mkdirSync(join(dir, 'src')); writeFileSync(join(dir, 'package.json'), '{}');
       writeFileSync(join(dir, 'src/A.tsx'), 'export default () => <img src="a.png" />;');
-      const run = (args: string[], input = '') => spawnSync('node', [hook, ...args], { cwd: dir, input, encoding: 'utf8' });
-      const check = run(['check']);
+      const env: NodeJS.ProcessEnv = { ...process.env, CLAUDE_PLUGIN_ROOT: join(root, 'plugin') };
+      const run = (script: string, input = '', e = env) => spawnSync('sh', [join(root, 'plugin/hooks', script)], { cwd: dir, input, encoding: 'utf8', env: e });
+      const none = run('check.sh', '', { ...env, PATH: '/usr/bin:/bin' });
+      expect(none.status).toBe(0); // fringe not installed in the project: silent
+      const bin = join(dir, 'node_modules/.bin'); mkdirSync(bin, { recursive: true });
+      writeFileSync(join(bin, 'fringe'), `#!/bin/sh\nexec node ${JSON.stringify(join(__dirname, '../dist/bin.js'))} "$@"\n`, { mode: 0o755 });
+      if (!existsSync(join(__dirname, '../dist/bin.js'))) return; // dist is built by `pnpm build`; the rest needs it
+      const check = run('check.sh');
       expect(check.status).toBe(0);
       expect(JSON.parse(check.stdout)).toMatchObject({ decision: 'block' });
-      expect(JSON.parse(run(['hook-prompt'], JSON.stringify({ prompt: 'create a carousel' })).stdout).hookSpecificOutput.additionalContext).toContain('Carousel: build it like this');
-      expect(run(['hook-prompt'], JSON.stringify({ prompt: 'fix the bug' })).stdout).toBe('');
-      expect(run(['nonsense']).status).toBe(0);
+      expect(JSON.parse(run('prompt.sh', JSON.stringify({ prompt: 'create a carousel' })).stdout).hookSpecificOutput.additionalContext).toContain('Carousel: build it like this');
+      expect(run('prompt.sh', JSON.stringify({ prompt: 'fix the bug' })).stdout).toBe('');
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
   it('plugin/skills is an exact copy of packages/cli/skill (run `node scripts/sync-plugin.mjs`)', () => {

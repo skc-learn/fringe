@@ -29,6 +29,7 @@ Every load-bearing decision, in one place: what was decided, the alternatives, a
 | D-23 | Dashboard scope cut: minimal `fringe open` now, full dashboard later | 2026-10-20 | 🔒 / deferred |
 | D-24 | Flow evidence check; review/audit skills instead of levels | 2026-10-20 | 🔒 |
 | D-37 | Audit fixes: ignored state folder, relocatable hand-offs, pinned init, per-file hook, gated playbooks | 2026-10-22 | 🔒 |
+| D-38 | The plugin ships no third-party code: prompt hook vendored, edit check runs the installed CLI | 2026-10-22 | 🔒 |
 | D-36 | The plugin runs vendored code, not a package fetched at run time; parser swapped to fit | 2026-10-22 | 🔒 |
 | D-35 | Playbooks are pushed to the agent at prompt time, not left for it to ask for | 2026-10-21 | 🔒 |
 | D-34 | Authenticated scans: session files, env-var logins, roles; secrets never printed | 2026-10-21 | 🔒 |
@@ -250,3 +251,9 @@ A ponytail audit of the repo found 11 issues; all were fixed, each with a test t
 | FR-364/366 thresholds fixed (3 tiles / 5 chips) | deliberately conservative first cut | tuning pass |
 | Token-drift checks, `fringe shot`, `--stamp verified` | v2 scope, schema already reserved | PRD §4.5 |
 | Per-rule precision view | ledger records `byRule`/`suppressed`; needs real data | v0.2 |
+
+### D-38 — The plugin ships no third-party code
+**Context:** vendoring the parsers (D-36) cleared the pinned-npx hold but the directory's scanner reads vendored third-party text as findings: acorn's identifier tables as an unread asset, its comments as credential handling and a download-and-run pattern, and it does not follow `node` hook commands (only plain shell scripts at a literal path).
+**Decision:** the plugin vendors only our own dependency-free playbook hook (`plugin/vendor/cli/pluginHook.js`, 24 KiB, run by `hooks/prompt.sh`). The post-edit check is `hooks/check.sh`, which runs the project's installed `fringe` and is silent when there is none. `knownRule` moved from `patterns.ts` to `guidance.ts` so the playbook bundle no longer pulls in the rules and parsers. `acorn` stays a normal dependency of the npm package.
+**Alternatives rejected:** patching strings inside third-party files (fragile, unreviewable); a purpose-built parser (large new code).
+**Consequence:** plugin-only users get playbooks and skills but not the post-edit check until they `npm i -D @fringetools/cli`; the check was one of the plugin's selling points, so the README says so plainly.

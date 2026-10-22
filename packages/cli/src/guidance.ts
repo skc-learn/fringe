@@ -225,3 +225,6 @@ export function renderExplain(id?: string): string | undefined {
   if (g.example) out.push('Before:  ' + g.example.before.replace(/\n/g, '\n         '), 'After:   ' + g.example.after.replace(/\n/g, '\n         '));
   return out.join('\n');
 }
+
+/** Rule ids a playbook may cite: static rules, plus the runtime ids that belong to `fringe scan`. */
+export const knownRule = (id: string) => ALL_RULES.some((r) => r.id === id) || /^FR-40[0-5]$/.test(id);

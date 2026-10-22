@@ -1,4 +1,3 @@
-import { ALL_RULES } from './rules/registry.js';
 
 /** Best-practice checklists per component type. An item names the rules that verify it; no rules = judged by the agent, with evidence. */
 export interface Item { text: string; rules?: string[] }
@@ -323,4 +322,3 @@ export function renderPatterns(name?: string): string | undefined {
 }
 
 export const patternRuleIds = () => [...new Set(Object.values(PATTERNS).flatMap((p) => p.items.flatMap((i) => i.rules ?? [])))];
-export const knownRule = (id: string) => ALL_RULES.some((r) => r.id === id) || /^FR-40[0-5]$/.test(id); // runtime ids belong to `fringe scan`

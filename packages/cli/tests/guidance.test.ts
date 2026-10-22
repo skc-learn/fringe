@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { GUIDANCE } from '../src/guidance.js';
+import { GUIDANCE, knownRule } from '../src/guidance.js';
 import { ALL_RULES } from '../src/rules/registry.js';
 
 describe('guidance table', () => {
@@ -15,7 +15,7 @@ describe('guidance table', () => {
   });
 });
 
-import { PATTERNS, patternRuleIds, knownRule } from '../src/patterns.js';
+import { PATTERNS, patternRuleIds } from '../src/patterns.js';
 import { runCli } from '../src/index.js';
 describe('patterns', () => {
   it('only name rules that exist, and mix verified with judged items', () => {

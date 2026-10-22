@@ -13,7 +13,7 @@ Send these as two separate prompts:
 /plugin install fringetool@fringe
 ```
 
-This adds the post-edit and playbook hooks and the skills, namespaced: `/fringetool:fringe-setup`, `/fringetool:fringe-review`, `/fringetool:fringe-audit`, `/fringetool:fringe-debt`, `/fringetool:fringe-help`. The hooks run a copy of the checker that is **inside the plugin**, so nothing is downloaded when they run and there is nothing else to install. `node` (18 or newer) must be on the PATH of the shell Claude Code uses.
+This adds the post-edit and playbook hooks and the skills, namespaced: `/fringetool:fringe-setup`, `/fringetool:fringe-review`, `/fringetool:fringe-audit`, `/fringetool:fringe-debt`, `/fringetool:fringe-help`. The playbook hook is one small file **inside the plugin** (needs `node` 18+ on the PATH); nothing is downloaded when hooks run. The post-edit check runs the `fringe` installed in your project or on your PATH, so run `npm i -D @fringetools/cli` once to turn it on; without it the plugin stays silent after edits.
 
 ## Claude Code, without the plugin
 
