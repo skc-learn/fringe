@@ -29,6 +29,7 @@ jobs:
       - name: GitHub Release with the tarball
         working-directory: packages/cli
         run: |
+          pnpm build                 # npm pack alone does not build: without this the tarball has no dist/
           npm pack --silent
           gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 || for i in 1 2 3; do gh release create "${GITHUB_REF_NAME}" --generate-notes --title "${GITHUB_REF_NAME}" && break; sleep 15; done
           gh release upload "${GITHUB_REF_NAME}" ./*.tgz --clobber

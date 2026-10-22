@@ -148,3 +148,12 @@ describe('audit 7: numbers in the docs match the code', () => {
     }
   });
 });
+
+describe('release workflow', () => {
+  it('builds before it packs, so the tarball attached to the GitHub Release contains dist/', () => {
+    const wf = readFileSync(join(__dirname, '..', '..', '..', '.github', 'workflows', 'publish.yml'), 'utf8');
+    expect(wf.indexOf('pnpm build')).toBeGreaterThan(-1);
+    expect(wf.indexOf('pnpm build')).toBeLessThan(wf.indexOf('npm pack'));
+    expect(wf.indexOf('npm pack')).toBeLessThan(wf.indexOf('npm publish'));   // GitHub first, npm second
+  });
+});
