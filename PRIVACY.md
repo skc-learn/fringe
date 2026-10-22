@@ -21,7 +21,7 @@ Fringe makes no network calls itself. The one download is `npx` fetching the pin
 
 ## Personal data, retention, children
 
-Fringe does not read, store or transmit personal data, credentials or environment secrets, and it keeps nothing beyond the local files above, which you control and can delete. It is a developer tool and is not directed at people under 18.
+The hook and skills do not read, store or transmit personal data, credentials or environment secrets. The one case where a secret is used is a login script you write for `fringe scan` (`${env:NAME}`): Fringe reads only the variables you name, types them into the page you chose, and never prints, logs or saves the values. Fringe keeps nothing beyond the local files above, which you control and can delete. It is a developer tool and is not directed at people under 18.
 
 ## Changes and contact
 

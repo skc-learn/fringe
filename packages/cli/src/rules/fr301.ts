@@ -23,13 +23,13 @@ export const fr301: Rule = {
     const hardcoded =
       count(ctx.source, ARBITRARY_TW) +
       ctx.css.filter((d) => !d.prop.startsWith('--') && COLOR_PROP.test(d.prop) && parseColor(d.value) !== null).length;
-    const tokenUses =
+    const tokenRefs =
       count(ctx.source, /var\(--/g) +
       count(ctx.source, PALETTE_TW);
-    if (!(hardcoded > 3 && hardcoded > tokenUses)) return [];
+    if (!(hardcoded > 3 && hardcoded > tokenRefs)) return [];
     return [{
       rule: 'FR-301', severity: 'signal' as const,
-      message: `${hardcoded} hardcoded colors vs ${tokenUses} token uses in this file`,
+      message: `${hardcoded} hardcoded colors vs ${tokenRefs} token uses in this file`,
       hint: `use design tokens / Tailwind palette instead of raw hex (tokenSource: ${ctx.tokenColors.length} colors found)`,
       loc: { file: ctx.file, line: 1, col: 0 },
     }];
