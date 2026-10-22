@@ -41,11 +41,12 @@ const walk = (dir) => { for (const e of readdirSync(dir, { withFileTypes: true }
 } };
 walk(join(out, 'node_modules'));
 rmSync(join(out, 'node_modules', '.package-lock.json'), { force: true });
+rmSync(join(out, 'node_modules', '.bin'), { recursive: true, force: true }); // symlinks to CLI shims we do not ship; a dangling symlink in a plugin is a defect
 writeFileSync(join(out, 'README.md'), `Vendored runtime for the Fringe Claude Code plugin (version ${pkg.version}).\n\nThe plugin's two hooks run \`node pluginHook.js\` from this folder: no package is downloaded at run time. \`cli/pluginHook.js\` is the unminified build of packages/cli/src/pluginHook.ts; \`node_modules/\` holds the production dependencies at the exact versions in packages/cli/npm-shrinkwrap.json. Regenerate with \`node scripts/vendor-plugin.mjs\`.\n`);
 
 // 4. the directory's limits
 let files = 0, biggest = ['', 0];
-const count = (dir) => { for (const e of readdirSync(dir, { withFileTypes: true })) { const p = join(dir, e.name); if (e.isDirectory()) count(p); else { files++; const s = statSync(p).size; if (s > biggest[1]) biggest = [p, s]; } } };
+const count = (dir) => { for (const e of readdirSync(dir, { withFileTypes: true })) { const p = join(dir, e.name); if (e.isSymbolicLink()) throw new Error(`${p} is a symlink: vendored files must be real files`); if (e.isDirectory()) count(p); else { files++; const s = statSync(p).size; if (s > biggest[1]) biggest = [p, s]; } } };
 count(out);
 if (biggest[1] >= 256 * 1024) throw new Error(`${biggest[0]} is ${biggest[1]} bytes: a vendored file must stay under 256 KiB`);
 console.log(`vendored ${files} files into plugin/vendor (largest: ${biggest[0].replace(root + '/', '')}, ${Math.round(biggest[1] / 1024)} KiB)`);

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { existsSync, readFileSync, readdirSync, mkdtempSync, mkdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, mkdtempSync, mkdirSync, rmSync, statSync, lstatSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -40,7 +40,7 @@ describe('Claude Code plugin manifests', () => {
     const walk = (d: string) => { for (const e of readdirSync(d, { withFileTypes: true })) { const p = join(d, e.name); if (e.isDirectory()) walk(p); else files.push(p); } };
     walk(join(root, 'plugin'));
     expect(files.length).toBeLessThan(512);
-    for (const f of files) { expect(statSync(f).size, f).toBeLessThan(256 * 1024); expect(f).not.toMatch(/\.(map|d\.ts|d\.mts|d\.cts)$/); }
+    for (const f of files) { expect(lstatSync(f).isSymbolicLink(), `${f} must not be a symlink`).toBe(false); expect(statSync(f).size, f).toBeLessThan(256 * 1024); expect(f).not.toMatch(/\.(map|d\.ts|d\.mts|d\.cts)$/); }
   });
   it('every vendored file is committed (a .gitignore rule once hid node_modules and dist, so a GitHub install had no dependencies)', () => {
     const git = spawnSync('git', ['ls-files', '--others', '--ignored', '--exclude-standard', 'plugin'], { cwd: root, encoding: 'utf8' });
